@@ -10,7 +10,7 @@ all: $(EXEC)
 
 
 
-kfc:   kfc.o
+kfc:   kfc.o index_min.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 %.o: %.cpp
