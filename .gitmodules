@@ -1,6 +1,6 @@
-[submodule "bloomfilter"]
-	path = bloomfilter
-	url = https://github.com/le1ca/bloomfilter
 [submodule "BBHash"]
 	path = BBHash
 	url = https://github.com/rizkg/BBHash
+[submodule "smhasher"]
+	path = smhasher
+	url = git@github.com:aappleby/smhasher.git

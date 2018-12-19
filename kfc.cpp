@@ -5,6 +5,8 @@
 #include <iostream>
 #include <algorithm>
 
+#include "BloomFilter.hpp"
+
 
 
 
@@ -48,6 +50,8 @@ void insert_sequence(const string& seq){
 
 
 int main(int argc, char ** argv){
+	BloomFilter bf(1000, 3);
+
 	if(argc<2){
 		cout<<"[Fasta file]"<<endl;
 		exit(0);
