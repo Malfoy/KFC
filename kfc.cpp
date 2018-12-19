@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#include "index_min.h"
 
 #include "BloomFilter.hpp"
 
@@ -69,4 +70,6 @@ int main(int argc, char** argv) {
 		insert_sequence(sequence);
 		sequence = "";
 	}
+	vector<uint64_t> abundant_kmer;
+	index_full index(abundant_kmer);
 }

@@ -10,7 +10,7 @@ all: $(EXEC)
 
 
 
-kfc:   kfc.o BloomFilter.o
+kfc:   kfc.o BloomFilter.o index_min.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 %.o: %.cpp
