@@ -11,7 +11,9 @@ using namespace std;
 CascadingBloomFilter::CascadingBloomFilter(uint64_t size, uint8_t num_blooms,
                                            float reset_ratio) {
   // Bloom filters init
-  this->filters = vector<BloomFilter>(num_blooms, BloomFilter(size/num_blooms, NUM_HASH, reset_ratio));
+  this->filters = vector<BloomFilter>(num_blooms);
+  for (uint i = 0; i < num_blooms; i++)
+    this->filters[i] = BloomFilter(size/num_blooms, NUM_HASH, reset_ratio);
   this->saved = vector<bool>(size/num_blooms, false);
   this->kmers = vector<uint64_t>();
 
