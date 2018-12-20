@@ -8,6 +8,7 @@ using namespace std;
 BloomFilter::BloomFilter(uint64_t size, uint8_t num_hashes) {
 	this->m_bits = std::vector<bool>(size);
   this->m_num_hashes = num_hashes;
+  this->m_bits_set = 0;
 }
 
 
@@ -30,7 +31,11 @@ void BloomFilter::add(const uint8_t *data, std::size_t len) {
   auto hash_values = hash_wesh(data, len);
 
   for (int n = 0; n < this->m_num_hashes; n++) {
-      m_bits[nthHash(n, hash_values[0], hash_values[1], m_bits.size())] = true;
+    uint64_t hash = nthHash(n, hash_values[0], hash_values[1], m_bits.size());
+    if (! m_bits[hash]) {
+      m_bits_set++;
+      m_bits[hash] = true;
+    }
   }
 }
 
@@ -51,6 +56,7 @@ ostream& operator<< (ostream& out, BloomFilter& bf) {
   for (auto val : bf.m_bits) {
     out << (val ? 1 : 0);
   }
+  out << " (" << bf.m_bits_set << ')';
 
   return out;
 }
