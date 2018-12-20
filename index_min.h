@@ -1,7 +1,6 @@
 #ifndef __INDEX8MIN
 #define __INDEX8MIN
 
-using namespace std;
 
 
 #include <stdio.h>
@@ -10,10 +9,21 @@ using namespace std;
 #include <atomic>
 #include <mutex>
 #include <unordered_map>
+#include <algorithm>
 #include "BBHash/BooPHF.h"
+
+
+using namespace std;
+
+
 
 typedef boomphf::SingleHashFunctor<uint64_t>  hasher;
 typedef boomphf::mphf<  uint64_t, hasher > MPHF;
+
+
+
+
+
 
 struct value{
 	uint64_t kmer;
@@ -21,10 +31,7 @@ struct value{
 };
 
 
-class index_min{
-public:
 
-};
 
 
 class index_full{
@@ -39,6 +46,22 @@ public:
 	}
 	void insert(uint64_t);
 	void dump_counting();
+};
+
+
+
+
+class index_min{
+public:
+	uint kmer_size;
+	uint minimizer_size;
+
+	vector<index_full> Index;
+
+	index_min(vector<uint64_t>& V);
+	void insert(uint64_t kmer);
+	void dump_counting();
+
 };
 
 
