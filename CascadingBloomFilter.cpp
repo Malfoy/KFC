@@ -11,9 +11,9 @@ using namespace std;
 CascadingBloomFilter::CascadingBloomFilter(uint64_t size, uint8_t num_blooms,
                                            float reset_ratio) {
   // Bloom filters init
-  this->filters = vector<BloomFilter>(num_blooms);
+  this->filters = vector<BloomFilter*>(num_blooms);
   for (uint i = 0; i < num_blooms; i++)
-    this->filters[i] = BloomFilter(size/num_blooms, NUM_HASH, reset_ratio);
+    this->filters[i] = new BloomFilter(size/num_blooms, NUM_HASH, reset_ratio);
   this->saved = vector<bool>(size/num_blooms, false);
   this->kmers = vector<uint64_t>();
 
@@ -21,6 +21,11 @@ CascadingBloomFilter::CascadingBloomFilter(uint64_t size, uint8_t num_blooms,
   this->m_num_blooms = num_blooms;
 }
 
+CascadingBloomFilter::~CascadingBloomFilter() {
+  for (uint i = 0; i < this->m_num_blooms; i++) {
+    delete this->filters[i];
+  }
+}
 
 static std::array<uint64_t, 2> hash_wesh(const uint8_t *data,
                              std::size_t len) {
@@ -41,8 +46,8 @@ void CascadingBloomFilter::insert(const uint8_t *data, std::size_t len) {
   // TODO: Reset bloom filter (ratio 0.5 ?)
 
   for (uint n = 0; n < this->m_num_blooms; n++) {
-    if (! this->filters[n].possiblyContains(data, len)) {
-      this->filters[n].add(data, len);
+    if (! this->filters[n]->possiblyContains(data, len)) {
+      this->filters[n]->add(data, len);
       return;
     }
   }
@@ -64,8 +69,8 @@ void CascadingBloomFilter::insert(const uint8_t *data, std::size_t len) {
 
 
 ostream& operator<< (ostream& out, CascadingBloomFilter& cbf) {
-  for (auto bf : cbf.filters) {
-    out << bf << endl;
+  for (BloomFilter *bf : cbf.filters) {
+    out << *bf << endl;
   }
 
   for (auto kmer: cbf.kmers) {
