@@ -1,10 +1,6 @@
 #include <vector>
-#include <stdio.h>
-#include <stdint.h>
+#include <cstdint>
 #include <iostream>
-
-#ifndef __BF__
-#	define __BF__
 
 class BloomFilter {
   public:
@@ -17,8 +13,5 @@ class BloomFilter {
 
   private:
 	uint8_t m_num_hashes;
-	std::vector<std::vector<bool>> filters;
-	std::vector<uint64_t> filling_count;
+	std::vector<bool> m_bits;
 };
-
-#endif
