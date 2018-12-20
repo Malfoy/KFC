@@ -1,69 +1,44 @@
 #include "BloomFilter.hpp"
 #include "smhasher/src/MurmurHash3.h"
 #include <array>
-#include <iostream>
 
 
 using namespace std;
 
-
 BloomFilter::BloomFilter(uint64_t size, uint8_t num_hashes) {
-  cout << size << " " << (uint)num_hashes << endl;
-  // Bloom filter init
-  this->filters = vector<vector<bool> >(num_hashes, vector<bool>(size, false));
-  cout << this->filters.size() << endl;
-  // for (uint8_t idx=0 ; idx<num_hashes ; idx++) {
-  //   this->filters.push_back();
-  // }
-
-  // Variables
+	this->m_bits = std::vector<bool>(size);
   this->m_num_hashes = num_hashes;
-  this->filling_count = vector<uint64_t>(num_hashes);
 }
 
 
-std::array<uint64_t, 2> hash_wesh(const uint8_t *data,
+static std::array<uint64_t, 2> hash_wesh(const uint8_t *data,
                              std::size_t len) {
-  std::array<uint64_t, 2> hashValue;
-  MurmurHash3_x64_128(data, len, 0, hashValue.data());
+  std::array<uint64_t, 2> hash_value;
+  MurmurHash3_x64_128(data, len, 0, hash_value.data());
 
-  return hashValue;
+  return hash_value;
 }
 
 inline uint64_t nthHash(uint8_t n,
                         uint64_t hashA,
                         uint64_t hashB,
-                        uint64_t filter_size) {
-    return (hashA + (hashB << n)) % filter_size;
+                        uint64_t filterSize) {
+    return (hashA + n * hashB) % filterSize;
 }
 
 void BloomFilter::add(const uint8_t *data, std::size_t len) {
-  auto hashValues = hash_wesh(data, len);
+  auto hash_values = hash_wesh(data, len);
 
-  // TODO: Reset bloom filter (ratio 0.5 ?)
-
-  for (uint n = 0; n < this->m_num_hashes; n++) {
-    uint64_t position = nthHash(n, hashValues[0], hashValues[1], this->filters[n].size());
-    if (! this->filters[n][position]) {
-      this->filters[n][position] = true;
-      return;
-    }
+  for (int n = 0; n < this->m_num_hashes; n++) {
+      m_bits[nthHash(n, hash_values[0], hash_values[1], m_bits.size())] = true;
   }
-
-  // TODO: Add in the abundant kmer vector
 }
 
-// bool BloomFilter::possiblyContainsHash(const uint8_t num_hash, const uint8_t *data, std::size_t len) const {
-//   auto hashValues = hash_wesh(data, len);
-
-//   return filters[nthHash(num_hash, hashValues[0], hashValues[1], filters.size())];
-// }
-
 bool BloomFilter::possiblyContains(const uint8_t *data, std::size_t len) const {
-  auto hashValues = hash_wesh(data, len);
+  auto hash_values = hash_wesh(data, len);
 
-  for (uint n = 0; n < this->m_num_hashes; n++) {
-      if (!this->filters[n][nthHash(n, hashValues[0], hashValues[1], this->filters[n].size())]) {
+  for (int n = 0; n < this->m_num_hashes; n++) {
+      if (!m_bits[nthHash(n, hash_values[0], hash_values[1], m_bits.size())]) {
           return false;
       }
   }
@@ -73,10 +48,11 @@ bool BloomFilter::possiblyContains(const uint8_t *data, std::size_t len) const {
 
 
 ostream& operator<< (ostream& out, BloomFilter& bf) {
-  for (uint8_t bloom_idx= 0 ; bloom_idx<bf.m_num_hashes ; bloom_idx++) {
-    for (bool val : bf.filters[bloom_idx]) {
-      out << val ? 1 : 0;
-    }
-    out << endl;
+  for (auto val : bf.m_bits) {
+    out << (val ? 1 : 0);
   }
+
+  return out;
 }
+
+

@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include "index_min.h"
 
-#include "BloomFilter.hpp"
+#include "CascadingBloomFilter.hpp"
 
 
 
@@ -47,23 +47,23 @@ void clean(string& str){
 
 #define hash_letter(letter) ((letter >> 1) & 0b11)
 
-void insert_sequence(BloomFilter& bf, const string& seq){
+void insert_sequence(CascadingBloomFilter& cbf, const string& seq){
 	uint64_t hash = 0;
 	for (uint i=0 ; i<31 ; i++)
 		hash = hash << 2 | hash_letter(seq[i]);
 
-	for (uint idx=31 ; idx<31+20/*seq.size()/**/ ; idx++) {
+	for (uint idx=31 ; idx<seq.size()/**/ ; idx++) {
 		hash = hash << 2 | hash_letter(seq[idx]);
-		bf.add((uint8_t *)&hash, sizeof(hash));
+		cbf.insert((uint8_t *)&hash, sizeof(hash));
 	}
 }
 
 
 
 int main(int argc, char ** argv){
-	uint64_t size = 50;
+	uint64_t size = 300;
 	// size <<= 30;
-	BloomFilter bf(size, 3);
+	CascadingBloomFilter cbf(size, 3);
 
 	if(argc<2){
 		cout<<"[Fasta file]"<<endl;
@@ -76,7 +76,10 @@ int main(int argc, char ** argv){
 	ifstream in(input);
 
 
+	uint nb_sequence=0;
 	while(not in.eof()){
+		if (nb_sequence++ >= 3)
+			break;
 		getline(in,header);
 		if(header[0]!='>'){continue;}
 		char c=in.peek();
@@ -85,10 +88,8 @@ int main(int argc, char ** argv){
 			sequence+=line;
 			c=in.peek();
 		}
-		insert_sequence(bf, sequence);
-		cout << bf;
-		// TODO: remove this
-		return 0;
+		insert_sequence(cbf, sequence);
+		cout << cbf;
 		sequence="";
 	}
 	vector<uint64_t> abundant_kmer;
