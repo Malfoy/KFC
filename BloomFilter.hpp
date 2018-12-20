@@ -1,6 +1,8 @@
-#include <vector>
+#include <bitset>
 #include <cstdint>
 #include <iostream>
+#include "BitSet.hpp"
+
 
 class BloomFilter {
 public:
@@ -13,8 +15,8 @@ public:
   friend std::ostream& operator<< (std::ostream& out, BloomFilter& bf);
 
 private:
+  BitSet m_bits;
   uint8_t m_num_hashes;
-  std::vector<bool> m_bits;
   uint64_t m_bits_set;
   float m_reset_ratio;
 };
