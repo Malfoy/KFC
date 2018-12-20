@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#include <unordered_map>
 #include "index_min.h"
 
 #include "BloomFilter.hpp"
@@ -44,14 +45,25 @@ void clean(string& str){
 	transform(str.begin(), str.end(), str.begin(), ::toupper);
 }
 
-void insert_sequence(const string& seq){
-	return;
+#define hash_letter(letter) ((letter >> 1) & 0b11)
+
+void insert_sequence(BloomFilter& bf, const string& seq){
+	uint64_t hash = 0;
+	for (uint i=0 ; i<31 ; i++)
+		hash = hash << 2 | hash_letter(seq[i]);
+
+	for (uint idx=31 ; idx<31+20/*seq.size()/**/ ; idx++) {
+		hash = hash << 2 | hash_letter(seq[idx]);
+		bf.add((uint8_t *)&hash, sizeof(hash));
+	}
 }
 
 
 
 int main(int argc, char ** argv){
-	BloomFilter bf(1000, 3);
+	uint64_t size = 50;
+	// size <<= 30;
+	BloomFilter bf(size, 3);
 
 	if(argc<2){
 		cout<<"[Fasta file]"<<endl;
@@ -73,7 +85,10 @@ int main(int argc, char ** argv){
 			sequence+=line;
 			c=in.peek();
 		}
-		insert_sequence(sequence);
+		insert_sequence(bf, sequence);
+		cout << bf;
+		// TODO: remove this
+		return 0;
 		sequence="";
 	}
 	vector<uint64_t> abundant_kmer;

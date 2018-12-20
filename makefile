@@ -1,8 +1,10 @@
 #~ CC=/usr/bin/g++
 CC=g++
-CFLAGS= -Wall -Ofast -std=c++11  -flto -pipe -funit-at-a-time -fopenmp -lz -Isparsepp -flto
-LDFLAGS=-flto -lpthread -fopenmp -lz  -Isparsepp  -flto
+CFLAGS= -Wall -g -std=c++11  -flto -pipe -funit-at-a-time -fopenmp -lz -Isparsepp -flto
+LDFLAGS=-flto -lpthread -g -fopenmp -lz  -Isparsepp  -flto smhasher/src/libSMHasherSupport.a
 
+CPPS = $(wildcard *.cpp)
+OBJS = $(CPPS:.cpp=.o)
 
 
 EXEC=kfc
@@ -10,7 +12,7 @@ all: $(EXEC)
 
 
 
-kfc:   kfc.o BloomFilter.o index_min.o
+kfc:   $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 %.o: %.cpp
@@ -18,7 +20,7 @@ kfc:   kfc.o BloomFilter.o index_min.o
 
 
 clean:
-	rm -rf *.o
+	rm -f *.o
 	rm -rf $(EXEC)
 
 
