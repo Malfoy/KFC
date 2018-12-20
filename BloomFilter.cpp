@@ -52,6 +52,7 @@ bool BloomFilter::possiblyContains(const uint8_t* data, std::size_t len) const {
 
 void BloomFilter::reset() {
 	this->m_bits.reset();
+	this->m_bits_set = 0;
 }
 
 ostream& operator<<(ostream& out, BloomFilter& bf) {
