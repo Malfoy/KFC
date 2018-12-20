@@ -56,7 +56,7 @@ void insert_sequence(CascadingBloomFilter& cbf, const string& seq) {
 int main(int argc, char** argv) {
 	uint64_t size = 300;
 	// size <<= 30;
-	CascadingBloomFilter cbf(size, 3);
+	CascadingBloomFilter cbf(size, 3, .5);
 
 	if (argc < 2) {
 		cout << "[Fasta file]" << endl;

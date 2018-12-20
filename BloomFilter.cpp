@@ -4,10 +4,11 @@
 
 using namespace std;
 
-BloomFilter::BloomFilter(uint64_t size, uint8_t num_hashes) {
+BloomFilter::BloomFilter(uint64_t size, uint8_t num_hashes, float reset_ratio) {
 	this->m_bits = std::vector<bool>(size);
 	this->m_num_hashes = num_hashes;
 	this->m_bits_set = 0;
+	this->m_reset_ratio = reset_ratio;
 }
 
 static std::array<uint64_t, 2> hash_wesh(const uint8_t* data, std::size_t len) {
@@ -31,6 +32,10 @@ void BloomFilter::add(const uint8_t* data, std::size_t len) {
 			m_bits[hash] = true;
 		}
 	}
+
+	if (this->m_bits_set * 1. / len >= reset_ratio) {
+		reset();
+	}
 }
 
 bool BloomFilter::possiblyContains(const uint8_t* data, std::size_t len) const {
@@ -43,6 +48,10 @@ bool BloomFilter::possiblyContains(const uint8_t* data, std::size_t len) const {
 	}
 
 	return true;
+}
+
+void BloomFilter::reset() {
+	this->m_bits.reset();
 }
 
 ostream& operator<<(ostream& out, BloomFilter& bf) {
