@@ -14,4 +14,5 @@ class BloomFilter {
   private:
 	uint8_t m_num_hashes;
 	std::vector<bool> m_bits;
+	uint64_t m_bits_set;
 };
