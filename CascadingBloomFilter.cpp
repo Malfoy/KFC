@@ -1,9 +1,7 @@
 #include "CascadingBloomFilter.hpp"
-#include "smhasher/src/MurmurHash3.h"
 #include <array>
 #include <iostream>
-
-#define NUM_HASH 3
+#include <cmath>
 
 using namespace std;
 
@@ -12,10 +10,10 @@ CascadingBloomFilter::CascadingBloomFilter(uint64_t size, uint8_t num_blooms,
                                            float reset_ratio) {
   // Bloom filters init
   this->filters = vector<BloomFilter*>(num_blooms);
-  for (uint i = 0; i < num_blooms; i++)
-    this->filters[i] = new BloomFilter(size/num_blooms, NUM_HASH, reset_ratio);
-  this->saved = vector<bool>(size/num_blooms, false);
-  this->kmers = vector<uint64_t>();
+  uint optimal_nb_hash = ceil(1./reset_ratio * log(2));
+  this->filters[0] = new BloomFilter(size/2, optimal_nb_hash, reset_ratio);
+  for (uint i = 1; i < num_blooms; i++)
+    this->filters[i] = new BloomFilter((size/2)/(num_blooms-1), optimal_nb_hash, reset_ratio);
 
   // Variables
   this->m_num_blooms = num_blooms;
