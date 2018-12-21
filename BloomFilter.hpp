@@ -1,4 +1,3 @@
-#include <bitset>
 #include <cstdint>
 #include <iostream>
 #include "BitSet.hpp"

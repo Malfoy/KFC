@@ -6,7 +6,7 @@
 using namespace std;
 
 BloomFilter::BloomFilter(uint64_t size, uint8_t num_hashes, float reset_ratio)
-  : m_bits(size) {
+  : m_bits(size * 8) {
 	this->m_num_hashes = num_hashes;
 	this->m_bits_set = 0;
 	this->m_reset_ratio = reset_ratio;
@@ -54,8 +54,10 @@ void BloomFilter::reset() {
 }
 
 ostream& operator<<(ostream& out, BloomFilter& bf) {
-	for (uint64_t i = 0; i < bf.m_bits.size(); i++) {
-		out << (bf.m_bits.get(i) ? 1 : 0);
+	if (bf.m_bits.size() < 10000) {
+		for (uint64_t i = 0; i < bf.m_bits.size(); i++) {
+			out << (bf.m_bits.get(i) ? 1 : 0);
+		}
 	}
 	out << " (" << bf.m_bits_set << ')';
 
