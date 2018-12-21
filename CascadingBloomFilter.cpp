@@ -67,7 +67,7 @@ void CascadingBloomFilter::insert(const uint8_t *data, std::size_t len) {
   }
 }
 
-uint64_t nbKmers() const {
+uint64_t CascadingBloomFilter::nbKmers() const {
   return this->kmers.size();
 }
 
