@@ -43,6 +43,7 @@ void clean(string& str) {
 #define hash_letter(letter) ((letter >> 1) & 0b11)
 
 void insert_sequence(CascadingBloomFilter& cbf, const string& seq) {
+	printf("Sequence\n");
 	uint64_t hash = 0;
 	for (unsigned i = 0; i < 31; i++)
 		hash = hash << 2 | hash_letter(seq[i]);
@@ -54,7 +55,7 @@ void insert_sequence(CascadingBloomFilter& cbf, const string& seq) {
 }
 
 int main(int argc, char** argv) {
-	uint64_t size = 300;
+	uint64_t size = 3000;
 	// size <<= 30;
 	CascadingBloomFilter cbf(size, 3, .5);
 
