@@ -25,17 +25,6 @@ CascadingBloomFilter::~CascadingBloomFilter() {
 	}
 }
 
-static std::array<uint64_t, 2> hash_wesh(const uint8_t* data, std::size_t len) {
-	std::array<uint64_t, 2> hash_value;
-	MurmurHash3_x64_128(data, len, 0, hash_value.data());
-
-	return hash_value;
-}
-
-inline uint64_t nthHash(uint8_t n, uint64_t hashA, uint64_t hashB, uint64_t filter_size) {
-	return (hashA + (hashB << n)) % filter_size;
-}
-
 void CascadingBloomFilter::insert(const uint8_t* data, std::size_t len) {
 	// TODO: Reset bloom filter (ratio 0.5 ?)
 
