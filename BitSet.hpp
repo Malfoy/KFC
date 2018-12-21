@@ -1,10 +1,11 @@
 #include <cstdint>
 
-#define WORD_SIZE (sizeof(uint64_t) * 8)
+#define WORD_TYPE uint64_t
+#define WORD_SIZE (sizeof(WORD_TYPE) * 8)
 /* reads bit p from e */
 #define bitget(e,p) ((((e)[(p)/WORD_SIZE] >> ((p)%WORD_SIZE))) & 1)
 /* sets bit p in e */
-#define bitset(e,p) ((e)[(p)/WORD_SIZE] |= (1<<((p)%WORD_SIZE)))
+#define bitset(e,p) ((e)[(p)/WORD_SIZE] |= ((WORD_TYPE)1<<((p)%WORD_SIZE)))
 
 class BitSet {
 public:
