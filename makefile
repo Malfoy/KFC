@@ -8,19 +8,23 @@ OBJS = $(CPPS:.cpp=.o)
 
 
 EXEC=kfc
-all: $(EXEC)
+LIB=$(EXEC).a
+all: $(EXEC) $(LIB)
 
 
 
 kfc:   $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
+$(LIB): $(OBJS)
+	ar rc $@ $^
+
 %.o: %.cpp
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 
 clean:
-	rm -f *.o
+	rm -f *.o *.a
 	rm -rf $(EXEC)
 
 
