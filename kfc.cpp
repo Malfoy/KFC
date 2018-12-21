@@ -6,8 +6,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include "index_min.h"
-
-#include "CascadingBloomFilter.hpp"
+#include "SolidSampler.hpp"
 
 
 
@@ -47,7 +46,7 @@ void clean(string& str){
 
 #define hash_letter(letter) ((letter >> 1) & 0b11)
 
-void insert_sequence(CascadingBloomFilter& cbf, const string& seq){
+void insert_sequence(SolidSampler& sampler, const string& seq){
 	printf("Sequence\n");
 	uint64_t hash = 0;
 	for (uint i=0 ; i<31 ; i++)
@@ -55,16 +54,16 @@ void insert_sequence(CascadingBloomFilter& cbf, const string& seq){
 
 	for (uint idx=31 ; idx<seq.size()/**/ ; idx++) {
 		hash = hash << 2 | hash_letter(seq[idx]);
-		cbf.insert((uint8_t *)&hash, sizeof(hash));
+		sampler.insert((uint8_t *)&hash, sizeof(hash));
 	}
 }
 
 
 
 int main(int argc, char ** argv){
-	uint64_t size = 3000;
+  uint64_t size = ((uint64_t)1 << 33);
 	// size <<= 30;
-	CascadingBloomFilter cbf(size, 3, .5);
+	SolidSampler sampler(size);
 
 	if(argc<2){
 		cout<<"[Fasta file]"<<endl;
@@ -79,7 +78,7 @@ int main(int argc, char ** argv){
 
 	uint nb_sequence=0;
 	while(not in.eof()){
-		if (nb_sequence++ >= 3)
+		if (nb_sequence++ >= 10000)
 			break;
 		getline(in,header);
 		if(header[0]!='>'){continue;}
@@ -89,10 +88,10 @@ int main(int argc, char ** argv){
 			sequence+=line;
 			c=in.peek();
 		}
-		insert_sequence(cbf, sequence);
-		cout << cbf;
+		insert_sequence(sampler, sequence);
 		sequence="";
 	}
+        cout << sampler;
 	vector<uint64_t> abundant_kmer;
 	index_full index(abundant_kmer);
 }

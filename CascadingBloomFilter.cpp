@@ -35,23 +35,6 @@ void CascadingBloomFilter::insert(const uint8_t *data, std::size_t len) {
     }
   }
 
-  // Add in the abundant kmer vector
-  bool already_inserted = true;
-  vector<uint64_t> positions = vector<uint64_t>(NUM_HASH);
-  for (uint n = 0; n < NUM_HASH; n++) {
-    auto hash_values = hash_wesh(data, len);
-    positions[n] = nthHash(n, hash_values[0], hash_values[1], len);
-    already_inserted &= this->saved[positions[n]];
-  }
-  if (! already_inserted) {
-    this->kmers.push_back(* ((uint64_t*) data));
-    for (uint n = 0; n < NUM_HASH; n++)
-      this->saved[positions[n]] = true;
-  }
-}
-
-uint64_t CascadingBloomFilter::nbKmers() const {
-  return this->kmers.size();
 }
 
 ostream& operator<< (ostream& out, CascadingBloomFilter& cbf) {
@@ -59,9 +42,5 @@ ostream& operator<< (ostream& out, CascadingBloomFilter& cbf) {
     out << *bf << endl;
   }
 
-  for (auto kmer: cbf.kmers) {
-    out << kmer << ' ';
-  }
-  out << endl;
   return out;
 }
