@@ -42,6 +42,10 @@ void BloomFilter::add(const uint8_t *data, std::size_t len) {
   }
 }
 
+uint64_t BloomFilter::nbBitsSet() const {
+  return this->m_bits_set;
+}
+
 bool BloomFilter::possiblyContains(const uint8_t *data, std::size_t len) const {
   auto hash_values = hash_wesh(data, len);
 
@@ -52,6 +56,10 @@ bool BloomFilter::possiblyContains(const uint8_t *data, std::size_t len) const {
   }
 
   return true;
+}
+
+uint64_t BloomFilter::size() const {
+  return this->m_bits.size();
 }
 
 void BloomFilter::reset() {
