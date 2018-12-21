@@ -37,7 +37,7 @@ void BloomFilter::add(const uint8_t *data, std::size_t len) {
     }
   }
 
-  if (this->m_bits_set * 1. / len >= this->m_reset_ratio) {
+  if ((this->m_bits_set * 1. / m_bits.size()) >= this->m_reset_ratio) {
     reset();
   }
 }
