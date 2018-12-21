@@ -61,6 +61,10 @@ void CascadingBloomFilter::insert(const uint8_t* data, std::size_t len) {
 	}
 }
 
+uint64_t nbKmers() const {
+	return this->kmers.size();
+}
+
 ostream& operator<<(ostream& out, CascadingBloomFilter& cbf) {
 	for (BloomFilter* bf : cbf.filters) {
 		out << *bf << endl;
