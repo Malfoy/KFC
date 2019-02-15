@@ -43,16 +43,23 @@ public:
 	ofstream dump_weak;
 
 	index_full(const vector<uint64_t>& V){
+		kmer_size=(31);
 		Values.resize(V.size());
 		dump_weak.open(("weak_kmers"));
 		auto data_iterator = boomphf::range(static_cast<const uint64_t*>(&((V)[0])), static_cast<const uint64_t*>((&(V)[0])+V.size()));
 		Hash= boomphf::mphf<uint64_t,hasher>(V.size(),data_iterator,4,5,false);
+		for(uint i(0);i<V.size();++i){
+			int64_t pos(Hash.lookup(V[i]));
+			Values[pos].kmer=V[i];
+		}
 	}
 
 	void insert(uint64_t);
 	void dump_counting();
 	void insert_seq(const string&  read);
 	void clear(bool=false);
+	void print_kmer(uint64_t num);
+
 
 
 };

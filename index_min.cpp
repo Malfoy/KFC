@@ -38,11 +38,16 @@ bool compare_minimizer(const uint64_t& a, const uint64_t& b){
 
 
 void index_full::insert(uint64_t kmer){
-	uint64_t pos(Hash.lookup(kmer));
-	if(Values[pos].kmer==kmer){
-		++Values[pos].count;
-	}else{
+	int64_t pos(Hash.lookup(kmer));
+	if(pos<0){
 		weak_kmer_buffer.push_back(kmer);
+	}else{
+		if(Values[pos].kmer==kmer){
+			++Values[pos].count;
+			//~ cout<<Values[pos].count<<endl;
+		}else{
+			weak_kmer_buffer.push_back(kmer);
+		}
 	}
 }
 
@@ -64,19 +69,64 @@ uint64_t str2num(const string& str){
 
 
 
+#define hash_letter(letter) ((letter >> 1) & 0b11)
 
-void index_full::insert_seq(const string&  read){
-	for (uint i(0);i+kmer_size<read.size();++i){
-		uint64_t seq(str2num(read.substr(i,kmer_size)));
-		insert(seq);
+
+
+void index_full::insert_seq(const string&  seq){
+	uint64_t hash = 0;
+	for (uint i=0 ; i<31 ; i++)
+		hash = hash << 2 | hash_letter(seq[i]);
+
+	for (uint idx=31 ; idx<seq.size()/**/ ; idx++) {
+		hash = hash << 2 | hash_letter(seq[idx]);
+		insert(hash);
 	}
 }
 
 
+//~ void index_full::insert_seq(const string&  read){
+	//~ for (uint i(0);i+kmer_size<read.size();++i){
+		//~ uint64_t seq(str2num(read.substr(i,kmer_size)));
+		//~ insert(seq);
+	//~ }
+//~ }
+
+
+
+void index_full::print_kmer(uint64_t num){
+	uint64_t anc(1<<(2*(kmer_size-1)));
+	for(uint i(0);i<kmer_size;++i){
+		uint nuc=num/anc;
+		num=num%anc;
+		if(nuc==3){
+			cout<<"T";
+		}
+		if(nuc==2){
+			cout<<"G";
+		}
+		if(nuc==1){
+			cout<<"C";
+		}
+		if(nuc==0){
+			cout<<"A";
+		}
+		if (nuc>=4){
+			cout<<nuc<<endl;
+			cout<<"WTF"<<endl;
+		}
+		anc>>=2;
+	}
+	cout<<endl;
+}
+
 
 void index_full::dump_counting(){
 	for(uint i(0);i<Values.size();++i){
-		cout<<Values[i].kmer<<" "<<Values[i].count<<"\n";
+		if(Values[i].count!=0){
+			cout<<(Values[i].kmer)<<" ";
+			cout<<Values[i].count<<"\n";
+		}
 	}
 }
 

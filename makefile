@@ -11,9 +11,13 @@ EXEC=kfc
 LIB=$(EXEC).a
 all: $(EXEC) $(LIB)
 
+kmerCountEvaluator:   evaluator.o
+	$(CC) -o $@ $^ $(LDFLAGS)
 
+evaluator.o: evaluator.cpp
+	$(CC) -o $@ -c $< $(CFLAGS)
 
-kfc:   $(OBJS)
+kfc: kfc.o SolidSampler.o BitSet.o BloomFilter.o Hash.o	CascadingBloomFilter.o index_min.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(LIB): $(OBJS)
