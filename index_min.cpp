@@ -57,14 +57,28 @@ uint64_t str2num(const string& str) {
 
 #define hash_letter(letter) ((letter >> 1) & 0b11)
 
+uint64_t rcb(uint64_t min, unsigned n) {
+	uint64_t res(0);
+	uint64_t offset(1);
+	offset <<= (2 * n - 2);
+	for (unsigned i(0); i < n; ++i) {
+		res += (3 - (min % 4)) * offset;
+		min >>= 2;
+		offset >>= 2;
+	}
+	return res;
+}
+
 void index_full::insert_seq(const string& seq) {
 	uint64_t hash = 0;
+	uint64_t canon_hash = 0;
 	for (unsigned i = 0; i < 31; i++)
 		hash = hash << 2 | hash_letter(seq[i]);
 
 	for (unsigned idx = 31; idx < seq.size() /**/; idx++) {
 		hash = hash << 2 | hash_letter(seq[idx]);
-		insert(hash);
+		canon_hash = min(hash, rcb(hash, 31));
+		insert(canon_hash);
 	}
 }
 

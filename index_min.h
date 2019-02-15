@@ -47,6 +47,8 @@ class index_full {
 	void print_kmer(uint64_t num);
 };
 
+uint64_t rcb(uint64_t min, unsigned n);
+
 class index_min {
   public:
 	unsigned kmer_size;
