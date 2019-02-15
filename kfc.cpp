@@ -42,7 +42,7 @@ void clean(string& str) {
 #define hash_letter(letter) ((letter >> 1) & 0b11)
 
 void insert_sequence(SolidSampler& sampler, const string& seq) {
-	printf("Sequence\n");
+	// printf("Sequence\n");
 	uint64_t hash = 0;
 	for (unsigned i = 0; i < 31; i++)
 		hash = hash << 2 | hash_letter(seq[i]);

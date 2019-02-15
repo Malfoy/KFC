@@ -45,9 +45,13 @@ void SolidSampler::insert(uint8_t* kmer, std::size_t len) {
 
 std::ostream& operator<<(std::ostream& out, SolidSampler& sampler) {
 	out << *(sampler.m_cbf);
-	for (uint64_t i = 0; i < sampler.m_nb_kmers_saved; i++) {
-		out << sampler.kmers[i] << ' ';
+
+	// Print all the kmers only if they are less than 100
+	if (sampler.m_nb_kmers_saved < 100) {
+		for (uint64_t i = 0; i < sampler.m_nb_kmers_saved; i++) {
+			out << sampler.kmers[i] << ' ';
+		}
+		out << endl;
 	}
-	out << endl;
 	return out;
 }
