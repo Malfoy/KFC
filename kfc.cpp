@@ -4,11 +4,13 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#include <chrono>
 #include <unordered_map>
 #include "index_min.h"
 #include "SolidSampler.hpp"
 
 using namespace std;
+using namespace chrono;
 
 string getLineFasta(ifstream* in) {
 	string line, result;
@@ -70,6 +72,8 @@ int main(int argc, char** argv) {
 
 	// WE TRY TO FIND THE ABUNDANT KMERS
 
+	high_resolution_clock::time_point t1 = high_resolution_clock::now();
+
 	unsigned nb_sequence = 0;
 	while (not in.eof()) {
 		if (nb_sequence++ >= 10000) break;
@@ -90,11 +94,17 @@ int main(int argc, char** argv) {
 	vector<uint64_t> abundant_kmer = *(sampler.get_kmers());
 	sampler.clean();
 
+	high_resolution_clock::time_point t2 = high_resolution_clock::now();
+	duration<double> time_span1 = duration_cast<duration<double>>(t2 - t1);
+
 	// SAMPLING DONE NOW WE DO THE ***EASY*** JOB
 
 	in.clear();
 	in.seekg(0, ios::beg);
+	cout << "SAMPLING DONE" << endl;
 	cout << abundant_kmer.size() << " abundant kmer" << endl;
+	std::cout << "It took me " << time_span1.count() << " seconds.\n" << endl;
+	;
 	cout << "I BUILD THE INDEX" << endl;
 	index_full index(abundant_kmer);
 	cout << "DONE	" << endl;
@@ -114,7 +124,14 @@ int main(int argc, char** argv) {
 		index.clear();
 		sequence = "";
 	}
+
+	high_resolution_clock::time_point t3 = high_resolution_clock::now();
+
+	duration<double> time_span = duration_cast<duration<double>>(t3 - t1);
+
 	cout << "I FINISHED COUNTING !" << endl;
+	std::cout << "It took me " << time_span.count() << " seconds.\n" << endl;
+	;
 	cin.get();
 	// COUNTING WAS DONE IN RAM I OUTPUT THE RESULT BECAUSE OF THE AMAZING AND POWERFULL SAMPLER
 	index.dump_counting();
