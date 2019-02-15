@@ -116,10 +116,12 @@ int main(int argc, char ** argv){
 			c=in.peek();
 		}
 		index.insert_seq(line);
+		index.clear();
 		sequence="";
 	}
 	//COUNTING WAS DONE IN RAM I OUTPUT THE RESULT
 	index.dump_counting();
+	index.clear(true);
 	//MY JOB HERE IS DONE *fly away*
 }
 
