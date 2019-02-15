@@ -4,3 +4,6 @@
 [submodule "smhasher"]
 	path = smhasher
 	url = https://github.com/aappleby/smhasher
+[submodule "sparsepp"]
+	path = sparsepp
+	url = https://github.com/greg7mdp/sparsepp
