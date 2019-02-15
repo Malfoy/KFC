@@ -20,7 +20,8 @@ SolidSampler::SolidSampler(uint64_t memory_size) {
 	this->m_nb_inserted = 0;
 	this->m_kmer_max = floor((memory_size - (MEMORY_CBF)) * 1. / (2 / 8. + sizeof(uint64_t)));
 	this->saved = vector<bool>(this->m_kmer_max * 2, false);
-	this->kmers = vector<uint64_t>(this->m_kmer_max);
+	this->kmers_p = new vector<uint64_t>(this->m_kmer_max);
+	this->kmers = *(this->kmers_p);
 	this->m_nb_kmers_saved = 0;
 }
 
@@ -43,7 +44,11 @@ void SolidSampler::insert(uint8_t* kmer, std::size_t len) {
 	}
 }
 
-std::ostream& operator<<(std::ostream& out, SolidSampler& sampler) {
+vector<uint64_t>* SolidSampler::get_kmers() {
+	return this->kmers_p;
+}
+
+ostream& operator<<(ostream& out, SolidSampler& sampler) {
 	out << *(sampler.m_cbf);
 
 	// Print all the kmers only if they are less than 100
