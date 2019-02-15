@@ -76,7 +76,8 @@ void index_full::insert_seq(const string& seq) {
 //~ }
 
 void index_full::print_kmer(uint64_t num) {
-	uint64_t anc(1 << (2 * (kmer_size - 1)));
+	uint64_t anc(1);
+	anc <<= (2 * (kmer_size));
 	for (unsigned i(0); i < kmer_size; ++i) {
 		unsigned nuc = num / anc;
 		num = num % anc;
@@ -98,14 +99,14 @@ void index_full::print_kmer(uint64_t num) {
 		}
 		anc >>= 2;
 	}
-	cout << endl;
+	cout << " ";
 }
 
 void index_full::dump_counting() {
 	for (unsigned i(0); i < Values.size(); ++i) {
 		if (Values[i].count != 0) {
-			cout << (Values[i].kmer) << " ";
-			cout << Values[i].count << "\n";
+			print_kmer(Values[i].kmer);
+			cout << to_string(Values[i].count) << "\n";
 		}
 	}
 }
