@@ -69,21 +69,25 @@ uint64_t str2num(const string& str){
 
 
 
-#define hash_letter(letter) ((letter >> 1) & 0b11)
+	#define hash_letter(letter) ((letter >> 1) & 0b11)
 
 
 
-uint64_t rcb(uint64_t min,uint n){
-	uint64_t res(0);
-	uint64_t offset(1);
-	offset<<=(2*n-2);
-	for(uint i(0); i<n;++i){
-		res+=(3-(min%4))*offset;
-		min>>=2;
-		offset>>=2;
-	}
+inline uint64_t rcb(uint64_t in, uint n) {
+	//~ assume(n <= 32, "n=%u > 32", n);
+	// Complement, swap byte order
+	uint64_t res = __builtin_bswap64(in ^ 0xaaaaaaaaaaaaaaaa);
+	// Swap nuc order in bytes
+	const uint64_t c1 = 0x0f0f0f0f0f0f0f0f;
+	const uint64_t c2 = 0x3333333333333333;
+	res = ((res & c1) << 4) | ((res & (c1 << 4)) >> 4); // swap 2-nuc order in bytes
+	res = ((res & c2) << 2) | ((res & (c2 << 2)) >> 2); // swap nuc order in 2-nuc
+
+	// Realign to the right
+	res >>= 64 - 2*n;
 	return res;
 }
+
 
 
 void index_full::insert_seq(const string&  seq){
@@ -95,6 +99,10 @@ void index_full::insert_seq(const string&  seq){
 	for (uint idx=31 ; idx<seq.size()/**/ ; idx++) {
 		hash = hash << 2 | hash_letter(seq[idx]);
 		canon_hash=min(hash,rcb(hash,31));
+		//~ print_kmer(hash);
+		//~ print_kmer(rcb(hash,31));
+		//~ print_kmer(rcb(rcb(hash,31),31))	;
+		//~ cin.get();
 		insert(canon_hash);
 	}
 }
@@ -149,6 +157,7 @@ void index_full::dump_counting(){
 
 
 void index_full::clear(bool force){
+	//~ return;
 	if(weak_kmer_buffer.size()>10*1000 or force){
 		for (uint i(0);i<weak_kmer_buffer.size();++i){
 			dump_weak<<weak_kmer_buffer[i];

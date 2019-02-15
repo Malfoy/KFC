@@ -45,7 +45,7 @@ public:
 	index_full(const vector<uint64_t>& V){
 		kmer_size=(31);
 		Values.resize(V.size());
-		dump_weak.open(("weak_kmers"));
+		dump_weak.open("weak_kmers",ofstream::out |ofstream::binary);
 		auto data_iterator = boomphf::range(static_cast<const uint64_t*>(&((V)[0])), static_cast<const uint64_t*>((&(V)[0])+V.size()));
 		Hash= boomphf::mphf<uint64_t,hasher>(V.size(),data_iterator,4,5,false);
 		for(uint i(0);i<V.size();++i){
