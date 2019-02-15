@@ -90,19 +90,21 @@ vector<string> split(const string &s, char delim){
 
 
 int main(int argc, char ** argv){
-	if(argc<4){
-		cout<<"[kmer count file to evaluate] [reference kmer count file] [k value] [core number] [n for 2^n pass]"<<endl;
+	if(argc<3){
+		//~ cout<<"[kmer count file to evaluate] [reference kmer count file] [k value] [core number] [n for 2^n pass]"<<endl;
+		cout<<"[kmer count file to evaluate] [reference kmer count file] [k value] "<<endl;
 		exit(0);
 	}
 	auto start = chrono::system_clock::now();
 	string inputUnitig(argv[1]);
 	string inputRef(argv[2]);
 	uint k(stoi(argv[3]));
-	uint n(0);
-	uint nb_cores(stoi(argv[4]));
-	if(argc>5){
-		 n=(stoi(argv[5]));
-	}
+	uint n(1);
+	uint nb_cores(1);
+	//~ uint nb_cores(stoi(argv[4]));
+	//~ if(argc>5){
+		 //~ n=(stoi(argv[5]));
+	//~ }
 	uint nbHash=1<<n;
 	cout<<"I will perform "<<nbHash<<" pass"<<endl;
 	srand (time(NULL));
