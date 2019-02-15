@@ -41,6 +41,8 @@ void index_full::insert(uint64_t kmer){
 	uint64_t pos(Hash.lookup(kmer));
 	if(Values[pos].kmer==kmer){
 		++Values[pos].count;
+	}else{
+		weak_kmer_buffer.push_back(kmer);
 	}
 }
 
@@ -75,6 +77,17 @@ void index_full::insert_seq(const string&  read){
 void index_full::dump_counting(){
 	for(uint i(0);i<Values.size();++i){
 		cout<<Values[i].kmer<<" "<<Values[i].count<<"\n";
+	}
+}
+
+
+
+void index_full::clear(bool force=false){
+	if(weak_kmer_buffer.size()>10*1000 or force){
+		for (uint i(0);i<weak_kmer_buffer.size();++i){
+			dump_weak<<weak_kmer_buffer[i];
+		}
+		weak_kmer_buffer.clear();
 	}
 }
 
