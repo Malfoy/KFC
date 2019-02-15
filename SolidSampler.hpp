@@ -19,8 +19,8 @@ class SolidSampler {
 	uint64_t m_kmer_max;
 	std::vector<bool> saved;
 	uint64_t m_nb_kmers_saved;
-	std::vector<uint64_t>* kmers_p;
-	std::vector<uint64_t> kmers;
+	std::vector<uint64_t>* kmers;
+	// std::vector<uint64_t> kmers;
 };
 
 #endif
