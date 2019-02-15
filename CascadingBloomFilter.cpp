@@ -25,16 +25,18 @@ CascadingBloomFilter::~CascadingBloomFilter() {
   }
 }
 
-void CascadingBloomFilter::insert(const uint8_t *data, std::size_t len) {
-  // TODO: Reset bloom filter (ratio 0.5 ?)
-
+/**
+ * Insert the kmer into the CBF and return true if already present into all the BF levels.
+ */
+bool CascadingBloomFilter::insert(const uint8_t *data, std::size_t len) {
   for (uint n = 0; n < this->m_num_blooms; n++) {
     if (! this->filters[n]->possiblyContains(data, len)) {
       this->filters[n]->add(data, len);
-      return;
+      return false;
     }
   }
 
+  return true;
 }
 
 ostream& operator<< (ostream& out, CascadingBloomFilter& cbf) {
