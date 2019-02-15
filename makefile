@@ -7,7 +7,7 @@ CPPS = $(wildcard *.cpp)
 OBJS = $(CPPS:.cpp=.o)
 
 
-EXEC=kfc
+EXEC=kfc kmerCountEvaluator
 LIB=$(EXEC).a
 all: $(EXEC) $(LIB)
 
