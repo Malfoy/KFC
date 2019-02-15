@@ -54,8 +54,8 @@ void SolidSampler::insert(uint8_t* kmer, std::size_t len) {
 		throw "SolidSample previously cleaned";
 	}
 
-	this->m_cbf->insert(kmer, len);
 	this->m_nb_inserted++;
+	if (!this->m_cbf->insert(kmer, len)) return;
 
 	// Add in the abundant kmer vector
 	bool already_inserted = true;

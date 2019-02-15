@@ -10,7 +10,7 @@
 class CascadingBloomFilter {
   public:
 	CascadingBloomFilter(uint64_t size, uint8_t num_blooms, float reset_ratio);
-	void insert(const uint8_t* data, std::size_t len);
+	bool insert(const uint8_t* data, std::size_t len);
 	~CascadingBloomFilter();
 
 	friend std::ostream& operator<<(std::ostream& out, CascadingBloomFilter& cbf);
