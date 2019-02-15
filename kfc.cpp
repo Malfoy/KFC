@@ -52,7 +52,7 @@ void clean(string& str){
 
 
 void insert_sequence(SolidSampler& sampler, const string& seq){
-	printf("Sequence\n");
+	// printf("Sequence\n");
 	uint64_t hash = 0;
 	for (uint i=0 ; i<31 ; i++)
 		hash = hash << 2 | hash_letter(seq[i]);
@@ -97,12 +97,13 @@ int main(int argc, char ** argv){
 		insert_sequence(sampler, sequence);
 		sequence="";
 	}
-    cout << sampler<<endl;;
+    cout << sampler<<endl;
 
 	//SAMPLING DONE NOW WE DO THE REAL JOB
 
     in.clear();
 	in.seekg(0, ios::beg);
+
 	vector<uint64_t> abundant_kmer;
 	index_full index(abundant_kmer);
 	while(not in.eof()){
