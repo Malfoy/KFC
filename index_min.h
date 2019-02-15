@@ -22,6 +22,7 @@ struct value {
 
 class index_full {
   public:
+	uint32_t kmer_size;
 	MPHF Hash;
 	vector<value> Values;
 
@@ -32,6 +33,7 @@ class index_full {
 	}
 	void insert(uint64_t);
 	void dump_counting();
+	void insert_seq(const string& read);
 };
 
 class index_min {

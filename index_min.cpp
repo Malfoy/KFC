@@ -34,6 +34,27 @@ void index_full::insert(uint64_t kmer) {
 	}
 }
 
+uint64_t str2num(const string& str) {
+	uint64_t res(0);
+	for (unsigned i(0); i < str.size(); i++) {
+		res <<= 2;
+		switch (str[i]) {
+			case 'A': res += 0; break;
+			case 'C': res += 1; break;
+			case 'G': res += 2; break;
+			default: res += 3; break;
+		}
+	}
+	return res;
+}
+
+void index_full::insert_seq(const string& read) {
+	for (unsigned i(0); i + kmer_size < read.size(); ++i) {
+		uint64_t seq(str2num(read.substr(i, kmer_size)));
+		insert(seq);
+	}
+}
+
 void index_full::dump_counting() {
 	for (unsigned i(0); i < Values.size(); ++i) {
 		cout << Values[i].kmer << " " << Values[i].count << "\n";
