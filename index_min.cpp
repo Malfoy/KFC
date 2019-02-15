@@ -63,7 +63,7 @@ void index_full::dump_counting() {
 	}
 }
 
-void index_full::clear(bool force = false) {
+void index_full::clear(bool force) {
 	if (weak_kmer_buffer.size() > 10 * 1000 or force) {
 		for (unsigned i(0); i < weak_kmer_buffer.size(); ++i) {
 			dump_weak << weak_kmer_buffer[i];

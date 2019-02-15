@@ -20,9 +20,14 @@ SolidSampler::SolidSampler(uint64_t memory_size) {
 	this->m_nb_inserted = 0;
 	this->m_kmer_max = floor((memory_size - (MEMORY_CBF)) * 1. / (2 / 8. + sizeof(uint64_t)));
 	this->saved = vector<bool>(this->m_kmer_max * 2, false);
-	this->kmers_p = new vector<uint64_t>(this->m_kmer_max);
+	this->kmers_p = new vector<uint64_t>();
 	this->kmers = *(this->kmers_p);
+	this->kmers.reserve(1000000);
 	this->m_nb_kmers_saved = 0;
+}
+
+SolidSampler::~SolidSampler() {
+	delete this->m_cbf;
 }
 
 void SolidSampler::insert(uint8_t* kmer, std::size_t len) {
@@ -38,7 +43,8 @@ void SolidSampler::insert(uint8_t* kmer, std::size_t len) {
 		already_inserted &= this->saved[positions[n]];
 	}
 	if (!already_inserted) {
-		this->kmers[this->m_nb_kmers_saved++] = (*((uint64_t*)kmer));
+		this->kmers.push_back(*((uint64_t*)kmer));
+		this->m_nb_kmers_saved++;
 		for (unsigned n = 0; n < NUM_HASH; n++)
 			this->saved[positions[n]] = true;
 	}

@@ -6,6 +6,7 @@
 class SolidSampler {
   public:
 	SolidSampler(uint64_t memory_size);
+	~SolidSampler();
 
 	void insert(uint8_t* kmer, std::size_t len);
 	std::vector<uint64_t>* get_kmers();
