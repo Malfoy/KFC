@@ -105,7 +105,10 @@ int main(int argc, char ** argv){
 	in.seekg(0, ios::beg);
 
 	vector<uint64_t> abundant_kmer = *(sampler.get_kmers());
+	cout<<abundant_kmer.size()<<" abundant kmer"<<endl;
+	cout<<"I BUILD THE INDEX"<<endl;
 	index_full index(abundant_kmer);
+	cout<<"DONE	"<<endl;
 	while(not in.eof()){
 		getline(in,header);
 		if(header[0]!='>'){continue;}
@@ -115,7 +118,8 @@ int main(int argc, char ** argv){
 			sequence+=line;
 			c=in.peek();
 		}
-		index.insert_seq(line);
+		//~ index.insert_seq(line);
+		cin.get();
 		index.clear();
 		sequence="";
 	}
