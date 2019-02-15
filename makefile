@@ -8,8 +8,8 @@ OBJS = $(CPPS:.cpp=.o)
 
 
 EXEC=kfc kmerCountEvaluator
-LIB=$(EXEC).a
-all: $(EXEC) $(LIB)
+# LIB=$(EXEC).a
+all: $(EXEC)
 
 kmerCountEvaluator:   evaluator.o
 	$(CC) -o $@ $^ $(LDFLAGS)
@@ -20,8 +20,8 @@ evaluator.o: evaluator.cpp
 kfc: kfc.o SolidSampler.o BitSet.o BloomFilter.o Hash.o	CascadingBloomFilter.o index_min.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-$(LIB): $(OBJS)
-	ar rc $@ $^
+# $(LIB): $(OBJS)
+# 	ar rc $@ $^
 
 %.o: %.cpp
 	$(CC) -o $@ -c $< $(CFLAGS)
