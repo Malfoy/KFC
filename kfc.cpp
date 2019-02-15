@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
 
 	unsigned nb_sequence = 0;
 	while (not in.eof()) {
-		if (nb_sequence++ >= 10000) break;
+		if (nb_sequence++ >= 100000) break;
 		getline(in, header);
 		if (header[0] != '>') {
 			continue;
@@ -94,20 +94,25 @@ int main(int argc, char** argv) {
 	vector<uint64_t> abundant_kmer = *(sampler.get_kmers());
 	sampler.clean();
 
-	high_resolution_clock::time_point t2 = high_resolution_clock::now();
-	duration<double> time_span1 = duration_cast<duration<double>>(t2 - t1);
-
 	// SAMPLING DONE NOW WE DO THE ***EASY*** JOB
 
 	in.clear();
 	in.seekg(0, ios::beg);
 	cout << "SAMPLING DONE" << endl;
 	cout << abundant_kmer.size() << " abundant kmer" << endl;
+	high_resolution_clock::time_point t2 = high_resolution_clock::now();
+
+	duration<double> time_span1 = duration_cast<duration<double>>(t2 - t1);
 	std::cout << "It took me " << time_span1.count() << " seconds.\n" << endl;
 	;
 	cout << "I BUILD THE INDEX" << endl;
 	index_full index(abundant_kmer);
 	cout << "DONE	" << endl;
+	high_resolution_clock::time_point t3 = high_resolution_clock::now();
+
+	duration<double> time_span2 = duration_cast<duration<double>>(t3 - t2);
+	std::cout << "It took me " << time_span2.count() << " seconds.\n" << endl;
+	;
 	while (not in.eof()) {
 		getline(in, header);
 		if (header[0] != '>') {
@@ -119,18 +124,22 @@ int main(int argc, char** argv) {
 			sequence += line;
 			c = in.peek();
 		}
-		index.insert_seq(line);
+		index.insert_seq(sequence);
 		//~ cin.get();
 		index.clear();
 		sequence = "";
 	}
 
-	high_resolution_clock::time_point t3 = high_resolution_clock::now();
+	high_resolution_clock::time_point t4 = high_resolution_clock::now();
 
-	duration<double> time_span = duration_cast<duration<double>>(t3 - t1);
+	duration<double> time_span3 = duration_cast<duration<double>>(t4 - t3);
 
 	cout << "I FINISHED COUNTING !" << endl;
-	std::cout << "It took me " << time_span.count() << " seconds.\n" << endl;
+	std::cout << "It took me " << time_span3.count() << " seconds.\n" << endl;
+	;
+
+	duration<double> time_span4 = duration_cast<duration<double>>(t4 - t1);
+	std::cout << "Whole process took " << time_span4.count() << " seconds.\n" << endl;
 	;
 	cin.get();
 	// COUNTING WAS DONE IN RAM I OUTPUT THE RESULT BECAUSE OF THE AMAZING AND POWERFULL SAMPLER
