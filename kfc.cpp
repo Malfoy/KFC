@@ -47,7 +47,7 @@ void clean(string& str){
 #define hash_letter(letter) ((letter >> 1) & 0b11)
 
 void insert_sequence(SolidSampler& sampler, const string& seq){
-	printf("Sequence\n");
+	// printf("Sequence\n");
 	uint64_t hash = 0;
 	for (uint i=0 ; i<31 ; i++)
 		hash = hash << 2 | hash_letter(seq[i]);
@@ -91,7 +91,8 @@ int main(int argc, char ** argv){
 		insert_sequence(sampler, sequence);
 		sequence="";
 	}
-        cout << sampler;
+	
+	cout << sampler;
 	vector<uint64_t> abundant_kmer;
 	index_full index(abundant_kmer);
 }
