@@ -99,12 +99,12 @@ int main(int argc, char ** argv){
 	}
     cout << sampler<<endl;
 
-	//SAMPLING DONE NOW WE DO THE REAL JOB
+	//SAMPLING DONE NOW WE DO THE ***EASY*** JOB
 
     in.clear();
 	in.seekg(0, ios::beg);
 
-	vector<uint64_t> abundant_kmer;
+	vector<uint64_t> abundant_kmer = *(sampler.get_kmers());
 	index_full index(abundant_kmer);
 	while(not in.eof()){
 		getline(in,header);
@@ -118,7 +118,7 @@ int main(int argc, char ** argv){
 		index.insert_seq(line);
 		sequence="";
 	}
-	//COUNTING WAS DONE IN RAM I OUTPUT THE RESULT
+	//COUNTING WAS DONE IN RAM I OUTPUT THE RESULT BECAUSE OF THE AMAZING AND POWERFULL SAMPLER
 	index.dump_counting();
 	//MY JOB HERE IS DONE *fly away*
 }

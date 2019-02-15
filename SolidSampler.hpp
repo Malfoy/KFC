@@ -12,6 +12,7 @@ public:
   SolidSampler(uint64_t memory_size);
 
   void insert(uint8_t *kmer, std::size_t len);
+  std::vector<uint64_t> * get_kmers();
 
   friend std::ostream& operator<< (std::ostream& out, SolidSampler&);
 private:
@@ -20,6 +21,7 @@ private:
   uint64_t m_kmer_max;
   std::vector<bool> saved;
   uint64_t m_nb_kmers_saved;
+  std::vector<uint64_t> * kmers_p;
   std::vector<uint64_t> kmers;
 };
 
