@@ -51,15 +51,19 @@ void clean(string& str){
 
 
 
+
+
+
 void insert_sequence(SolidSampler& sampler, const string& seq){
-	// printf("Sequence\n");
 	uint64_t hash = 0;
+	uint64_t canon_hash = 0;
 	for (uint i=0 ; i<31 ; i++)
 		hash = hash << 2 | hash_letter(seq[i]);
 
 	for (uint idx=31 ; idx<seq.size()/**/ ; idx++) {
 		hash = hash << 2 | hash_letter(seq[idx]);
-		sampler.insert((uint8_t *)&hash, sizeof(hash));
+		canon_hash=min(hash,rcb(hash,31));
+		sampler.insert((uint8_t *)&canon_hash, sizeof(hash));
 	}
 }
 
@@ -67,7 +71,6 @@ void insert_sequence(SolidSampler& sampler, const string& seq){
 
 int main(int argc, char ** argv){
   uint64_t size = ((uint64_t)1 << 33);
-	// size <<= 30;
 	if(argc<2){
 		cout<<"[Fasta file]"<<endl;
 		exit(0);
@@ -124,6 +127,8 @@ int main(int argc, char ** argv){
 		index.clear();
 		sequence="";
 	}
+	cout<<"I FINISHED COUNTING !"<<endl;
+	cin.get();
 	//COUNTING WAS DONE IN RAM I OUTPUT THE RESULT BECAUSE OF THE AMAZING AND POWERFULL SAMPLER
 	index.dump_counting();
 	index.clear(true);

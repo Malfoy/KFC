@@ -65,6 +65,9 @@ public:
 };
 
 
+uint64_t rcb(uint64_t min,uint n);
+
+
 
 
 class index_min{
