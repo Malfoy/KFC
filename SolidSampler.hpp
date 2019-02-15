@@ -8,6 +8,7 @@ class SolidSampler {
 	SolidSampler(uint64_t memory_size);
 	~SolidSampler();
 
+	void clean();
 	void insert(uint8_t* kmer, std::size_t len);
 	std::vector<uint64_t>* get_kmers();
 
@@ -20,6 +21,7 @@ class SolidSampler {
 	std::vector<bool> saved;
 	uint64_t m_nb_kmers_saved;
 	std::vector<uint64_t>* kmers;
+	bool alive;
 	// std::vector<uint64_t> kmers;
 };
 

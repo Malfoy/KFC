@@ -86,13 +86,14 @@ int main(int argc, char** argv) {
 		insert_sequence(sampler, sequence);
 		sequence = "";
 	}
-	cout << (*(sampler.get_kmers())).size() << endl;
+
+	vector<uint64_t> abundant_kmer = *(sampler.get_kmers());
+	sampler.clean();
 
 	// SAMPLING DONE NOW WE DO THE ***EASY*** JOB
 
 	in.clear();
 	in.seekg(0, ios::beg);
-	vector<uint64_t> abundant_kmer = *(sampler.get_kmers());
 	index_full index(abundant_kmer);
 	while (not in.eof()) {
 		getline(in, header);
