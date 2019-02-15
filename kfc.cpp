@@ -106,7 +106,6 @@ int main(int argc, char ** argv){
     in.clear();
 	in.seekg(0, ios::beg);
 
-	vector<uint64_t> abundant_kmer = *(sampler.get_kmers());
 	cout<<abundant_kmer.size()<<" abundant kmer"<<endl;
 	cout<<"I BUILD THE INDEX"<<endl;
 	index_full index(abundant_kmer);
