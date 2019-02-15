@@ -13,12 +13,15 @@
 #include "index_min.h"
 
 
+
 using namespace std;
 using namespace chrono;
 
 
- uint32_t global_minimizer_size;
- uint32_t global_kmer_size;
+
+uint32_t global_minimizer_size;
+uint32_t global_kmer_size;
+
 
 
  uint32_t get_minimizer(uint64_t k){
@@ -27,11 +30,11 @@ using namespace chrono;
 
 
 
-bool compare_minimizer(const uint64_t& a, const uint64_t& b)
-{
+bool compare_minimizer(const uint64_t& a, const uint64_t& b){
     return get_minimizer(a) < get_minimizer(b);
     //~ return (a) < (b);
 }
+
 
 
 void index_full::insert(uint64_t kmer){
@@ -41,11 +44,40 @@ void index_full::insert(uint64_t kmer){
 	}
 }
 
+
+
+uint64_t str2num(const string& str){
+	uint64_t res(0);
+	for(uint i(0);i<str.size();i++){
+		res<<=2;
+		switch (str[i]){
+			case 'A':res+=0;break;
+			case 'C':res+=1;break;
+			case 'G':res+=2;break;
+			default:res+=3;break;
+		}
+	}
+	return res;
+}
+
+
+
+
+void index_full::insert_seq(const string&  read){
+	for (uint i(0);i+kmer_size<read.size();++i){
+		uint64_t seq(str2num(read.substr(i,kmer_size)));
+		insert(seq);
+	}
+}
+
+
+
 void index_full::dump_counting(){
 	for(uint i(0);i<Values.size();++i){
 		cout<<Values[i].kmer<<" "<<Values[i].count<<"\n";
 	}
 }
+
 
 
 index_min::index_min(vector<uint64_t>& V){
@@ -64,10 +96,12 @@ index_min::index_min(vector<uint64_t>& V){
 }
 
 
+
 void index_min::insert(uint64_t kmer){
 	uint32_t minimizer(get_minimizer(kmer));
 	Index[minimizer].insert(kmer);
 }
+
 
 
 void index_min::dump_counting(){

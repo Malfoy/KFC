@@ -10,8 +10,8 @@
 
 
 
-
 using namespace std;
+
 
 
 string getLineFasta(ifstream* in){
@@ -25,6 +25,7 @@ string getLineFasta(ifstream* in){
 	}
 	return result;
 }
+
 
 
 void clean(string& str){
@@ -44,7 +45,11 @@ void clean(string& str){
 	transform(str.begin(), str.end(), str.begin(), ::toupper);
 }
 
+
+
 #define hash_letter(letter) ((letter >> 1) & 0b11)
+
+
 
 void insert_sequence(SolidSampler& sampler, const string& seq){
 	printf("Sequence\n");
@@ -63,18 +68,19 @@ void insert_sequence(SolidSampler& sampler, const string& seq){
 int main(int argc, char ** argv){
   uint64_t size = ((uint64_t)1 << 33);
 	// size <<= 30;
-	SolidSampler sampler(size);
-
 	if(argc<2){
 		cout<<"[Fasta file]"<<endl;
 		exit(0);
 	}
+
+	SolidSampler sampler(size);
 	string input(argv[1]);
 
 	srand (time(NULL));
 	string header, sequence,line;
 	ifstream in(input);
 
+	//WE TRY TO FIND THE ABUNDANT KMERS
 
 	uint nb_sequence=0;
 	while(not in.eof()){
@@ -91,7 +97,36 @@ int main(int argc, char ** argv){
 		insert_sequence(sampler, sequence);
 		sequence="";
 	}
-        cout << sampler;
+    cout << sampler<<endl;;
+
+	//SAMPLING DONE NOW WE DO THE REAL JOB
+
+    in.clear();
+	in.seekg(0, ios::beg);
 	vector<uint64_t> abundant_kmer;
 	index_full index(abundant_kmer);
+	while(not in.eof()){
+		getline(in,header);
+		if(header[0]!='>'){continue;}
+		char c=in.peek();
+		while(c!='>' and c!=EOF){
+			getline(in,line);
+			sequence+=line;
+			c=in.peek();
+		}
+		index.insert_seq(line);
+		sequence="";
+	}
+	//COUNTING WAS DONE IN RAM I OUTPUT THE RESULT
+	index.dump_counting();
+	//MY JOB HERE IS DONE *fly away*
 }
+
+
+
+
+
+
+
+
+

@@ -1,7 +1,11 @@
 #ifndef __SOLID_SAMPLER__
 #define __SOLID_SAMPLER__
 
+
+
 #include "CascadingBloomFilter.hpp"
+
+
 
 class SolidSampler {
 public:
