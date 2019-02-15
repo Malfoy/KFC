@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
 			sequence += line;
 			c = in.peek();
 		}
-		//~ index.insert_seq(line);
+		index.insert_seq(line);
 		//~ cin.get();
 		index.clear();
 		sequence = "";
