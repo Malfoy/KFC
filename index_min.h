@@ -25,15 +25,20 @@ class index_full {
 	uint32_t kmer_size;
 	MPHF Hash;
 	vector<value> Values;
+	vector<uint64_t> weak_kmer_buffer;
+	ofstream dump_weak;
 
 	index_full(const vector<uint64_t>& V) {
 		Values.resize(V.size());
+		dump_weak.open(("weak_kmers"));
 		auto data_iterator = boomphf::range(static_cast<const uint64_t*>(&((V)[0])), static_cast<const uint64_t*>((&(V)[0]) + V.size()));
 		Hash = boomphf::mphf<uint64_t, hasher>(V.size(), data_iterator, 4, 5, false);
 	}
+
 	void insert(uint64_t);
 	void dump_counting();
 	void insert_seq(const string& read);
+	void clear(bool = false);
 };
 
 class index_min {
