@@ -97,7 +97,7 @@ int main(int argc, char ** argv){
 		insert_sequence(sampler, sequence);
 		sequence="";
 	}
-    cout << sampler<<endl;
+    cout << (*(sampler.get_kmers())).size()<<endl;
 
 	//SAMPLING DONE NOW WE DO THE ***EASY*** JOB
 
