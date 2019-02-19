@@ -4,6 +4,12 @@
 
 class BloomFilter {
   public:
+	/**
+	 * Setup A bloom filter
+	 * @param size The BF size in Bytes
+	 * @param num_hashes The number of hash function used to add a new value
+	 * @param reset_ratio The ratio of bits needed inside of the BF to invoque a self cleaning.
+	 */
 	BloomFilter(uint64_t size, uint8_t num_hashes, float reset_ratio);
 
 	void add(const uint8_t* data, std::size_t len);
