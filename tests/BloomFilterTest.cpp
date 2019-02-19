@@ -1,13 +1,15 @@
 #include "lest.hpp"
 #include "BloomFilter.hpp"
 #include <array>
+#include <iostream>
 
 const lest::test module[] = {
   CASE("Setting and querying BloomFilter") {
-    SETUP("A BloomFilter with 100 bits") {
-      const uint length = 100;
-      BloomFilter bf(length, 1, .5);
-      EXPECT(bf.size() == length);
+    SETUP("A BloomFilter with 18 bytes") {
+      const uint byte_length = 16;
+      BloomFilter bf(byte_length, 1, .5);
+      // byte_length is given in bytes, bf.size return bits (ceiled)
+      EXPECT(bf.size() == byte_length*8);
 
       
       SECTION("Setting and querying") {
@@ -33,7 +35,7 @@ const lest::test module[] = {
     SECTION("Reset when setting 50% different bits") {
         uint8_t val[] = {0};
         uint i = 0;
-        while (bf.nbBitsSet() < (uint) length/2-1) {
+        while (bf.nbBitsSet() < (uint) (byte_length*8/2-1)) {
           val[0] = i++;
           bf.add(val, 1);
         }
