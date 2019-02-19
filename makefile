@@ -5,11 +5,12 @@ LDFLAGS= -lpthread -g -fopenmp -lz  -Isparsepp  -flto smhasher/src/libSMHasherSu
 
 CPPS = $(wildcard *.cpp)
 OBJS = $(CPPS:.cpp=.o)
+KFC_OBJ = kfc.o SolidSampler.o BitSet.o BloomFilter.o Hash.o	CascadingBloomFilter.o index_min.o
 
 
 EXEC=kfc kmerCountEvaluator
-# LIB=$(EXEC).a
-all: $(EXEC)
+LIB=kfc.a
+all: $(EXEC) $(LIB)
 
 kmerCountEvaluator:   evaluator.o
 	$(CC) -o $@ $^ $(LDFLAGS)
@@ -17,11 +18,11 @@ kmerCountEvaluator:   evaluator.o
 #~ evaluator.o: evaluator.cpp
 #~ 	$(CC) -o $@ -c $< $(CFLAGS)
 
-kfc: kfc.o SolidSampler.o BitSet.o BloomFilter.o Hash.o	CascadingBloomFilter.o index_min.o
+kfc: $(KFC_OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-#~ $(LIB): $(OBJS)
-#~ 	ar rc $@ $^
+kfc.a: $(KFC_OBJ)
+	ar rcs kfc.a $(KFC_OBJ)
 
 %.o: %.cpp
 	$(CC) -o $@ -c $< $(CFLAGS)
