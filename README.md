@@ -6,7 +6,7 @@ kmer week experiment
 
 To build a debug version (default in this early development stage):
 ``` bash
-git clone --recursive https://github.com/Malfoy/KFC.git
+git clone https://github.com/Malfoy/KFC.git
 cd KFC
 make -j
 ```

@@ -30,38 +30,40 @@ CFLAGS+=-std=c++11 -pipe -fopenmp ${WARNS}
 LDFLAGS+=-lpthread -fopenmp -lz
 
 INCS=-Ithirdparty/gatb-lite/include/ -Ithirdparty/sparsepp -Ithirdparty/BBHash -Ithirdparty/smhasher/src/
-LIBS=thirdparty/smhasher/src/libSMHasherSupport.a
+EXT_BUILT_LIBS=thirdparty/smhasher/src/libSMHasherSupport.a
+SUBMODULE_TOKEN=thirdparty/smhasher/README.md
 
 CPPS = $(wildcard *.cpp)
 OBJS = $(CPPS:.cpp=.o)
 KFC_OBJ = kfc.o SolidSampler.o BitSet.o BloomFilter.o Hash.o CascadingBloomFilter.o index_min.o
 
-
 EXEC=kfc kmerCountEvaluator
 LIB=kfc.a
+
 all: $(EXEC) $(LIB)
 
-kmerCountEvaluator:   evaluator.o $(LIBS)
-	$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
+kmerCountEvaluator: evaluator.o $(EXT_BUILT_LIBS)
+	$(CC) -o $@ $^ $(LDFLAGS) $(EXT_BUILT_LIBS)
 
 
-kfc: $(KFC_OBJ) $(LIBS)
-	$(CC) -o $@ $^ $(LDFLAGS) $(LIBS)
+kfc: $(KFC_OBJ) $(EXT_BUILT_LIBS)
+	$(CC) -o $@ $^ $(LDFLAGS) $(EXT_BUILT_LIBS)
 
 kfc.a: $(KFC_OBJ)
 	ar rcs kfc.a $(KFC_OBJ)
 
-%.o: %.cpp
+%.o: %.cpp $(SUBMODULE_TOKEN)
 	$(CC) -o $@ -c $< $(CFLAGS) $(INCS)
 
-thirdparty/smhasher/src/libSMHasherSupport.a: FORCE
+thirdparty/smhasher/src/libSMHasherSupport.a: $(SUBMODULE_TOKEN)
 	cmake -S thirdparty/smhasher/src/ -B thirdparty/smhasher/src/
 	$(MAKE) -C thirdparty/smhasher/src/ SMHasherSupport
+
+$(SUBMODULE_TOKEN):
+	git submodule update --init
 
 clean:
 	rm -f *.o *.a
 	rm -rf $(EXEC)
 
 rebuild: clean $(EXEC)
-
-FORCE: ;
