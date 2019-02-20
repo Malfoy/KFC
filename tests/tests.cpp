@@ -1,14 +1,10 @@
 #include "lest.hpp"
 
-lest::tests&
-specification()
-{
+lest::tests& specification() {
 	static lest::tests tests;
 	return tests;
 }
 
-int
-main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
 	return lest::run(specification(), argc, argv /*, std::cout */);
 }

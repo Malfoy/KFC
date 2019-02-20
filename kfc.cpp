@@ -12,9 +12,7 @@
 using namespace std;
 using namespace chrono;
 
-string
-getLineFasta(ifstream* in)
-{
+string getLineFasta(ifstream* in) {
 	string line, result;
 	getline(*in, line);
 	char c = in->peek();
@@ -26,9 +24,7 @@ getLineFasta(ifstream* in)
 	return result;
 }
 
-void
-clean(string& str)
-{
+void clean(string& str) {
 	for (uint i(0); i < str.size(); ++i) {
 		switch (str[i]) {
 			case 'a': break;
@@ -47,23 +43,20 @@ clean(string& str)
 
 #define hash_letter(letter) ((letter >> 1) & 0b11)
 
-void
-insert_sequence(SolidSampler& sampler, const string& seq)
-{
-	uint64_t hash = 0;
+void insert_sequence(SolidSampler& sampler, const string& seq) {
+	uint64_t hash       = 0;
 	uint64_t canon_hash = 0;
-	for (uint i = 0; i < 31; i++) hash = hash << 2 | hash_letter(seq[i]);
+	for (uint i = 0; i < 31; i++)
+		hash = hash << 2 | hash_letter(seq[i]);
 
 	for (uint idx = 31; idx < seq.size() /**/; idx++) {
-		hash = hash << 2 | hash_letter(seq[idx]);
+		hash       = hash << 2 | hash_letter(seq[idx]);
 		canon_hash = min(hash, rcb(hash, 31));
 		sampler.insert((uint8_t*)&canon_hash, sizeof(hash));
 	}
 }
 
-int
-main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 	uint64_t size = ((uint64_t)1 << 33);
 	if (argc < 2) {
 		cout << "[Fasta file]" << endl;
@@ -71,10 +64,10 @@ main(int argc, char** argv)
 	}
 
 	SolidSampler sampler(size);
-	string input(argv[1]);
+	string       input(argv[1]);
 
 	srand(time(NULL));
-	string header, sequence, line;
+	string   header, sequence, line;
 	ifstream in(input);
 
 	// WE TRY TO FIND THE ABUNDANT KMERS
@@ -85,7 +78,9 @@ main(int argc, char** argv)
 	while (not in.eof()) {
 		if (nb_sequence++ >= 100000) break;
 		getline(in, header);
-		if (header[0] != '>') { continue; }
+		if (header[0] != '>') {
+			continue;
+		}
 		char c = in.peek();
 		while (c != '>' and c != EOF) {
 			getline(in, line);
@@ -120,7 +115,9 @@ main(int argc, char** argv)
 	;
 	while (not in.eof()) {
 		getline(in, header);
-		if (header[0] != '>') { continue; }
+		if (header[0] != '>') {
+			continue;
+		}
 		char c = in.peek();
 		while (c != '>' and c != EOF) {
 			getline(in, line);

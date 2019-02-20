@@ -18,19 +18,21 @@ using spp::sparse_hash_map;
 
 using namespace std;
 
-string
-intToString(uint64_t n)
-{
-	if (n < 1000) { return to_string(n); }
+string intToString(uint64_t n) {
+	if (n < 1000) {
+		return to_string(n);
+	}
 	string end(to_string(n % 1000));
-	if (end.size() == 3) { return intToString(n / 1000) + "," + end; }
-	if (end.size() == 2) { return intToString(n / 1000) + ",0" + end; }
+	if (end.size() == 3) {
+		return intToString(n / 1000) + "," + end;
+	}
+	if (end.size() == 2) {
+		return intToString(n / 1000) + ",0" + end;
+	}
 	return intToString(n / 1000) + ",00" + end;
 }
 
-char
-revCompChar(char c)
-{
+char revCompChar(char c) {
 	switch (c) {
 		case 'A': return 'T';
 		case 'C': return 'G';
@@ -39,23 +41,19 @@ revCompChar(char c)
 	return 'A';
 }
 
-string
-revComp(const string& s)
-{
+string revComp(const string& s) {
 	string rc(s.size(), 0);
-	for (int i((int)s.length() - 1); i >= 0; i--) { rc[s.size() - 1 - i] = revCompChar(s[i]); }
+	for (int i((int)s.length() - 1); i >= 0; i--) {
+		rc[s.size() - 1 - i] = revCompChar(s[i]);
+	}
 	return rc;
 }
 
-string
-getCanonical(const string& str)
-{
+string getCanonical(const string& str) {
 	return (min(str, revComp(str)));
 }
 
-uint64_t
-str2num(const string& str)
-{
+uint64_t str2num(const string& str) {
 	uint64_t res(0);
 	for (uint64_t i(0); i < str.size(); i++) {
 		res <<= 2;
@@ -69,30 +67,28 @@ str2num(const string& str)
 	return res;
 }
 
-vector<string>
-split(const string& s, char delim)
-{
-	stringstream ss(s);
-	string item;
+vector<string> split(const string& s, char delim) {
+	stringstream   ss(s);
+	string         item;
 	vector<string> elems;
-	while (getline(ss, item, delim)) { elems.push_back(move(item)); }
+	while (getline(ss, item, delim)) {
+		elems.push_back(move(item));
+	}
 	return elems;
 }
 
-int
-main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 	if (argc < 3) {
 		//~ cout<<"[kmer count file to evaluate] [reference kmer count file] [k value] [core number] [n for 2^n pass]"<<endl;
 		cout << "[kmer count file to evaluate] [reference kmer count file] [k value] " << endl;
 		exit(0);
 	}
-	auto start = chrono::system_clock::now();
+	auto   start = chrono::system_clock::now();
 	string inputUnitig(argv[1]);
 	string inputRef(argv[2]);
-	uint k(stoi(argv[3]));
-	uint n(1);
-	uint nb_cores(1);
+	uint   k(stoi(argv[3]));
+	uint   n(1);
+	uint   nb_cores(1);
 	//~ uint nb_cores(stoi(argv[4]));
 	//~ if(argc>5){
 	//~ n=(stoi(argv[5]));
@@ -106,9 +102,10 @@ main(int argc, char** argv)
 		cout << "Problem with files opening" << endl;
 		exit(1);
 	}
-	uint64_t FP(0), TP(0), FN(0), size(0), number(0), genomicKmersNum(0), TPcount(0), undercount(0), overcount(0);
+	uint64_t   FP(0), TP(0), FN(0), size(0), number(0), genomicKmersNum(0), TPcount(0), undercount(0), overcount(0);
 	omp_lock_t lock[1024];
-	for (int i = 0; i < 1024; i++) omp_init_lock(&(lock[i]));
+	for (int i = 0; i < 1024; i++)
+		omp_init_lock(&(lock[i]));
 
 	for (uint HASH(0); HASH < nbHash; ++HASH) {
 		vector<sparse_hash_map<string, uint64_t>> genomicKmers;
@@ -116,8 +113,8 @@ main(int argc, char** argv)
 
 		#pragma omp parallel num_threads(nb_cores)
 		{
-			string ref, header, canon;
-			uint64_t headerInt;
+			string         ref, header, canon;
+			uint64_t       headerInt;
 			vector<string> headerElements;
 			while (not inRef.eof()) {
 				#pragma omp critical(dataupdate)
@@ -131,7 +128,7 @@ main(int argc, char** argv)
 						uint64_t num((str2num(canon)));
 						if (num % nbHash == HASH) {
 							headerElements = split(header, '>');
-							headerInt = stoi(headerElements[1]);
+							headerInt      = stoi(headerElements[1]);
 							uint64_t num2((num / nbHash) % 1024);
 							omp_set_lock(&(lock[num2]));
 							genomicKmers[num2][canon] = headerInt;
@@ -146,8 +143,8 @@ main(int argc, char** argv)
 
 		#pragma omp parallel num_threads(nb_cores)
 		{
-			string ref, header, canon;
-			uint64_t headerIntResult;
+			string         ref, header, canon;
+			uint64_t       headerIntResult;
 			vector<string> headerElementsResult;
 			while (not inUnitigs.eof()) {
 				#pragma omp critical(dataupdate)
@@ -157,7 +154,7 @@ main(int argc, char** argv)
 				}
 				if (not ref.empty() and not header.empty()) {
 					headerElementsResult = split(header, '>');
-					headerIntResult = stoi(headerElementsResult[1]);
+					headerIntResult      = stoi(headerElementsResult[1]);
 					#pragma omp atomic
 					size += ref.size();
 					#pragma omp atomic
@@ -227,9 +224,9 @@ main(int argc, char** argv)
 	cout << "k-mers over-estimated counts (k-mers with higher counts in results than in ref):	" << intToString(overcount) << endl;
 	cout << "k-mers with under-estimated counts (k-mers with lower counts in results than in ref):	" << intToString(undercount) << endl;
 
-	auto end = chrono::system_clock::now();
+	auto                     end             = chrono::system_clock::now();
 	chrono::duration<double> elapsed_seconds = end - start;
-	time_t end_time = chrono::system_clock::to_time_t(end);
+	time_t                   end_time        = chrono::system_clock::to_time_t(end);
 
 	cout << "\nFinished computation at " << ctime(&end_time) << "Elapsed time: " << elapsed_seconds.count() << "s\n";
 }

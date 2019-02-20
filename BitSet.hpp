@@ -7,8 +7,7 @@
 /* sets bit p in e */
 #define bitset(e, p) ((e)[(p) / WORD_SIZE] |= ((WORD_TYPE)1 << ((p) % WORD_SIZE)))
 
-class BitSet
-{
+class BitSet {
   public:
 	BitSet(uint64_t nb_bits);
 	~BitSet();
@@ -22,6 +21,6 @@ class BitSet
 
   private:
 	uint64_t* m_bits;
-	uint64_t m_nb_bits;
-	uint64_t m_int_size;
+	uint64_t  m_nb_bits;
+	uint64_t  m_int_size;
 };

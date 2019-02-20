@@ -13,30 +13,27 @@
 using namespace std;
 
 typedef boomphf::SingleHashFunctor<uint64_t> hasher;
-typedef boomphf::mphf<uint64_t, hasher> MPHF;
+typedef boomphf::mphf<uint64_t, hasher>      MPHF;
 
-struct value
-{
+struct value {
 	uint64_t kmer;
-	uint8_t count;
+	uint8_t  count;
 };
 
-class index_full
-{
+class index_full {
   public:
-	uint32_t kmer_size;
-	MPHF Hash;
-	vector<value> Values;
+	uint32_t         kmer_size;
+	MPHF             Hash;
+	vector<value>    Values;
 	vector<uint64_t> weak_kmer_buffer;
-	ofstream dump_weak;
+	ofstream         dump_weak;
 
-	index_full(const vector<uint64_t>& V)
-	{
+	index_full(const vector<uint64_t>& V) {
 		kmer_size = (31);
 		Values.resize(V.size());
 		dump_weak.open("weak_kmers", ofstream::out | ofstream::binary);
 		auto data_iterator = boomphf::range(static_cast<const uint64_t*>(&((V)[0])), static_cast<const uint64_t*>((&(V)[0]) + V.size()));
-		Hash = boomphf::mphf<uint64_t, hasher>(V.size(), data_iterator, 4, 5, false);
+		Hash               = boomphf::mphf<uint64_t, hasher>(V.size(), data_iterator, 4, 5, false);
 		for (uint i(0); i < V.size(); ++i) {
 			int64_t pos(Hash.lookup(V[i]));
 			Values[pos].kmer = V[i];
@@ -50,11 +47,9 @@ class index_full
 	void print_kmer(uint64_t num);
 };
 
-uint64_t
-rcb(uint64_t min, uint n);
+uint64_t rcb(uint64_t min, uint n);
 
-class index_min
-{
+class index_min {
   public:
 	uint kmer_size;
 	uint minimizer_size;
