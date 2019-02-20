@@ -8,7 +8,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <algorithm>
-#include "BBHash/BooPHF.h"
+#include "BooPHF.h"
 
 using namespace std;
 

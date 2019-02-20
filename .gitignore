@@ -1,2 +1,13 @@
 kfc
+kmerCountEvaluator
+tests/tests
 *.o
+*.a
+# perf output
+*.data*
+# gcov files
+*.gcov
+*.gcda
+*.gcno
+gmon.out
+*.orig

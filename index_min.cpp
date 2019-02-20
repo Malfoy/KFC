@@ -57,7 +57,7 @@ uint64_t str2num(const string& str) {
 
 #define hash_letter(letter) ((letter >> 1) & 0b11)
 
-inline uint64_t rcb(uint64_t in, unsigned n) {
+uint64_t rcb(uint64_t in, unsigned n) {
 	//~ assume(n <= 32, "n=%u > 32", n);
 	// Complement, swap byte order
 	uint64_t res = __builtin_bswap64(in ^ 0xaaaaaaaaaaaaaaaa);

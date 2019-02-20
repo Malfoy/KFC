@@ -1,5 +1,5 @@
 #include "Hash.hpp"
-#include "smhasher/src/MurmurHash3.h"
+#include "MurmurHash3.h"
 
 std::array<uint64_t, 2> hash64(const uint8_t* data, std::size_t len) {
 	std::array<uint64_t, 2> hash_value;
