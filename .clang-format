@@ -1,0 +1,13 @@
+# We'll use defaults from the Mozilla style, but with 4 spaces indentation.
+BasedOnStyle: Mozilla
+IndentWidth: 4
+TabWidth: 4
+UseTab: ForIndentation
+ColumnLimit: 160
+IndentPPDirectives: AfterHash
+SortIncludes: true
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortBlocksOnASingleLine: true
+AllowShortFunctionsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: true
+AllowShortLoopsOnASingleLine: true

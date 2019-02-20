@@ -1,0 +1,40 @@
+#!/bin/bash
+
+TOPLEVEL_DIR=$(git rev-parse --show-toplevel)
+SCRIPT_DIR="${TOPLEVEL_DIR}/scripts"
+
+FILE_EXTS=".c .h .cpp .hpp .cc .hh .cxx .m"
+
+format_file() {
+  file="${1}"
+  ${SCRIPT_DIR}/p-clang-format -i ${1}
+  git add ${1}
+}
+
+# check whether the given file matches any of the set extensions
+matches_extension() {
+    local filename=$(basename "$1")
+    local extension=".${filename##*.}"
+    local ext
+
+    for ext in $FILE_EXTS; do [[ "$ext" == "$extension" ]] && return 0; done
+
+    return 1
+}
+
+case "${1}" in
+  --about )
+    echo "Runs clang-format on source files"
+    ;;
+  * )
+    for file in `git diff-index --cached --name-only HEAD` ; do
+        # ignore file if we do check for file extensions and the file
+        # does not match any of the extensions specified in $FILE_EXTS
+        if ! matches_extension "${file}"; then
+            continue;
+        fi
+
+      format_file "${file}"
+    done
+    ;;
+esac
