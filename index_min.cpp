@@ -73,7 +73,7 @@ uint64_t str2num(const string& str){
 
 
 
-inline uint64_t rcb(uint64_t in, uint n) {
+uint64_t rcb(uint64_t in, uint n) {
 	//~ assume(n <= 32, "n=%u > 32", n);
 	// Complement, swap byte order
 	uint64_t res = __builtin_bswap64(in ^ 0xaaaaaaaaaaaaaaaa);
