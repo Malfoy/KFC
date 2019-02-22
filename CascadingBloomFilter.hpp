@@ -13,6 +13,15 @@ class CascadingBloomFilter {
 	bool insert(const uint8_t* data, std::size_t len);
 	~CascadingBloomFilter();
 
+	/**
+	 * Return the memory size for cascading bloom filters.
+	 */
+	uint64_t get_structure_size();
+	/**
+	 * Return the memory size for the whole data structure (cascading bloom filters + list).
+	 */
+	uint64_t size();
+
 	friend std::ostream& operator<<(std::ostream& out, CascadingBloomFilter& cbf);
 
   private:

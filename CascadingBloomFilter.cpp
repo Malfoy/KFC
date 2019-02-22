@@ -24,6 +24,22 @@ CascadingBloomFilter::~CascadingBloomFilter() {
 }
 
 /**
+ * Return the memory size for cascading bloom filters.
+ */
+uint64_t CascadingBloomFilter::get_structure_size() {
+	uint64_t size = 0;
+
+	for (auto& filter : this->filters)
+		size += filter->size() / 8;
+
+	return size;
+}
+
+uint64_t CascadingBloomFilter::size() {
+	return this->get_structure_size();
+}
+
+/**
  * Insert the kmer into the CBF and return true if already present into all the BF levels.
  */
 bool CascadingBloomFilter::insert(const uint8_t* data, std::size_t len) {

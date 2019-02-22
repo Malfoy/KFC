@@ -1,6 +1,6 @@
 CC=g++
 CFLAGS= -Wall -g -std=c++11 -I.. -O0
-LDFLAGS=-flto -lpthread -g -fopenmp -lz  -Isparsepp  -flto ../smhasher/src/libSMHasherSupport.a
+LDFLAGS=-flto -lpthread -g -fopenmp -lz  -Isparsepp  -flto ../thirdparty/smhasher/src/libSMHasherSupport.a
 
 CPPS = $(wildcard *.cpp)
 OBJS = $(CPPS:.cpp=.o) ../kfc.a
