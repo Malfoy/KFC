@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
 		sequence = "";
 	}
 
-	vector<uint64_t> abundant_kmer = *(sampler.get_kmers());
+	vector<uint64_t> abundant_kmer = std::move(sampler.get_kmers());
 	sampler.clean();
 
 	// SAMPLING DONE NOW WE DO THE ***EASY*** JOB
