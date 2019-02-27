@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS= -Wall -g -std=c++11 -I.. -O0
+CFLAGS= -Wall -g -std=c++11 -I.. -I../thirdparty/smhasher/src/  -I../thirdparty/sparsepp -I../thirdparty/BBHash -I../thirdparty/ -O0
 LDFLAGS=-flto -lpthread -g -fopenmp -lz  -Isparsepp  -flto ../thirdparty/smhasher/src/libSMHasherSupport.a
 
 CPPS = $(wildcard *.cpp)
