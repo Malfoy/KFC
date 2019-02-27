@@ -5,12 +5,12 @@
 
 using namespace std;
 
-CascadingBloomFilter::CascadingBloomFilter(uint64_t size, uint8_t num_blooms, float reset_ratio) {
+CascadingBloomFilter::CascadingBloomFilter(uint64_t size, uint8_t num_blooms, double reset_ratio) {
 	// Bloom filters init
 	this->filters = vector<BloomFilter*>(num_blooms);
 	unsigned optimal_nb_hash = ceil(1. / reset_ratio * log(2));
 	this->filters[0] = new BloomFilter(size / 2, optimal_nb_hash, reset_ratio);
-	for (unsigned i = 1; i < num_blooms; i++)
+	for (uint8_t i = 1; i < num_blooms; i++)
 		this->filters[i] = new BloomFilter((size / 2) / (num_blooms - 1), optimal_nb_hash, reset_ratio);
 
 	// Variables
@@ -26,7 +26,7 @@ CascadingBloomFilter::~CascadingBloomFilter() {
 /**
  * Return the memory size for cascading bloom filters.
  */
-uint64_t CascadingBloomFilter::get_structure_size() {
+uint64_t CascadingBloomFilter::size() {
 	uint64_t size = 0;
 
 	for (auto& filter : this->filters)
@@ -35,8 +35,20 @@ uint64_t CascadingBloomFilter::get_structure_size() {
 	return size;
 }
 
-uint64_t CascadingBloomFilter::size() {
-	return this->get_structure_size();
+/**
+ * Return an array containing all the filter pair (bit sets, total bits).
+ * /!\ The returned array must be
+ * @return An array of size nb_filters * 2. The array is as follow :
+ * [nb 1 in BF 1, total bits in BF 1, nb 1 in BF 2, total bits un BF 2, ...]
+ */
+std::vector<uint64_t> CascadingBloomFilter::filter_sizes() {
+	vector<uint64_t> sizes = vector<uint64_t>(this->filters.size() * 2);
+	for (unsigned idx = 0; idx < this->filters.size(); idx++) {
+		sizes[2 * idx] = this->filters[idx]->nbBitsSet();
+		sizes[2 * idx + 1] = this->filters[idx]->size();
+	}
+
+	return sizes;
 }
 
 /**
