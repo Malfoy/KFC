@@ -60,32 +60,6 @@ const lest::test module[] = {
 				EXPECT(sizes[5] == byte_length*8/4);
 			}
 
-		// SECTION("Reset when setting 50% different bits") {
-		// 		uint8_t val[] = {0};
-		// 		unsigned i = 0;
-		// 		while (bf.nbBitsSet() < (unsigned) (byte_length*8/2-1)) {
-		// 			vxal[0] = i++;
-		// 			bf.add(val, 1);
-		// 		}
-		// 		uint64_t current_nb_bits_set = bf.nbBitsSet();
-		// 		// Next inserted bit should induce a reset
-		// 		// But next inserted bit may fall on an existing set bit (proba: 1/2) .
-		// 		while (bf.nbBitsSet() == current_nb_bits_set) {
-		// 			val[0] = i++;
-		// 			bf.add(val, 1);
-		// 		}
-
-		// 		// Now the BF should have been reset
-		// 		EXPECT(bf.nbBitsSet() == (unsigned)0);
-		// 		for (unsigned i = 0; i < 255; i++) {
-		// 			val[0] = i;
-		// 			EXPECT(! bf.possiblyContains(val, 1));
-		// 		}
-		// }
-		
-		// SECTION("No reset when modifying same bits") {
-
-		// }
 		}
 
 	}
