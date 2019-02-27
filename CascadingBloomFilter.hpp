@@ -11,7 +11,6 @@ class CascadingBloomFilter {
   public:
 	CascadingBloomFilter(uint64_t size, uint8_t num_blooms, double reset_ratio);
 	bool insert(const uint8_t* data, std::size_t len);
-	~CascadingBloomFilter();
 
 	/**
 	 * Return the memory size for the whole data structure (cascading bloom filters + list).
@@ -29,7 +28,7 @@ class CascadingBloomFilter {
 
   private:
 	uint8_t m_num_blooms;
-	std::vector<BloomFilter*> filters;
+	std::vector<BloomFilter> filters;
 };
 
 #endif

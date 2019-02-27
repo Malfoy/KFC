@@ -3,13 +3,9 @@
 
 BitSet::BitSet(uint64_t nb_bits) {
 	this->m_int_size = nb_bits / WORD_SIZE + ((nb_bits % WORD_SIZE > 0) ? 1 : 0);
-	this->m_bits = new uint64_t[this->m_int_size];
+	this->m_bits = std::unique_ptr<uint64_t[]>(new uint64_t[this->m_int_size]);
 	this->m_nb_bits = nb_bits;
 	this->reset();
-}
-
-BitSet::~BitSet() {
-	delete[] this->m_bits;
 }
 
 bool BitSet::get(uint64_t pos) const {
@@ -21,7 +17,7 @@ void BitSet::set(uint64_t pos) {
 }
 
 void BitSet::reset() {
-	memset(this->m_bits, 0, this->m_int_size * WORD_SIZE / 8);
+	memset(this->m_bits.get(), 0, this->m_int_size * WORD_SIZE / 8);
 }
 
 uint64_t BitSet::size() const {
