@@ -10,18 +10,18 @@ class SolidSampler {
 
 	void                   clean();
 	void                   insert(uint8_t* kmer, std::size_t len);
-	std::vector<uint64_t>* get_kmers();
+	std::vector<uint64_t>& get_kmers();
 
 	friend std::ostream& operator<<(std::ostream& out, SolidSampler&);
 
   private:
-	CascadingBloomFilter*  m_cbf;
-	uint64_t               m_nb_inserted;
-	uint64_t               m_kmer_max;
-	std::vector<bool>      saved;
-	uint64_t               m_nb_kmers_saved;
-	std::vector<uint64_t>* kmers;
-	bool                   alive;
+	CascadingBloomFilter  m_cbf;
+	uint64_t              m_nb_inserted;
+	const uint64_t        m_kmer_max;
+	std::vector<bool>     saved;
+	uint64_t              m_nb_kmers_saved;
+	std::vector<uint64_t> kmers;
+	bool                  alive;
 	// std::vector<uint64_t> kmers;
 };
 

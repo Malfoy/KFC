@@ -1,7 +1,9 @@
+#include <climits>
 #include <cstdint>
+#include <memory>
 
 #define WORD_TYPE uint64_t
-#define WORD_SIZE (sizeof(WORD_TYPE) * 8)
+#define WORD_SIZE (sizeof(WORD_TYPE) * CHAR_BIT)
 /* reads bit p from e */
 #define bitget(e, p) ((((e)[(p) / WORD_SIZE] >> ((p) % WORD_SIZE))) & 1)
 /* sets bit p in e */
@@ -10,7 +12,6 @@
 class BitSet {
   public:
 	BitSet(uint64_t nb_bits);
-	~BitSet();
 
 	bool get(uint64_t pos) const;
 	void set(uint64_t pos);
@@ -20,7 +21,7 @@ class BitSet {
 	uint64_t size() const;
 
   private:
-	uint64_t* m_bits;
-	uint64_t  m_nb_bits;
-	uint64_t  m_int_size;
+	std::unique_ptr<uint64_t[]> m_bits;
+	uint64_t                    m_nb_bits;
+	uint64_t                    m_int_size;
 };

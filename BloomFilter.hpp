@@ -22,7 +22,7 @@ class BloomFilter {
 
   private:
 	BitSet   m_bits;
-	uint8_t  m_num_hashes;
 	uint64_t m_bits_set;
 	double    m_reset_ratio;
+	uint8_t  m_num_hashes;
 };
