@@ -2,6 +2,10 @@
 #include "lest.hpp"
 #include <array>
 #include <iostream>
+#include <vector>
+
+using namespace std;
+
 // clang-format off
 const lest::test module[] = {
 	CASE("Setting and querying BloomFilter") {
@@ -12,31 +16,55 @@ const lest::test module[] = {
 			EXPECT(cbf.size() == byte_length);
 
 			
-			// SECTION("Setting and querying") {
-			// 	uint8_t val[] = {0};
-			// 	bf.add(val, 1);
-			// 	EXPECT(bf.possiblyContains(val, 1));
-			// 	EXPECT(bf.nbBitsSet() == (unsigned)1);
+			SECTION("Setting and querying sizes") {
+				uint8_t val[] = {0};
 
-			// 	val[0] = 1;
-			// 	EXPECT(! bf.possiblyContains(val, 1));
+				// must contain 0s only
+				vector<uint64_t> sizes = cbf.filter_sizes();
+				EXPECT(sizes[0] == 0);
+				EXPECT(sizes[1] == byte_length*8/2);
+				EXPECT(sizes[2] == 0);
+				EXPECT(sizes[3] == byte_length*8/4);
+				EXPECT(sizes[4] == 0);
+				EXPECT(sizes[5] == byte_length*8/4);
 
-			// 	val[0] = 255;
-			// 	bf.add(val, 1);
-			// 	EXPECT(bf.possiblyContains(val, 1));
-			// 	// This will depend on hash functions but the test is likely to succeed
-			// 	EXPECT(bf.nbBitsSet() == (unsigned)2);
-			// 	val[0] = 0;
-			// 	EXPECT(bf.possiblyContains(val, 1));
-			// 	val[0] = 0;
-			// 	EXPECT(bf.possiblyContains(val, 1));
-			// }
+				cbf.insert(val, 1);
+				// Must contain 1s only in the 1st BF
+				sizes = cbf.filter_sizes();
+				EXPECT(sizes[0] == 2);
+				EXPECT(sizes[2] == 0);
+				EXPECT(sizes[4] == 0);
+
+				cbf.insert(val, 1);
+				//                 in the 1st & 2nd BFs
+				sizes = cbf.filter_sizes();
+				EXPECT(sizes[0] == 2);
+				EXPECT(sizes[2] == 2);
+				EXPECT(sizes[4] == 0);
+
+				cbf.insert(val, 1);
+				//                 in the 1st & 2nd & 3rd BFs
+				sizes = cbf.filter_sizes();
+				EXPECT(sizes[0] == 2);
+				EXPECT(sizes[2] == 2);
+				EXPECT(sizes[4] == 2);
+
+				cbf.insert(val, 1);
+				// BFs must not change
+				sizes = cbf.filter_sizes();
+				EXPECT(sizes[0] == 2);
+				EXPECT(sizes[1] == byte_length*8/2);
+				EXPECT(sizes[2] == 2);
+				EXPECT(sizes[3] == byte_length*8/4);
+				EXPECT(sizes[4] == 2);
+				EXPECT(sizes[5] == byte_length*8/4);
+			}
 
 		// SECTION("Reset when setting 50% different bits") {
 		// 		uint8_t val[] = {0};
 		// 		unsigned i = 0;
 		// 		while (bf.nbBitsSet() < (unsigned) (byte_length*8/2-1)) {
-		// 			val[0] = i++;
+		// 			vxal[0] = i++;
 		// 			bf.add(val, 1);
 		// 		}
 		// 		uint64_t current_nb_bits_set = bf.nbBitsSet();
