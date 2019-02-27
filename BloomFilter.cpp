@@ -5,7 +5,7 @@
 
 using namespace std;
 
-BloomFilter::BloomFilter(uint64_t size, uint8_t num_hashes, float reset_ratio)
+BloomFilter::BloomFilter(uint64_t size, uint8_t num_hashes, double reset_ratio)
   : m_bits(size * 8) {
 	this->m_num_hashes  = num_hashes;
 	this->m_bits_set    = 0;
@@ -15,7 +15,7 @@ BloomFilter::BloomFilter(uint64_t size, uint8_t num_hashes, float reset_ratio)
 void BloomFilter::add(const uint8_t* data, std::size_t len) {
 	auto hash_values = hash64(data, len);
 
-	for (int n = 0; n < this->m_num_hashes; n++) {
+	for (uint8_t n = 0; n < this->m_num_hashes; n++) {
 		uint64_t hash = nthHash(n, hash_values[0], hash_values[1], this->m_bits.size());
 		if (!m_bits.get(hash)) {
 			m_bits_set++;
@@ -23,7 +23,7 @@ void BloomFilter::add(const uint8_t* data, std::size_t len) {
 		}
 	}
 
-	if ((this->m_bits_set * 1. / m_bits.size()) >= this->m_reset_ratio) {
+	if ((static_cast<double>(this->m_bits_set) * 1. / static_cast<double>(m_bits.size())) >= this->m_reset_ratio) {
 		reset();
 	}
 }
@@ -35,7 +35,7 @@ uint64_t BloomFilter::nbBitsSet() const {
 bool BloomFilter::possiblyContains(const uint8_t* data, std::size_t len) const {
 	auto hash_values = hash64(data, len);
 
-	for (int n = 0; n < this->m_num_hashes; n++) {
+	for (uint8_t n = 0; n < this->m_num_hashes; n++) {
 		if (!m_bits.get(nthHash(n, hash_values[0], hash_values[1], m_bits.size()))) {
 			return false;
 		}
