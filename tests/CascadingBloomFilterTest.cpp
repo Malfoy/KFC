@@ -6,10 +6,9 @@
 const lest::test module[] = {
 	CASE("Setting and querying BloomFilter") {
 		SETUP("A CascadingBloomFilter with 256 bytes composed of 3 BF") {
-			const unsigned byte_length = 16;
-			CascadingBloomFilter cbf = CascadingBloomFilter(256, 3, .5);
+			const unsigned byte_length = 256;
+			CascadingBloomFilter cbf = CascadingBloomFilter(byte_length, 3, .5);
 
-			EXPECT(cbf.get_structure_size() == byte_length);
 			EXPECT(cbf.size() == byte_length);
 
 			
