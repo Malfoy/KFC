@@ -22,22 +22,20 @@ struct value {
 
 class index_full {
   public:
-	uint32_t kmer_size;
 	MPHF Hash;
 	vector<value> Values;
 	vector<uint64_t> weak_kmer_buffer;
 	ofstream dump_weak;
+	static const uint32_t kmer_size = 31;
+	static const size_t weak_kmer_buffer_waterline = 1 << 14;
 
 	index_full(const vector<uint64_t>& V) {
-		kmer_size = (31);
-		Values.resize(V.size());
+		weak_kmer_buffer.reserve(weak_kmer_buffer_waterline);
 		dump_weak.open("weak_kmers", ofstream::out | ofstream::binary);
-		auto data_iterator = boomphf::range(static_cast<const uint64_t*>(&((V)[0])), static_cast<const uint64_t*>((&(V)[0]) + V.size()));
-		Hash = boomphf::mphf<uint64_t, hasher>(V.size(), data_iterator, 4, 5, false);
-		for (unsigned i(0); i < V.size(); ++i) {
-			int64_t pos(Hash.lookup(V[i]));
-			Values[pos].kmer = V[i];
-		}
+		Hash = boomphf::mphf<uint64_t, hasher>(V.size(), V, 4, 5, false);
+		Values.resize(V.size());
+		for (auto& kmer : V)
+			Values[Hash.lookup(kmer)].kmer = kmer;
 	}
 
 	void insert(uint64_t);
