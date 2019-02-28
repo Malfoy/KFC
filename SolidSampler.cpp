@@ -4,30 +4,39 @@
 #include "Hash.hpp"
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
 using namespace std;
 
-#define MEMORY_CBF (uint64_t(1) << 32)
-#define DERIVATIVE_RANGE 10000
-#define NUM_HASH 2
+// #define MEMORY_CBF ((uint64_t)1 << 32)
+// #define DERIVATIVE_RANGE 10000
+
+// 7 hash function is optimal for a bitset of 10 bits per kmer inserted.
+#define NUM_HASH 7
 
 /**
- * Construct the SolidSampler with maximum `memory_size` bytes.
+ * Construct the SolidSampler with maximum `memory_size` bytes for the cascading bloom filter.
+ * For now, the solid kmers are not limited. So the SolidSampler can become huge.
+ * @param cbf_memory_size Number of bytes to use in the CBF.
+ * TODO : Allow a collision rate in the list => Compute the number of bits per kmer on the fly
+ * and compute also the optimal number of hash functions.
  */
 SolidSampler::SolidSampler(uint64_t memory_size)
-  : m_cbf(MEMORY_CBF, 3, .5)
+  : memory_cbf(memory_size / 2)
+  , m_cbf(memory_cbf, 3, .5)
   , m_nb_inserted(0)
-  , m_kmer_max(floor((memory_size - (MEMORY_CBF)) * 1. / (2 / 8. + sizeof(uint64_t))))
-  , saved(this->m_kmer_max * 2, false)
+  // 64 bits for the kmer  +  10 for the deduplication vector with 1% collision
+  , m_kmer_max((memory_size - memory_cbf) / (64 + 10))
+  , saved(this->m_kmer_max * 10, false)
   , m_nb_kmers_saved(0)
   , kmers()
   , alive(true)
 
 {
-	if (memory_size < (MEMORY_CBF)) {
-		cerr << "SolidSampler needs more than 4GiB" << endl;
-		throw bad_alloc();
-	}
+	// if (memory_size < (MEMORY_CBF)) {
+	// 	cerr << "SolidSampler needs more than 4GiB" << endl;
+	// 	throw bad_alloc();
+	// }
 
 	this->kmers.reserve(1ull << 20);
 }
