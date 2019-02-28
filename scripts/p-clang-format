@@ -1,0 +1,68 @@
+#!/bin/bash
+# Copyright (c) 2017, Medicine Yeh
+# MIT License
+# A patch of clang format for #pragma with no patch to clang-format
+# https://github.com/MedicineYeh/p-clang-format
+
+function replace_all()
+{
+    local prefix="$1"
+    local pattern="$2"
+    local file_pathes=("${!3}")
+
+    # echo "Keywords     : ${keywords[*]}"
+    # echo "Pattern      : ${pattern}"
+    # echo "File Path    : ${file_pathes[*]}"
+
+    for file_path in "${file_pathes[@]}"; do
+        [[ ! -r "$file_path" ]] && continue
+        sed -i "s/${prefix}/${pattern}${prefix}/g" "${file_path}"
+    done
+}
+
+function re_replace_all()
+{
+    local prefix="$1"
+    local pattern="$2"
+    local file_pathes=("${!3}")
+
+    # echo "Keywords     : ${keywords[*]}"
+    # echo "Anti-Pattern : ${pattern}"
+    # echo "File Path    : ${file_pathes[*]}"
+
+    for file_path in "${file_pathes[@]}"; do
+        [[ ! -r "$file_path" ]] && continue
+        sed -i "s/${pattern}${prefix}/${prefix}/g" "${file_path}"
+    done
+}
+
+function format()
+{
+    clang-format "$@"
+}
+
+function main()
+{
+    # This is the pattern for replacing to comments
+    local comment_pattern="\/\/"
+    # This is the pattern for replacing comments back to original string
+    local re_comment_pattern="\/\/ *"
+    # The path of files
+    local file_pathes=()
+    # Define the keywords of pragma to be escaped from formatting
+    local pragma_prefix="#pragma "
+
+    # Find all files in the arguments
+    for var in "$@"; do
+        if [[ ! "$var" =~ ^-.* ]]; then
+            file_pathes+=("$var")
+        fi
+    done
+
+    replace_all "$pragma_prefix" "$comment_pattern" "file_pathes[@]"
+    format "$@"
+    re_replace_all "$pragma_prefix" "$re_comment_pattern" "file_pathes[@]"
+}
+
+main "$@"
+

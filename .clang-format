@@ -1,0 +1,42 @@
+# We'll use defaults from the Mozilla style, but with 4 spaces indentation.
+BasedOnStyle: Mozilla
+Standard: Cpp11
+IndentWidth: 4
+TabWidth: 4
+UseTab: ForIndentation
+ColumnLimit: 160
+IndentPPDirectives: AfterHash
+SortIncludes: false
+AlignAfterOpenBracket: true
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignTrailingComments: true
+BreakBeforeBinaryOperators: All
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeComma
+BreakInheritanceList: BeforeComma
+BreakStringLiterals: true
+CompactNamespaces: true
+Cpp11BracedListStyle: true
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: true
+AlwaysBreakAfterDefinitionReturnType: None
+AlwaysBreakAfterReturnType: None
+BraceWrapping:
+    AfterClass: true
+    AfterStruct: true
+    AfterUnion: true
+    AfterExternBlock: true
+    BeforeCatch: true
+    AfterControlStatement: true
+    BeforeElse: true
+    AfterEnum: true
+    AfterFunction: true
+    AfterNamespace: true
+    SplitEmptyRecord: false
+    SplitEmptyFunction: false
+    SplitEmptyNamespace: false
+    IndentBraces: true
+
+BreakBeforeBraces: Attach
