@@ -15,6 +15,7 @@ class SolidSampler {
 	friend std::ostream& operator<<(std::ostream& out, SolidSampler&);
 
   private:
+  uint64_t              memory_cbf;
 	CascadingBloomFilter  m_cbf;
 	uint64_t              m_nb_inserted;
 	const uint64_t        m_kmer_max;

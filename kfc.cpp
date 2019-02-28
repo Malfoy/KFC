@@ -57,7 +57,7 @@ void insert_sequence(SolidSampler& sampler, const string& seq) {
 }
 
 int main(int argc, char** argv) {
-	uint64_t size = ((uint64_t)1 << 33);
+	uint64_t size = ((uint64_t)1 << 23);
 	if (argc < 2) {
 		cout << "[Fasta file]" << endl;
 		exit(0);
