@@ -65,17 +65,19 @@ void SolidSampler::insert(uint8_t* kmer, std::size_t len) {
 	}
 
 	this->m_nb_inserted++;
-	if (!this->m_cbf.insert(kmer, len)) return;
 
-	// Add in the abundant kmer vector
+	// Check if the kmer is already in the solid set
 	bool already_inserted = true;
-	vector<uint64_t> positions = vector<uint64_t>(NUM_HASH);
+	uint64_t positions[NUM_HASH];
 	for (unsigned n = 0; n < NUM_HASH; n++) {
 		auto hash_values = hash64(kmer, len);
 		positions[n] = nthHash(n, hash_values[0], hash_values[1], this->saved.size());
 		already_inserted &= this->saved[positions[n]];
 	}
-	if (!already_inserted) {
+
+	if (already_inserted) {
+		return;
+	} else if (this->m_cbf.insert(kmer, len)) {
 		this->kmers.push_back(*((uint64_t*)kmer));
 		this->m_nb_kmers_saved++;
 		for (unsigned n = 0; n < NUM_HASH; n++)
