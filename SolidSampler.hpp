@@ -19,11 +19,10 @@ class SolidSampler {
 	CascadingBloomFilter m_cbf;
 	uint64_t m_nb_inserted;
 	const uint64_t m_kmer_max;
-	std::vector<bool> saved;
+	BloomFilter saved;
 	uint64_t m_nb_kmers_saved;
 	std::vector<uint64_t> kmers;
 	bool alive;
-	// std::vector<uint64_t> kmers;
 };
 
 #endif

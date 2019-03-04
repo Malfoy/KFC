@@ -27,7 +27,7 @@ SolidSampler::SolidSampler(uint64_t memory_size)
   , m_nb_inserted(0)
   // 64 bits for the kmer  +  10 for the deduplication vector with 1% collision
   , m_kmer_max((memory_size - memory_cbf) / (64 + 10))
-  , saved(this->m_kmer_max * 10, false)
+  , saved((this->m_kmer_max * 10) / 8, NUM_HASH)
   , m_nb_kmers_saved(0)
   , kmers()
   , alive(true)
@@ -66,22 +66,12 @@ void SolidSampler::insert(uint8_t* kmer, std::size_t len) {
 
 	this->m_nb_inserted++;
 
-	// Check if the kmer is already in the solid set
-	bool already_inserted = true;
-	uint64_t positions[NUM_HASH];
-	for (unsigned n = 0; n < NUM_HASH; n++) {
-		auto hash_values = hash64(kmer, len);
-		positions[n] = nthHash(n, hash_values[0], hash_values[1], this->saved.size());
-		already_inserted &= this->saved[positions[n]];
-	}
-
-	if (already_inserted) {
+	if (saved.possiblyContains(kmer, len)) {
 		return;
 	} else if (this->m_cbf.insert(kmer, len)) {
 		this->kmers.push_back(*((uint64_t*)kmer));
 		this->m_nb_kmers_saved++;
-		for (unsigned n = 0; n < NUM_HASH; n++)
-			this->saved[positions[n]] = true;
+		saved.add(kmer, len);
 	}
 }
 
