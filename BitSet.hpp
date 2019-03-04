@@ -15,6 +15,7 @@ class BitSet {
 
 	bool get(uint64_t pos) const;
 	void set(uint64_t pos);
+	bool get_and_set(uint64_t pos);
 
 	void reset();
 

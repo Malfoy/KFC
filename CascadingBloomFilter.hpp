@@ -27,8 +27,9 @@ class CascadingBloomFilter {
 	friend std::ostream& operator<<(std::ostream& out, CascadingBloomFilter& cbf);
 
   private:
-	uint8_t m_num_blooms;
 	std::vector<BloomFilter> filters;
+	double m_reset_ratio;
+	uint8_t m_num_blooms;
 };
 
 #endif

@@ -16,6 +16,15 @@ void BitSet::set(uint64_t pos) {
 	bitset(this->m_bits, pos);
 }
 
+bool BitSet::get_and_set(uint64_t pos) {
+	uint64_t offset = pos % WORD_SIZE;
+	uint64_t& word = m_bits[pos / WORD_SIZE];
+
+	bool was_set = static_cast<bool>((word >> offset) & 1);
+	word |= uint64_t(1) << offset; // Avoiding branches
+	return was_set;
+}
+
 void BitSet::reset() {
 	memset(this->m_bits.get(), 0, this->m_int_size * WORD_SIZE / 8);
 }

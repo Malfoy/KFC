@@ -8,7 +8,7 @@ const lest::test module[] = {
 	CASE("Setting and querying BloomFilter") {
 		SETUP("A BloomFilter with 18 bytes") {
 			const unsigned byte_length = 16;
-			BloomFilter bf(byte_length, 1, .5);
+			BloomFilter bf(byte_length, 1);
 			// byte_length is given in bytes, bf.size return bits (ceiled)
 			EXPECT(bf.size() == byte_length*8);
 
@@ -38,14 +38,14 @@ const lest::test module[] = {
 				unsigned i = 0;
 				while (bf.nbBitsSet() < (unsigned) (byte_length*8/2-1)) {
 					val[0] = i++;
-					bf.add(val, 1);
+					bf.add_resetting(val, 1, .5);
 				}
 				uint64_t current_nb_bits_set = bf.nbBitsSet();
 				// Next inserted bit should induce a reset
 				// But next inserted bit may fall on an existing set bit (proba: 1/2) .
 				while (bf.nbBitsSet() == current_nb_bits_set) {
 					val[0] = i++;
-					bf.add(val, 1);
+					bf.add_resetting(val, 1, .5);
 				}
 
 				// Now the BF should have been reset
