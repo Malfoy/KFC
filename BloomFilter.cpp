@@ -59,7 +59,7 @@ ostream& operator<<(ostream& out, BloomFilter& bf) {
 			out << (bf.m_bits.get(i) ? 1 : 0);
 		}
 	}
-	out << " (" << bf.m_bits_set << ')';
+	out << " (" << bf.m_bits_set << '/' << bf.m_bits.size() << ')';
 
 	return out;
 }
