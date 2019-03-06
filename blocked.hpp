@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <climits>
 #include <cstdlib>
+#include <cstring>
 
 #include <memory>
 #include <exception>
@@ -271,7 +272,104 @@ class BlockedCMS {
 	const uint8_t m_log2size;
 };
 
-class BlockedBloom { /*TODO*/
+template<uint8_t hash_funcs = 3>
+class BlockedBloom {
+	using subword_trait = subword_traits<1>;
+	using block_t = Block<subword_trait>;
+	using array_t = AlignedVector<block_t>;
+	using word_t = typename subword_trait::word_t;
+	static constexpr size_t nbits_per_block = block_t::nsubwords;
+
+  public:
+	static constexpr size_t block_bytes = sizeof(block_t);
+
+	BlockedBloom(uint8_t log2size)
+	  : m_arr(size_t(1) << log2size)
+	  , m_bits_set(0)
+	  , m_log2size(log2size) {}
+
+	/**
+	 * Add an element
+	 * @returns the previous value
+	 */
+	bool add(void* data, size_t len) {
+		__uint128_t hash0;
+		MurmurHash3_x64_128(data, static_cast<int>(len), 0, &hash0);
+
+		block_t& block = m_arr.at(static_cast<size_t>(hash0) % (size_t(1) << m_log2size));
+		hash0 >>= m_log2size;
+
+		__uint128_t hash = hash0;
+		bool was_present = true;
+		for (unsigned i = 0; i < hash_funcs; i++) {
+			auto ref = block.at(hash % nbits_per_block);
+			hash /= nbits_per_block;
+
+			bool was_set = ref;
+			was_present &= was_set;
+			m_bits_set += !was_set;
+			ref = 1;
+		}
+		return was_present;
+	}
+
+	bool possiblyContains(void* data, size_t len) {
+		__uint128_t hash0;
+		MurmurHash3_x64_128(data, static_cast<int>(len), 0, &hash0);
+
+		block_t& block = m_arr.at(static_cast<size_t>(hash0) % (size_t(1) << m_log2size));
+		hash0 >>= m_log2size;
+
+		__uint128_t hash = hash0;
+		bool present = true;
+		for (unsigned i = 0; i < hash_funcs; i++) {
+			present &= block.at(hash % nbits_per_block);
+			hash /= nbits_per_block;
+		}
+
+		return present;
+	}
+
+	void reset() { memset(&m_arr.at(0), 0, size_t(1) << m_log2size); }
+
+	bool add_resetting(void* data, size_t len, double reset_ratio) {
+		bool was_present = this->add(data, len);
+		if (not was_present && this->nbBitsSet() >= reset_ratio * this->size()) {
+			this->reset();
+		}
+		return was_present;
+	}
+
+	size_t nbBitsSet() const { return m_bits_set; }
+
+  private:
+	array_t m_arr;
+	size_t m_bits_set;
+	const uint8_t m_log2size;
+};
+
+template<uint8_t num_blooms = 4, uint8_t hash_funcs = 3>
+class LayeredBlockedBloom {
+  public:
+	using bloom_t = BlockedBloom<hash_funcs>;
+	static constexpr size_t block_bytes = bloom_t::block_bytes;
+
+	LayeredBlockedBloom(std::array<size_t, num_blooms> sizes, double reset_ratio = 0.65)
+	  : m_blooms(sizes)
+	  , m_reset_ratio(reset_ratio) {}
+
+	bool insert(void* data, size_t len) {
+		for (auto& level : m_blooms) {
+			if (!level.add_resetting(data, len, this->m_reset_ratio)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+  private:
+	std::array<bloom_t, num_blooms> m_blooms;
+	double m_reset_ratio;
 };
 
 #endif // BLOCKEDBLOOM_HPP
