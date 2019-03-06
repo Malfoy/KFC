@@ -1,10 +1,17 @@
-#include "SolidSampler.hpp"
-#include <new>
+
 #include <cmath>
-#include "Hash.hpp"
+
 #include <iostream>
 #include <vector>
 #include <algorithm>
+
+#include "SolidSampler.hpp"
+#include "Hash.hpp"
+#include "blocked.hpp"
+
+int ilog2(size_t x) {
+	return static_cast<int>(sizeof(size_t)) * CHAR_BIT - __builtin_clzll(x) - 1;
+}
 
 using namespace std;
 
@@ -23,11 +30,10 @@ using namespace std;
  */
 SolidSampler::SolidSampler(uint64_t memory_size)
   : memory_cbf(memory_size / 2)
-  , m_cbf(memory_cbf, 3, .5)
+  , m_cbf(static_cast<uint8_t>(ilog2(memory_cbf / BlockedCMS<>::block_bytes)))
   , m_nb_inserted(0)
   // 64 bits for the kmer  +  10 for the deduplication vector with 1% collision
-  , m_kmer_max((memory_size - memory_cbf) / (64 + 10))
-  , saved((this->m_kmer_max * 10) / 8, NUM_HASH)
+  , m_kmer_max((memory_size - memory_cbf) / sizeof(uint64_t))
   , m_nb_kmers_saved(0)
   , kmers()
   , alive(true)
@@ -59,20 +65,21 @@ void SolidSampler::clean() {
  * @param kmer: The kmer wrapped into a byte array.
  * @param len: The byte array size.
  */
-void SolidSampler::insert(uint8_t* kmer, std::size_t len) {
+bool SolidSampler::insert(uint8_t* kmer, std::size_t len) {
 	if (!this->alive) {
 		throw "SolidSample previously cleaned";
 	}
 
 	this->m_nb_inserted++;
 
-	if (saved.possiblyContains(kmer, len)) {
-		return;
-	} else if (this->m_cbf.insert(kmer, len)) {
+	auto old_count = m_cbf.add(kmer, len);
+	if (old_count == BlockedCMS<>::max_count - 1) {
+		assert(std::find(kmers.begin(), kmers.end(), kmer) == kmers.end(), "Ouate le phoque");
 		this->kmers.push_back(*reinterpret_cast<uint64_t*>(kmer));
 		this->m_nb_kmers_saved++;
-		saved.add(kmer, len);
+		return this->m_nb_kmers_saved >= m_kmer_max;
 	}
+	return false;
 }
 
 /**
@@ -86,6 +93,7 @@ vector<uint64_t>& SolidSampler::get_kmers() {
 
 ostream& operator<<(ostream& out, SolidSampler& sampler) {
 	out << sampler.m_cbf;
+	std::cout << "Inserted:" << sampler.m_nb_inserted << std::endl;
 
 	// Print all the kmers only if they are less than 100
 	if (sampler.m_nb_kmers_saved < 100) {
