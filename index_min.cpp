@@ -48,7 +48,7 @@ uint64_t str2num(const string& str) {
 		switch (str[i]) {
 			case 'A': res += 0; break;
 			case 'C': res += 1; break;
-			case 'G': res += 2; break;
+			case 'T': res += 2; break;
 			default: res += 3; break;
 		}
 	}
@@ -101,23 +101,11 @@ void index_full::print_kmer(uint64_t num) {
 	anc <<= (2 * (kmer_size));
 	for (unsigned i(0); i < kmer_size; ++i) {
 		unsigned nuc = num / anc;
-		num = num % anc;
-		if (nuc == 3) {
-			cout << "T";
-		}
-		if (nuc == 2) {
-			cout << "G";
-		}
-		if (nuc == 1) {
-			cout << "C";
-		}
-		if (nuc == 0) {
-			cout << "A";
-		}
 		if (nuc >= 4) {
 			cout << nuc << endl;
 			cout << "WTF" << endl;
 		}
+		cout << "ACTG"[num];
 		anc >>= 2;
 	}
 	cout << " ";
