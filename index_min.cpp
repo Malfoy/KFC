@@ -19,7 +19,7 @@ uint32_t global_minimizer_size;
 uint32_t global_kmer_size;
 
 uint32_t get_minimizer(uint64_t k) {
-	return k + global_kmer_size + global_minimizer_size;
+	return static_cast<uint32_t>(k + global_kmer_size + global_minimizer_size); // WTF?
 }
 
 bool compare_minimizer(const uint64_t& a, const uint64_t& b) {
@@ -28,8 +28,8 @@ bool compare_minimizer(const uint64_t& a, const uint64_t& b) {
 }
 
 void index_full::insert(uint64_t kmer) {
-	int64_t pos(Hash.lookup(kmer));
-	if (pos < 0) {
+	uint64_t pos(Hash.lookup(kmer));
+	if (pos == ULLONG_MAX) {
 		weak_kmer_buffer.push_back(kmer);
 	} else {
 		if (Values[pos].kmer == kmer) {
@@ -55,7 +55,7 @@ uint64_t str2num(const string& str) {
 	return res;
 }
 
-#define hash_letter(letter) ((letter >> 1) & 0b11)
+#define hash_letter(letter) ((letter >> 1) & 3)
 
 uint64_t rcb(uint64_t in, unsigned n) {
 	//~ assume(n <= 32, "n=%u > 32", n);
@@ -100,7 +100,7 @@ void index_full::print_kmer(uint64_t num, std::ostream& stream) {
 	uint64_t anc(1);
 	anc <<= (2 * (kmer_size));
 	for (unsigned i(0); i < kmer_size; ++i) {
-		unsigned nuc = num / anc;
+		auto nuc = num / anc;
 		if (nuc >= 4) {
 			stream << nuc << endl;
 			stream << "WTF" << endl;

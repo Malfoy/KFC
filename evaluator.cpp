@@ -37,13 +37,13 @@ char revCompChar(char c) {
 		case 'A': return 'T';
 		case 'C': return 'G';
 		case 'G': return 'C';
+		default: return 'A';
 	}
-	return 'A';
 }
 
 string revComp(const string& s) {
 	string rc(s.size(), 0);
-	for (int i((int)s.length() - 1); i >= 0; i--) {
+	for (size_t i = s.length(); i-- > 0;) {
 		rc[s.size() - 1 - i] = revCompChar(s[i]);
 	}
 	return rc;
@@ -86,16 +86,16 @@ int main(int argc, char** argv) {
 	auto start = chrono::system_clock::now();
 	string inputUnitig(argv[1]);
 	string inputRef(argv[2]);
-	unsigned k(stoi(argv[3]));
+	auto k = static_cast<unsigned>(stoul(argv[3]));
 	unsigned n(1);
 	unsigned nb_cores(1);
 	//~ unsigned nb_cores(stoi(argv[4]));
 	//~ if(argc>5){
 	//~ n=(stoi(argv[5]));
 	//~ }
-	unsigned nbHash = 1 << n;
+	unsigned nbHash = 1u << n;
 	cout << "I will perform " << nbHash << " pass" << endl;
-	srand(time(NULL));
+	srand(static_cast<unsigned>(time(NULL)));
 
 	ifstream inRef(inputRef), inUnitigs(inputUnitig);
 	if (not inRef.good() or not inUnitigs.good()) {
@@ -128,7 +128,7 @@ int main(int argc, char** argv) {
 						uint64_t num((str2num(canon)));
 						if (num % nbHash == HASH) {
 							headerElements = split(header, '>');
-							headerInt = stoi(headerElements[1]);
+							headerInt = stoul(headerElements[1]);
 							uint64_t num2((num / nbHash) % 1024);
 							omp_set_lock(&(lock[num2]));
 							genomicKmers[num2][canon] = headerInt;
@@ -154,7 +154,7 @@ int main(int argc, char** argv) {
 				}
 				if (not ref.empty() and not header.empty()) {
 					headerElementsResult = split(header, '>');
-					headerIntResult = stoi(headerElementsResult[1]);
+					headerIntResult = stoul(headerElementsResult[1]);
 					#pragma omp atomic
 					size += ref.size();
 					#pragma omp atomic
@@ -197,8 +197,8 @@ int main(int argc, char** argv) {
 			cout << "True positive (kmers in the results and the reference) 		GOOD kmers:	" << intToString(TP) << endl;
 			cout << "False positive (kmers in the results and NOT in the reference)	ERRONEOUS kmers:	" << intToString(FP) << endl;
 			cout << "False Negative (kmers NOT in the result but in the reference)	MISSING kmers:	" << intToString(FN) << endl;
-			cout << "Erroneous kmer rate (*10,000): " << (double)10000 * FP / (FP + TP) << endl;
-			cout << "Missing kmer rate (*10,000): " << (double)10000 * FN / genomicKmersNum << endl;
+			cout << "Erroneous kmer rate (*10,000): " << 1e4 * static_cast<double>(FP) / static_cast<double>(FP + TP) << endl;
+			cout << "Missing kmer rate (*10,000): " << 1e4 * static_cast<double>(FN) / static_cast<double>(genomicKmersNum) << endl;
 			cout << "------- Counts --------------- " << endl;
 			cout << "True positive counts (same counts in results and reference) 		:	" << intToString(TPcount) << endl;
 			cout << "k-mers over-estimated counts (kmers with higher counts in results than in ref) 		:	" << intToString(overcount) << endl;
@@ -217,8 +217,8 @@ int main(int argc, char** argv) {
 	cout << "True positive k-mers(k-mers in the results and the reference) :	" << intToString(TP) << endl;
 	cout << "False positive k-mers(k-mers in the results and NOT in the reference):	" << intToString(FP) << endl;
 	cout << "False Negative k-mers(k-mers NOT in the result but in the reference):	" << intToString(FN) << endl;
-	cout << "Erroneous kmer rate (*10,000): " << (double)10000 * FP / (FP + TP) << endl;
-	cout << "Missing kmer rate (*10,000): " << (double)10000 * FN / genomicKmersNum << endl;
+	cout << "Erroneous kmer rate (*10,000): " << 1e4 * static_cast<double>(FP) / static_cast<double>(FP + TP) << endl;
+	cout << "Missing kmer rate (*10,000): " << 1e4 * static_cast<double>(FN) / static_cast<double>(genomicKmersNum) << endl;
 	cout << "------- Counts --------------- " << endl;
 	cout << "True positive counts (same counts in results and reference):	" << intToString(TPcount) << endl;
 	cout << "k-mers over-estimated counts (k-mers with higher counts in results than in ref):	" << intToString(overcount) << endl;

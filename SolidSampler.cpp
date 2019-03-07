@@ -69,7 +69,7 @@ void SolidSampler::insert(uint8_t* kmer, std::size_t len) {
 	if (saved.possiblyContains(kmer, len)) {
 		return;
 	} else if (this->m_cbf.insert(kmer, len)) {
-		this->kmers.push_back(*((uint64_t*)kmer));
+		this->kmers.push_back(*reinterpret_cast<uint64_t*>(kmer));
 		this->m_nb_kmers_saved++;
 		saved.add(kmer, len);
 	}

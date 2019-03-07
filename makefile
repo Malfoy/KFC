@@ -4,7 +4,15 @@ CC=g++
 DEBUG ?= 1
 ifeq ($(DEBUG), 1)
 	CFLAGS+=-O0
-	WARNS= -Wextra -Wpedantic -Wno-format -Wpadded -Wswitch-default -Wswitch-enum -Wfloat-equal -Wconversion -Wsign-conversion -Wold-style-cast -Wuseless-cast -Wlogical-op -Wcast-align -Wtrampolines -Werror=enum-compare -Wstrict-aliasing=2 -Werror=parentheses -Wnull-dereference -Werror=restrict -Werror=logical-op -Wsync-nand -Werror=main -Wshift-overflow=2 -Werror=pointer-sign -Wcast-qual -Werror=array-bounds -Werror=char-subscripts -Wshadow -Werror=ignored-qualifiers -Werror=sequence-point -Werror=address -Wduplicated-branches -Wsign-compare -Wodr -Wnarrowing -Wsuggest-final-methods  -Wformat-signedness -Wrestrict -Werror=aggressive-loop-optimizations -Werror=missing-braces -Werror=uninitialized -Wframe-larger-than=32768 -Werror=nonnull -Wno-unused-function -Werror=init-self -Werror=empty-body -Wdouble-promotion -Wfatal-errors -Werror=old-style-declaration -Wduplicated-cond -Werror=write-strings -Werror=return-type -Werror=volatile-register-var -Wsuggest-final-types -Werror=missing-parameter-type -Werror=implicit-int
+	WARNS= -Wextra -Wpedantic -Wno-format -Wswitch-default -Wswitch-enum -Wfloat-equal -Wconversion -Wsign-conversion \
+	-Wold-style-cast -Wuseless-cast -Wlogical-op -Wcast-align -Wtrampolines -Werror=enum-compare -Wstrict-aliasing=2 \
+	-Werror=parentheses -Wnull-dereference -Werror=restrict -Werror=logical-op -Wsync-nand -Werror=main -Wshift-overflow=2 \
+	-Werror=pointer-sign -Wcast-qual -Werror=array-bounds -Werror=char-subscripts -Wshadow -Werror=ignored-qualifiers \
+	-Werror=sequence-point -Werror=address -Wduplicated-branches -Wsign-compare -Wodr -Wnarrowing -Wsuggest-final-methods \
+	-Wformat-signedness -Wrestrict -Werror=aggressive-loop-optimizations -Werror=missing-braces -Werror=uninitialized \
+	-Wframe-larger-than=32768 -Werror=nonnull -Wno-unused-function -Werror=init-self -Werror=empty-body -Wdouble-promotion \
+	-Wfatal-errors -Werror=old-style-declaration -Wduplicated-cond -Werror=write-strings -Werror=return-type -Wredundant-decls \
+	-Werror=volatile-register-var -Wsuggest-final-types -Werror=missing-parameter-type -Werror=implicit-int
 	DEBUG_SYMS=1
 else
 	CFLAGS+=-O3 -flto -march=native -mtune=native
@@ -29,7 +37,7 @@ WARNS+= -Wall
 CFLAGS+=-std=c++11 -pipe -fopenmp ${WARNS}
 LDFLAGS+=-lpthread -fopenmp -lz
 
-INCS=-Ithirdparty/gatb-lite/include/ -Ithirdparty/sparsepp -Ithirdparty/BBHash -Ithirdparty/smhasher/src/
+INCS=-Ithirdparty/gatb-lite/include/ -isystem thirdparty/sparsepp -isystem thirdparty/BBHash -Ithirdparty/smhasher/src/
 EXT_BUILT_LIBS=thirdparty/smhasher/src/libSMHasherSupport.a
 SUBMODULE_TOKEN=thirdparty/smhasher/README.md
 

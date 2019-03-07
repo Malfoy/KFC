@@ -2,15 +2,11 @@
 #include <cstdint>
 #include <memory>
 
-#define WORD_TYPE uint64_t
-#define WORD_SIZE (sizeof(WORD_TYPE) * CHAR_BIT)
-/* reads bit p from e */
-#define bitget(e, p) ((((e)[(p) / WORD_SIZE] >> ((p) % WORD_SIZE))) & 1)
-/* sets bit p in e */
-#define bitset(e, p) ((e)[(p) / WORD_SIZE] |= ((WORD_TYPE)1 << ((p) % WORD_SIZE)))
-
 class BitSet {
   public:
+	using word_type = uint64_t;
+	static constexpr size_t word_bitwidth = sizeof(word_type) * CHAR_BIT;
+
 	BitSet(uint64_t nb_bits);
 
 	bool get(uint64_t pos) const;

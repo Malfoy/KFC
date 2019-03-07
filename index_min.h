@@ -13,7 +13,8 @@
 typedef boomphf::SingleHashFunctor<uint64_t> hasher;
 typedef boomphf::mphf<uint64_t, hasher> MPHF;
 
-struct value {
+// FIXME: maybe it would be better to use a structure of arrays instead of an array of packed struct:
+struct __attribute__((packed)) value {
 	uint64_t kmer;
 	uint8_t count;
 };
@@ -30,7 +31,7 @@ class index_full {
 	index_full(const std::vector<uint64_t>& V) {
 		weak_kmer_buffer.reserve(weak_kmer_buffer_waterline);
 		dump_weak.open("weak_kmers", std::ofstream::out | std::ofstream::binary);
-		Hash = boomphf::mphf<uint64_t, hasher>(V.size(), V, 4, 5, false);
+		Hash = boomphf::mphf<uint64_t, hasher>(V.size(), V, 4, 5, false, true, 0.003f);
 		Values.resize(V.size());
 		for (auto& kmer : V)
 			Values[Hash.lookup(kmer)].kmer = kmer;

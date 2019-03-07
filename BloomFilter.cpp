@@ -30,7 +30,7 @@ bool BloomFilter::add(const uint8_t* data, std::size_t len) {
 
 bool BloomFilter::add_resetting(const uint8_t* data, std::size_t len, double reset_ratio) {
 	bool was_present = this->add(data, len);
-	if (not was_present && this->nbBitsSet() >= reset_ratio * this->size()) {
+	if (not was_present && this->nbBitsSet() >= static_cast<size_t>(reset_ratio * static_cast<double>(this->size()))) {
 		this->reset();
 	}
 	return was_present;

@@ -15,11 +15,11 @@ using namespace chrono;
 string getLineFasta(ifstream* in) {
 	string line, result;
 	getline(*in, line);
-	char c = in->peek();
+	char c = static_cast<char>(in->peek());
 	while (c != '>' and c != EOF) {
 		getline(*in, line);
 		result += line;
-		c = in->peek();
+		c = static_cast<char>(in->peek());
 	}
 	return result;
 }
@@ -41,7 +41,7 @@ void clean(string& str) {
 	transform(str.begin(), str.end(), str.begin(), ::toupper);
 }
 
-#define hash_letter(letter) ((letter >> 1) & 0b11)
+#define hash_letter(letter) ((letter >> 1) & 3)
 
 void insert_sequence(SolidSampler& sampler, const string& seq) {
 	uint64_t hash = 0;
@@ -52,12 +52,12 @@ void insert_sequence(SolidSampler& sampler, const string& seq) {
 	for (unsigned idx = 31; idx < seq.size() /**/; idx++) {
 		hash = hash << 2 | hash_letter(seq[idx]);
 		canon_hash = min(hash, rcb(hash, 31));
-		sampler.insert((uint8_t*)&canon_hash, sizeof(hash));
+		sampler.insert(reinterpret_cast<uint8_t*>(&canon_hash), sizeof(hash));
 	}
 }
 
 int main(int argc, char** argv) {
-	uint64_t size = ((uint64_t)1 << 23);
+	uint64_t size = (uint64_t(1) << 23);
 	if (argc < 2) {
 		cerr << "[Fasta file]" << endl;
 		exit(0);
@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
 	SolidSampler sampler(size);
 	string input(argv[1]);
 
-	srand(time(NULL));
+	srand(static_cast<unsigned>(time(NULL)));
 	string header, sequence, line;
 	ifstream in(input);
 
@@ -81,11 +81,11 @@ int main(int argc, char** argv) {
 		if (header[0] != '>') {
 			continue;
 		}
-		char c = in.peek();
+		char c = static_cast<char>(in.peek());
 		while (c != '>' and c != EOF) {
 			getline(in, line);
 			sequence += line;
-			c = in.peek();
+			c = static_cast<char>(in.peek());
 		}
 		insert_sequence(sampler, sequence);
 		sequence = "";
@@ -118,11 +118,11 @@ int main(int argc, char** argv) {
 		if (header[0] != '>') {
 			continue;
 		}
-		char c = in.peek();
+		char c = static_cast<char>(in.peek());
 		while (c != '>' and c != EOF) {
 			getline(in, line);
 			sequence += line;
-			c = in.peek();
+			c = static_cast<char>(in.peek());
 		}
 		index.insert_seq(sequence);
 		//~ cin.get();

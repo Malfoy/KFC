@@ -6,16 +6,19 @@
 using namespace std;
 
 CascadingBloomFilter::CascadingBloomFilter(uint64_t size, uint8_t num_blooms, double reset_ratio) {
-	// Bloom filters init
-	this->filters.reserve(num_blooms);
-	unsigned optimal_nb_hash = ceil(1. / reset_ratio * log(2));
-	this->filters.emplace_back(size / 2, optimal_nb_hash);
-	for (uint8_t i = 1; i < num_blooms; i++)
-		this->filters.emplace_back((size / 2) / (num_blooms - 1), optimal_nb_hash);
+	if (size == 0 || num_blooms == 0) throw std::domain_error("Empty cascading bloom filter created");
 
 	// Variables
 	this->m_num_blooms = num_blooms;
 	this->m_reset_ratio = reset_ratio;
+
+	// Bloom filters init
+	this->filters.reserve(num_blooms);
+	auto optimal_nb_hash = static_cast<unsigned>(ceil(1. / reset_ratio * log(2)));
+	this->filters.emplace_back(size / 2, optimal_nb_hash);
+	num_blooms--;
+	for (uint8_t i = 0; i < num_blooms; i++)
+		this->filters.emplace_back((size / 2) / num_blooms, optimal_nb_hash);
 }
 
 /**

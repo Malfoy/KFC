@@ -26,14 +26,14 @@ const lest::test module[] = {
 				bits.set(15);
 				EXPECT(bits.get(15));
 
-				bits.set(WORD_SIZE-1);
-				EXPECT(bits.get(WORD_SIZE-1));
+				bits.set(BitSet::word_bitwidth-1);
+				EXPECT(bits.get(BitSet::word_bitwidth-1));
 
 				bits.set(99);
 				EXPECT(bits.get(99));
 
 				for (unsigned i = 0; i < length; i++) {
-					if (i != 0 && i != 15 && i != (WORD_SIZE - 1) && i != 99) {
+					if (i != 0 && i != 15 && i != (BitSet::word_bitwidth - 1) && i != 99) {
 						EXPECT(! bits.get(i));
 					}
 				}

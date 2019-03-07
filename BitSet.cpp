@@ -2,23 +2,23 @@
 #include <cstring>
 
 BitSet::BitSet(uint64_t nb_bits) {
-	this->m_int_size = nb_bits / WORD_SIZE + ((nb_bits % WORD_SIZE > 0) ? 1 : 0);
+	this->m_int_size = nb_bits / word_bitwidth + ((nb_bits % word_bitwidth > 0) ? 1 : 0);
 	this->m_bits = std::unique_ptr<uint64_t[]>(new uint64_t[this->m_int_size]);
 	this->m_nb_bits = nb_bits;
 	this->reset();
 }
 
 bool BitSet::get(uint64_t pos) const {
-	return (bitget(this->m_bits, pos) == 1);
+	return (this->m_bits[pos / this->word_bitwidth] >> (pos % word_bitwidth)) & 1;
 }
 
 void BitSet::set(uint64_t pos) {
-	bitset(this->m_bits, pos);
+	this->m_bits[pos / this->word_bitwidth] |= word_type(1) << (pos % word_bitwidth);
 }
 
 bool BitSet::get_and_set(uint64_t pos) {
-	uint64_t offset = pos % WORD_SIZE;
-	uint64_t& word = m_bits[pos / WORD_SIZE];
+	uint64_t offset = pos % word_bitwidth;
+	uint64_t& word = m_bits[pos / word_bitwidth];
 
 	bool was_set = static_cast<bool>((word >> offset) & 1);
 	word |= uint64_t(1) << offset; // Avoiding branches
@@ -26,7 +26,7 @@ bool BitSet::get_and_set(uint64_t pos) {
 }
 
 void BitSet::reset() {
-	memset(this->m_bits.get(), 0, this->m_int_size * WORD_SIZE / 8);
+	memset(this->m_bits.get(), 0, this->m_int_size * word_bitwidth / 8);
 }
 
 uint64_t BitSet::size() const {
