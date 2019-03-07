@@ -59,7 +59,7 @@ void insert_sequence(SolidSampler& sampler, const string& seq) {
 int main(int argc, char** argv) {
 	uint64_t size = ((uint64_t)1 << 23);
 	if (argc < 2) {
-		cout << "[Fasta file]" << endl;
+		cerr << "[Fasta file]" << endl;
 		exit(0);
 	}
 
@@ -98,21 +98,21 @@ int main(int argc, char** argv) {
 
 	in.clear();
 	in.seekg(0, ios::beg);
-	cout << "SAMPLING DONE" << endl;
-	cout << abundant_kmer.size() << " abundant kmer" << endl;
+	cerr << "SAMPLING DONE" << endl;
+	cerr << abundant_kmer.size() << " abundant kmer" << endl;
 	high_resolution_clock::time_point t2 = high_resolution_clock::now();
 
 	duration<double> time_span1 = duration_cast<duration<double>>(t2 - t1);
-	std::cout << "It took me " << time_span1.count() << " seconds.\n" << endl;
-	;
-	cout << "I BUILD THE INDEX" << endl;
+	cerr << "It took me " << time_span1.count() << " seconds.\n" << endl;
+
+	cerr << "I BUILD THE INDEX" << endl;
 	index_full index(abundant_kmer);
-	cout << "DONE	" << endl;
+	cerr << "DONE	" << endl;
 	high_resolution_clock::time_point t3 = high_resolution_clock::now();
 
 	duration<double> time_span2 = duration_cast<duration<double>>(t3 - t2);
-	std::cout << "It took me " << time_span2.count() << " seconds.\n" << endl;
-	;
+	cerr << "It took me " << time_span2.count() << " seconds.\n" << endl;
+
 	while (not in.eof()) {
 		getline(in, header);
 		if (header[0] != '>') {
@@ -134,16 +134,15 @@ int main(int argc, char** argv) {
 
 	duration<double> time_span3 = duration_cast<duration<double>>(t4 - t3);
 
-	cout << "I FINISHED COUNTING !" << endl;
-	std::cout << "It took me " << time_span3.count() << " seconds.\n" << endl;
-	;
+	cerr << "I FINISHED COUNTING !" << endl;
+	cerr << "It took me " << time_span3.count() << " seconds.\n" << endl;
 
 	duration<double> time_span4 = duration_cast<duration<double>>(t4 - t1);
-	std::cout << "Whole process took " << time_span4.count() << " seconds.\n" << endl;
-	;
+	cerr << "Whole process took " << time_span4.count() << " seconds.\n" << endl;
+
 	cin.get();
 	// COUNTING WAS DONE IN RAM I OUTPUT THE RESULT BECAUSE OF THE AMAZING AND POWERFULL SAMPLER
-	index.dump_counting();
+	index.dump_counting(std::cout);
 	index.clear(true);
 	// MY JOB HERE IS DONE *fly away*
 }

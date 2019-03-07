@@ -10,8 +10,6 @@
 #include <algorithm>
 #include "BooPHF.h"
 
-using namespace std;
-
 typedef boomphf::SingleHashFunctor<uint64_t> hasher;
 typedef boomphf::mphf<uint64_t, hasher> MPHF;
 
@@ -23,15 +21,15 @@ struct value {
 class index_full {
   public:
 	MPHF Hash;
-	vector<value> Values;
-	vector<uint64_t> weak_kmer_buffer;
-	ofstream dump_weak;
+	std::vector<value> Values;
+	std::vector<uint64_t> weak_kmer_buffer;
+	std::ofstream dump_weak;
 	static const uint32_t kmer_size = 31;
 	static const size_t weak_kmer_buffer_waterline = 1 << 14;
 
-	index_full(const vector<uint64_t>& V) {
+	index_full(const std::vector<uint64_t>& V) {
 		weak_kmer_buffer.reserve(weak_kmer_buffer_waterline);
-		dump_weak.open("weak_kmers", ofstream::out | ofstream::binary);
+		dump_weak.open("weak_kmers", std::ofstream::out | std::ofstream::binary);
 		Hash = boomphf::mphf<uint64_t, hasher>(V.size(), V, 4, 5, false);
 		Values.resize(V.size());
 		for (auto& kmer : V)
@@ -39,10 +37,10 @@ class index_full {
 	}
 
 	void insert(uint64_t);
-	void dump_counting();
-	void insert_seq(const string& read);
+	void dump_counting(std::ostream& stream = std::cout);
+	void insert_seq(const std::string& read);
 	void clear(bool = false);
-	void print_kmer(uint64_t num);
+	void print_kmer(uint64_t num, std::ostream& steam);
 };
 
 uint64_t rcb(uint64_t min, unsigned n);
@@ -52,11 +50,11 @@ class index_min {
 	unsigned kmer_size;
 	unsigned minimizer_size;
 
-	vector<index_full> Index;
+	std::vector<index_full> Index;
 
-	index_min(vector<uint64_t>& V);
+	index_min(std::vector<uint64_t>& V);
 	void insert(uint64_t kmer);
-	void dump_counting();
+	void dump_counting(std::ostream& stream = std::cout);
 };
 
 #endif

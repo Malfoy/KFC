@@ -96,26 +96,25 @@ void index_full::insert_seq(const string& seq) {
 //~ }
 //~ }
 
-void index_full::print_kmer(uint64_t num) {
+void index_full::print_kmer(uint64_t num, std::ostream& stream) {
 	uint64_t anc(1);
 	anc <<= (2 * (kmer_size));
 	for (unsigned i(0); i < kmer_size; ++i) {
 		unsigned nuc = num / anc;
 		if (nuc >= 4) {
-			cout << nuc << endl;
-			cout << "WTF" << endl;
+			stream << nuc << endl;
+			stream << "WTF" << endl;
 		}
-		cout << "ACTG"[num];
+		stream << "ACTG"[num];
 		anc >>= 2;
 	}
-	cout << " ";
 }
 
-void index_full::dump_counting() {
+void index_full::dump_counting(std::ostream& stream) {
 	for (unsigned i(0); i < Values.size(); ++i) {
 		if (Values[i].count != 0) {
-			print_kmer(Values[i].kmer);
-			cout << to_string(Values[i].count) << "\n";
+			print_kmer(Values[i].kmer, stream);
+			stream << " " << to_string(Values[i].count) << "\n";
 		}
 	}
 }
@@ -150,8 +149,8 @@ void index_min::insert(uint64_t kmer) {
 	Index[minimizer].insert(kmer);
 }
 
-void index_min::dump_counting() {
+void index_min::dump_counting(std::ostream& stream) {
 	for (unsigned i(0); i < Index.size(); ++i) {
-		Index[i].dump_counting();
+		Index[i].dump_counting(stream);
 	}
 }
