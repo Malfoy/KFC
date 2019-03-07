@@ -1,4 +1,3 @@
-#~ CC=/usr/bin/g++
 CC=g++
 
 DEBUG ?= 1
@@ -11,7 +10,7 @@ ifeq ($(DEBUG), 1)
 	-Werror=sequence-point -Werror=address -Wduplicated-branches -Wsign-compare -Wodr -Wnarrowing -Wsuggest-final-methods \
 	-Wformat-signedness -Wrestrict -Werror=aggressive-loop-optimizations -Werror=missing-braces -Werror=uninitialized \
 	-Wframe-larger-than=32768 -Werror=nonnull -Wno-unused-function -Werror=init-self -Werror=empty-body -Wdouble-promotion \
-	-Wfatal-errors -Werror=old-style-declaration -Wduplicated-cond -Werror=write-strings -Werror=return-type -Wredundant-decls \
+	-Werror=old-style-declaration -Wduplicated-cond -Werror=write-strings -Werror=return-type -Wredundant-decls \
 	-Werror=volatile-register-var -Wsuggest-final-types -Werror=missing-parameter-type -Werror=implicit-int
 	DEBUG_SYMS=1
 else
@@ -43,37 +42,50 @@ SUBMODULE_TOKEN=thirdparty/smhasher/README.md
 
 CPPS = $(wildcard *.cpp)
 OBJS = $(CPPS:.cpp=.o)
+DEPS = $(OBJS:%.o=%.d)
 KFC_OBJ = kfc.o SolidSampler.o BitSet.o BloomFilter.o Hash.o CascadingBloomFilter.o index_min.o
 
 EXEC=kfc kmerCountEvaluator
 LIB=kfc.a
 
-all: $(EXEC) $(LIB)
+all: $(EXEC) $(LIB) tests
 
 kmerCountEvaluator: evaluator.o $(EXT_BUILT_LIBS)
-	$(CC) -o $@ $^ $(LDFLAGS) $(EXT_BUILT_LIBS)
-
-#~ evaluator.o: evaluator.cpp
-#~ 	$(CC) -o $@ -c $< $(CFLAGS)
+	@echo "[LD] $@"
+	@$(CC) -o $@ $^ $(LDFLAGS) $(EXT_BUILT_LIBS)
 
 kfc: $(KFC_OBJ) $(EXT_BUILT_LIBS)
-	$(CC) -o $@ $^ $(LDFLAGS) $(EXT_BUILT_LIBS)
+	@echo "[LD] $@"
+	@$(CC) -o $@ $^ $(LDFLAGS) $(EXT_BUILT_LIBS)
 
 kfc.a: $(KFC_OBJ)
-	ar rcs kfc.a $(KFC_OBJ)
+	@echo "[AR] $@"
+	@$(AR) rcs kfc.a $(KFC_OBJ)
+
+-include $(DEPS)
 
 %.o: %.cpp $(SUBMODULE_TOKEN)
-	$(CC) -o $@ -c $< $(CFLAGS) $(INCS)
+	@echo "[CC] $<"
+	@$(CC) $(CFLAGS) $(INCS) -MMD -o $@ -c $<
 
 thirdparty/smhasher/src/libSMHasherSupport.a: $(SUBMODULE_TOKEN)
 	cmake -S thirdparty/smhasher/src/ -B thirdparty/smhasher/src/
-	$(MAKE) -C thirdparty/smhasher/src/ SMHasherSupport
+	$(MAKE) -sC thirdparty/smhasher/src/ SMHasherSupport
 
 $(SUBMODULE_TOKEN):
 	git submodule update --init
 
-clean:
-	rm -f *.o *.a
-	rm -rf $(EXEC)
+tests: kfc.a
+	@$(MAKE) -s -C tests/
+	@echo "[run tests]"
+	@tests/tests
 
-rebuild: clean $(EXEC)
+clean:
+	@echo "[clean]"
+	@rm -f $(EXEC) $(LIB) $(OBJS) $(DEPS)
+	@$(MAKE) -s -C tests/ clean
+
+rebuild: clean
+	@$(MAKE) -s all
+
+.PHONY: all tests clean rebuild

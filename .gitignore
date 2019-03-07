@@ -3,6 +3,7 @@ kmerCountEvaluator
 tests/tests
 *.o
 *.a
+*.d
 # perf output
 *.data*
 # gcov files
