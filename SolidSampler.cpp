@@ -70,7 +70,7 @@ ostream& operator<<(ostream& out, SolidSampler& sampler) {
     auto saved_bits = sampler.m_saved.size();
     auto psolid = sampler.kmers.size();
 
-    std::cout << "Inserted: " << sampler.m_nb_inserted << std::endl;
+    std::cerr << "Inserted: " << sampler.m_nb_inserted << std::endl;
 
     out << "Counters:\n" << sampler.m_cbf;
     out << "\tmemory: " << double(ncounters * SolidSampler::counter_bits) / (size_t(CHAR_BIT) << 20) << "M\n";
@@ -78,7 +78,7 @@ ostream& operator<<(ostream& out, SolidSampler& sampler) {
     out << "Deduplicator:\n" << sampler.m_saved;
     out << "\tmemory: " << double(saved_bits) / (size_t(CHAR_BIT) << 20) << "M\n";
 
-    std::cout << "Pseudo solid kmers: " << psolid << std::endl;
+    std::cerr << "Pseudo solid kmers: " << psolid << std::endl;
     out << "\tmemory: " << double(psolid * sizeof(kmer_t)) / (size_t(1) << 20) << "M\n";
     out << "total memory: "
         << double(ncounters * SolidSampler::counter_bits + saved_bits + sampler.kmers.size() * sizeof(kmer_t) * CHAR_BIT) / (size_t(CHAR_BIT) << 20) << "M\n";
