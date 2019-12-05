@@ -11,3 +11,6 @@
 [submodule "thirdparty/gatb-lite"]
 	path = thirdparty/gatb-lite
 	url = https://github.com/Piezoid/gatb-lite.git
+[submodule "thirdparty/robin-hood-hashing"]
+	path = thirdparty/robin-hood-hashing
+	url = https://github.com/martinus/robin-hood-hashing.git
