@@ -8,141 +8,121 @@
 #include <unordered_map>
 #include "index_min.h"
 #include "SolidSampler.hpp"
+#include <gatbl/fastx2kmer.hpp>
+#include <gatbl/kmer.hpp>
+#include <robin_hood.h>
 
 using namespace std;
 using namespace chrono;
 
-string getLineFasta(ifstream* in) {
-	string line, result;
-	getline(*in, line);
-	char c = static_cast<char>(in->peek());
-	while (c != '>' and c != EOF) {
-		getline(*in, line);
-		result += line;
-		c = static_cast<char>(in->peek());
-	}
-	return result;
-}
+template<typename Window = gatbl::kmer_window<kmer_t>>
+class sampling_parser : public gatbl::details::sequence2kmers_base<sampling_parser<Window>, Window> {
+  public:
+    using base = gatbl::details::sequence2kmers_base<sampling_parser<Window>, Window>;
+    template<typename W>
+    sampling_parser(W&& window, size_t memory_size)
+      : base(std::forward<W>(window))
+      , _sampler(memory_size) {}
 
-void clean(string& str) {
-	for (unsigned i(0); i < str.size(); ++i) {
-		switch (str[i]) {
-			case 'a': break;
-			case 'A': break;
-			case 'c': break;
-			case 'C': break;
-			case 'g': break;
-			case 'G': break;
-			case 't': break;
-			case 'T': break;
-			default: str = ""; return;
-		}
-	}
-	transform(str.begin(), str.end(), str.begin(), ::toupper);
-}
+    vector<uint64_t>&& get_aboundant_kmers() && { return std::move(_sampler.get_kmers()); }
 
-#define hash_letter(letter) ((letter >> 1) & 3)
+  protected:
+    friend base;
 
-void insert_sequence(SolidSampler& sampler, const string& seq) {
-	uint64_t hash = 0;
-	uint64_t canon_hash = 0;
-	for (unsigned i = 0; i < 31; i++)
-		hash = hash << 2 | hash_letter(seq[i]);
+    void on_kmer() {
+        assume(not this->done, "asking for more ?");
+        this->done = _sampler.insert(this->get_window().canon());
+        if (unlikely(this->done)) {
+            std::cerr << "Sampling stopped after " << nb_reads << " reads and " << _sampler.get_nb_kmer_seen() << " kmers seen" << std::endl;
+            std::cerr << _sampler;
+        }
+    }
+    void on_run_end() {}
+    bool on_chrom() {
+        nb_reads++;
+        return true;
+    }
 
-	for (unsigned idx = 31; idx < seq.size() /**/; idx++) {
-		hash = hash << 2 | hash_letter(seq[idx]);
-		canon_hash = min(hash, rcb(hash, 31));
-		sampler.insert(reinterpret_cast<uint8_t*>(&canon_hash), sizeof(hash));
-	}
-}
+    SolidSampler _sampler;
+    size_t nb_reads = 0;
+};
+
+template<typename Window = gatbl::kmer_window<kmer_t>>
+class counting_parser : public gatbl::details::sequence2kmers_base<counting_parser<Window>, Window> {
+  public:
+    using counter_t = uint8_t;
+
+    using base = gatbl::details::sequence2kmers_base<counting_parser<Window>, Window>;
+    template<typename W>
+    counting_parser(W&& window, std::vector<kmer_t>&& kmers)
+      : base(std::forward<W>(window)) {
+        for (kmer_t kmer : kmers) {
+            _map.insert({kmer, 0});
+        }
+        kmers.clear();
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, counting_parser& that) {
+        using sized_kmer_t = typename Window::sized_kmer_t;
+        const gatbl::ksize_t k = that.get_window().size();
+        for (auto pair : that._map) {
+            out << sized_kmer_t{pair.first, k} << ' ' << unsigned(pair.second) << std::endl;
+        }
+        return out;
+    }
+
+  protected:
+    friend base;
+
+    void on_kmer() {
+        kmer_t kmer = this->get_window().canon();
+        auto it = _map.find(kmer);
+        if (it != _map.end()) {
+            if (it->second != std::numeric_limits<counter_t>::max()) it->second++;
+        }
+    }
+    void on_run_end() {}
+    bool on_chrom() {
+        nb_reads++;
+        return true;
+    }
+
+    robin_hood::unordered_flat_map<kmer_t, uint8_t, gatbl::ReversibleHash> _map;
+    size_t nb_reads = 0;
+};
 
 int main(int argc, char** argv) {
-	uint64_t size = (uint64_t(1) << 23);
-	if (argc < 2) {
-		cerr << "[Fasta file]" << endl;
-		exit(0);
-	}
+    uint64_t size = (uint64_t(1) << 22);
+    if (argc < 2) {
+        cerr << "[Fasta file]" << endl;
+        exit(0);
+    }
 
-	SolidSampler sampler(size);
-	string input(argv[1]);
+    const gatbl::ksize_t k = 31;
 
-	srand(static_cast<unsigned>(time(NULL)));
-	string header, sequence, line;
-	ifstream in(input);
+    // WE TRY TO FIND THE ABUNDANT KMERS
 
-	// WE TRY TO FIND THE ABUNDANT KMERS
+    high_resolution_clock::time_point t1 = high_resolution_clock::now();
+    vector<uint64_t> abundant_kmer;
+    {
+        sampling_parser<> sampler(k, size);
+        sampler.read_fastx(argv[1]);
+        abundant_kmer = std::move(sampler).get_aboundant_kmers();
+    }
+    high_resolution_clock::time_point t2 = high_resolution_clock::now();
+    duration<double> time_span1 = duration_cast<duration<double>>(t2 - t1);
 
-	high_resolution_clock::time_point t1 = high_resolution_clock::now();
+    std::cerr << "SAMPLING DONE" << endl;
+    std::cerr << "It took me " << time_span1.count() << " seconds.\n" << endl;
 
-	unsigned nb_sequence = 0;
-	while (not in.eof()) {
-		if (nb_sequence++ >= 100000) break;
-		getline(in, header);
-		if (header[0] != '>') {
-			continue;
-		}
-		char c = static_cast<char>(in.peek());
-		while (c != '>' and c != EOF) {
-			getline(in, line);
-			sequence += line;
-			c = static_cast<char>(in.peek());
-		}
-		insert_sequence(sampler, sequence);
-		sequence = "";
-	}
+    counting_parser<> counter(k, std::move(abundant_kmer));
+    counter.read_fastx(argv[1]);
 
-	vector<uint64_t> abundant_kmer = std::move(sampler.get_kmers());
-	sampler.clean();
+    high_resolution_clock::time_point t3 = high_resolution_clock::now();
+    duration<double> time_span2 = duration_cast<duration<double>>(t3 - t2);
+    std::cerr << "It took me " << time_span2.count() << " seconds.\n" << endl;
 
-	// SAMPLING DONE NOW WE DO THE ***EASY*** JOB
+    std::cout << counter;
 
-	in.clear();
-	in.seekg(0, ios::beg);
-	cerr << "SAMPLING DONE" << endl;
-	cerr << abundant_kmer.size() << " abundant kmer" << endl;
-	high_resolution_clock::time_point t2 = high_resolution_clock::now();
-
-	duration<double> time_span1 = duration_cast<duration<double>>(t2 - t1);
-	cerr << "It took me " << time_span1.count() << " seconds.\n" << endl;
-
-	cerr << "I BUILD THE INDEX" << endl;
-	index_full index(abundant_kmer);
-	cerr << "DONE	" << endl;
-	high_resolution_clock::time_point t3 = high_resolution_clock::now();
-
-	duration<double> time_span2 = duration_cast<duration<double>>(t3 - t2);
-	cerr << "It took me " << time_span2.count() << " seconds.\n" << endl;
-
-	while (not in.eof()) {
-		getline(in, header);
-		if (header[0] != '>') {
-			continue;
-		}
-		char c = static_cast<char>(in.peek());
-		while (c != '>' and c != EOF) {
-			getline(in, line);
-			sequence += line;
-			c = static_cast<char>(in.peek());
-		}
-		index.insert_seq(sequence);
-		//~ cin.get();
-		index.clear();
-		sequence = "";
-	}
-
-	high_resolution_clock::time_point t4 = high_resolution_clock::now();
-
-	duration<double> time_span3 = duration_cast<duration<double>>(t4 - t3);
-
-	cerr << "I FINISHED COUNTING !" << endl;
-	cerr << "It took me " << time_span3.count() << " seconds.\n" << endl;
-
-	duration<double> time_span4 = duration_cast<duration<double>>(t4 - t1);
-	cerr << "Whole process took " << time_span4.count() << " seconds.\n" << endl;
-
-	cin.get();
-	// COUNTING WAS DONE IN RAM I OUTPUT THE RESULT BECAUSE OF THE AMAZING AND POWERFULL SAMPLER
-	index.dump_counting(std::cout);
-	index.clear(true);
-	// MY JOB HERE IS DONE *fly away*
+    // MY JOB HERE IS DONE *fly away*
 }
