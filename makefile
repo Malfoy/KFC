@@ -59,9 +59,9 @@ kfc_blue: $(KFC_OBJ) $(EXT_BUILT_LIBS) kfc_blue.o
 	@echo "[LD] $@"
 	@$(CC) -o $@ $^ $(LDFLAGS) $(EXT_BUILT_LIBS)
 
-kfc_red: $(KFC_OBJ) $(EXT_BUILT_LIBS) kfc_red.o
+kfc_red:  kfc_red.o
 	@echo "[LD] $@"
-	@$(CC) -o $@ $^ $(LDFLAGS) $(EXT_BUILT_LIBS)
+	@$(CC) -o $@ $^ $(LDFLAGS)
 
 kfc_blue.a: $(KFC_OBJ)
 	@echo "[AR] $@"
