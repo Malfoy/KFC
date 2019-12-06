@@ -44,10 +44,10 @@ SUBMODULE_TOKEN=thirdparty/smhasher/README.md
 CPPS = $(wildcard *.cpp)
 OBJS = $(CPPS:.cpp=.o)
 DEPS = $(OBJS:%.o=%.d)
-KFC_OBJ = kfc.o SolidSampler.o BitSet.o BloomFilter.o Hash.o CascadingBloomFilter.o index_min.o BitSet.o
+KFC_OBJ = SolidSampler.o BitSet.o BloomFilter.o Hash.o CascadingBloomFilter.o index_min.o BitSet.o
 
-EXEC=kfc kmerCountEvaluator
-LIB=kfc.a
+EXEC=kfc_blue kfc_red kmerCountEvaluator
+LIB=kfc_blue.a
 
 all: $(EXEC) $(LIB) tests
 
@@ -55,13 +55,17 @@ kmerCountEvaluator: evaluator.o $(EXT_BUILT_LIBS)
 	@echo "[LD] $@"
 	@$(CC) -o $@ $^ $(LDFLAGS) $(EXT_BUILT_LIBS)
 
-kfc: $(KFC_OBJ) $(EXT_BUILT_LIBS)
+kfc_blue: $(KFC_OBJ) $(EXT_BUILT_LIBS) kfc_blue.o
 	@echo "[LD] $@"
 	@$(CC) -o $@ $^ $(LDFLAGS) $(EXT_BUILT_LIBS)
 
-kfc.a: $(KFC_OBJ)
+kfc_red: $(KFC_OBJ) $(EXT_BUILT_LIBS) kfc_red.o
+	@echo "[LD] $@"
+	@$(CC) -o $@ $^ $(LDFLAGS) $(EXT_BUILT_LIBS)
+
+kfc_blue.a: $(KFC_OBJ)
 	@echo "[AR] $@"
-	@$(AR) rcs kfc.a $(KFC_OBJ)
+	@$(AR) rcs kfc_blue.a $(KFC_OBJ)
 
 -include $(DEPS)
 
@@ -70,13 +74,13 @@ kfc.a: $(KFC_OBJ)
 	@$(CC) $(CFLAGS) $(INCS) -MMD -o $@ -c $<
 
 thirdparty/smhasher/src/libSMHasherSupport.a: $(SUBMODULE_TOKEN)
-	cmake -S thirdparty/smhasher/src/ -B thirdparty/smhasher/src/
+	cd thirdparty/smhasher/src/ && cmake .
 	$(MAKE) -sC thirdparty/smhasher/src/ SMHasherSupport
 
 $(SUBMODULE_TOKEN):
 	git submodule update --init
 
-tests: kfc.a
+tests: kfc_blue.a
 	@$(MAKE) -s -C tests/
 	@echo "[run tests]"
 	@tests/tests

@@ -104,7 +104,7 @@ uint64_t canonize(uint64_t x,uint64_t n){
 
 
 
-uint64_t get_minimizer(uint64_t seq){
+static uint64_t get_minimizer(uint64_t seq){
 	uint64_t mini,mmer,hash_mini(-1);
 	mmer=seq%minimizer_number;
 	mini=mmer=canonize(mmer,minimizer_size);
@@ -211,7 +211,7 @@ int compact(string& super_kmer,const string& kmer){
 
 
 
-uint64_t str2num(const string& str){
+static uint64_t str2num(const string& str){
 uint64_t res(0);
 for(uint64_t i(0);i<str.size();i++){
 	res<<=2;

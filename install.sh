@@ -6,5 +6,5 @@ mkdir $folder;
 echo "I put binaries in $folder";
 ( cd thirdparty/smhasher/src; cmake .; make )
 make
-mv kfc kmerCountEvaluator $folder
+mv kfc_blue kfc_red kmerCountEvaluator $folder
 rm *.o

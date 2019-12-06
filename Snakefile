@@ -8,7 +8,7 @@ rule kfc_red_build_exec:
     input:
         data=INPUT,
     output:
-        "bench/kfc_red_"
+        "bench/kfc_red_kmers.txt"
     shell:
         "make kfc_red ;"
         "kfc_red {input.data} > {output}"
