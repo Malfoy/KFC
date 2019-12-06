@@ -1,11 +1,18 @@
 #include "Hash.hpp"
-#include "MurmurHash3.h"
+#include <gatbl/kmer.hpp>
+
+using namespace std;
 
 std::array<uint64_t, 2> hash64(const uint8_t* data, std::size_t len) {
-	std::array<uint64_t, 2> hash_value;
-	MurmurHash3_x64_128(data, int(len), 0, hash_value.data());
+	assume(len <= sizeof(uint64_t), "Can only up to 64bit integers"); // pretty brutal
+	uint64_t in = 0;
+	assume(in == 0, "wtf");
+	memcpy(&in, data, len);
 
-	return hash_value;
+	std::array<uint64_t, 2> out;
+	out[0] = gatbl::ReversibleHash()(in);
+	out[1] = gatbl::ReversibleHash()(in + 0xDEADBEEF);
+	return out;
 }
 
 uint64_t nthHash(uint8_t n, uint64_t hashA, uint64_t hashB, uint64_t filterSize) {

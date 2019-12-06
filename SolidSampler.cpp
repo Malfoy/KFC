@@ -6,13 +6,10 @@
 #include <algorithm>
 
 #include "SolidSampler.hpp"
-#include "Hash.hpp"
 #include "blocked.hpp"
 #include <gatbl/kmer.hpp>
 
-uint8_t ilog2(size_t x) {
-    return static_cast<uint8_t>(sizeof(size_t)) * CHAR_BIT - __builtin_clzll(x) - 1;
-}
+using gatbl::bits::ilog2;
 
 using namespace std;
 
@@ -30,7 +27,7 @@ SolidSampler::SolidSampler(uint64_t memory_size)
   , m_cbf(ilog2(m_memory_cbf / cbf_t::block_bytes))
   , m_saved(ilog2(m_memory_saved / saved_t::block_bytes))
   , kmers() {
-    this->kmers.reserve(m_kmer_max);
+	this->kmers.reserve(m_kmer_max);
 }
 
 /**
@@ -41,20 +38,20 @@ SolidSampler::SolidSampler(uint64_t memory_size)
  * @returns true when the number of saved kmer exceed the limit
  */
 bool SolidSampler::insert(kmer_t kmer) {
-    __uint128_t hash;
-    MurmurHash3_x64_128(&kmer, sizeof(kmer_t), 0, &hash);
+	auto hash_func = gatbl::ReversibleHash();
+	uint64_t hash = hash_func(kmer);
 
 	this->m_nb_inserted++;
 
-    if (!m_saved.possiblyContains(hash)) {
-        auto old_count = m_cbf.add(hash);
-        if (old_count == BlockedCMS<>::max_count) {
-            // assert(std::find(kmers.begin(), kmers.end(), kmer) == kmers.end(), "Ouate le phoque");
-            this->kmers.push_back(kmer);
-            assume(m_saved.add(hash) == false, "kmer should not be present in the deduplicating bloom");
-            return this->kmers.size() >= m_kmer_max;
-        }
-    }
+	if (!m_saved.possiblyContains(hash)) {
+		auto old_count = m_cbf.add(hash);
+		if (old_count == BlockedCMS<>::max_count) {
+			// assert(std::find(kmers.begin(), kmers.end(), kmer) == kmers.end(), "Ouate le phoque");
+			this->kmers.push_back(kmer);
+			assume(m_saved.add(hash) == false, "kmer should not be present in the deduplicating bloom");
+			return this->kmers.size() >= m_kmer_max;
+		}
+	}
 	return false;
 }
 
@@ -66,26 +63,26 @@ vector<uint64_t>& SolidSampler::get_kmers() {
 }
 
 ostream& operator<<(ostream& out, SolidSampler& sampler) {
-    auto ncounters = sampler.m_cbf.size();
-    auto saved_bits = sampler.m_saved.size();
-    auto psolid = sampler.kmers.size();
+	auto ncounters = sampler.m_cbf.size();
+	auto saved_bits = sampler.m_saved.size();
+	auto psolid = sampler.kmers.size();
 
-    std::cerr << "Inserted: " << sampler.m_nb_inserted << std::endl;
+	out << "Inserted: " << sampler.m_nb_inserted << std::endl;
 
-    out << "Counters:\n" << sampler.m_cbf;
-    out << "\tmemory: " << double(ncounters * SolidSampler::counter_bits) / (size_t(CHAR_BIT) << 20) << "M\n";
+	out << "Counters:\n" << sampler.m_cbf;
+	out << "\tmemory: " << double(ncounters * SolidSampler::counter_bits) / (size_t(CHAR_BIT) << 20) << "M\n";
 
-    out << "Deduplicator:\n" << sampler.m_saved;
-    out << "\tmemory: " << double(saved_bits) / (size_t(CHAR_BIT) << 20) << "M\n";
+	out << "Deduplicator:\n" << sampler.m_saved;
+	out << "\tmemory: " << double(saved_bits) / (size_t(CHAR_BIT) << 20) << "M\n";
 
-    std::cerr << "Pseudo solid kmers: " << psolid << std::endl;
-    out << "\tmemory: " << double(psolid * sizeof(kmer_t)) / (size_t(1) << 20) << "M\n";
-    out << "total memory: "
-        << double(ncounters * SolidSampler::counter_bits + saved_bits + sampler.kmers.size() * sizeof(kmer_t) * CHAR_BIT) / (size_t(CHAR_BIT) << 20) << "M\n";
+	out << "Pseudo solid kmers: " << psolid << std::endl;
+	out << "\tmemory: " << double(psolid * sizeof(kmer_t)) / (size_t(1) << 20) << "M\n";
+	out << "total memory: "
+	    << double(ncounters * SolidSampler::counter_bits + saved_bits + sampler.kmers.size() * sizeof(kmer_t) * CHAR_BIT) / (size_t(CHAR_BIT) << 20) << "M\n";
 
 	// Print all the kmers only if they are less than 100
-    if (sampler.kmers.size() < 100) {
-        for (uint64_t i = 0; i < sampler.kmers.size(); i++) {
+	if (sampler.kmers.size() < 100) {
+		for (uint64_t i = 0; i < sampler.kmers.size(); i++) {
 			out << (sampler.kmers)[i] << ' ';
 		}
 		out << endl;
