@@ -7,7 +7,11 @@
 #include <chrono>
 #include <unordered_map>
 
+
+
 using namespace std;
+
+
 
 string getLineFasta(ifstream* in) {
 	string line, result;
@@ -22,21 +26,26 @@ string getLineFasta(ifstream* in) {
 }
 
 
+
 struct SKC{
   string sk;
   vector<uint8_t> counts;
 };
 
 
+
 uint64_t k=(31);
 
+
+
 uint64_t minimizer_size(9);
+
 
 uint64_t minimizer_number((uint64_t)1<<(2*minimizer_size));
 
 
 
-  uint32_t revhash ( uint32_t x ) {
+uint32_t revhash ( uint32_t x ) {
 	x = ( ( x >> 16 ) ^ x ) * 0x2c1b3c6d;
 	x = ( ( x >> 16 ) ^ x ) * 0x297a2d39;
 	x = ( ( x >> 16 ) ^ x );
@@ -45,7 +54,7 @@ uint64_t minimizer_number((uint64_t)1<<(2*minimizer_size));
 
 
 
-  uint32_t unrevhash ( uint32_t x ) {
+uint32_t unrevhash ( uint32_t x ) {
 	x = ( ( x >> 16 ) ^ x ) * 0x0cf0b109; // PowerMod[0x297a2d39, -1, 2^32]
 	x = ( ( x >> 16 ) ^ x ) * 0x64ea2d65;
 	x = ( ( x >> 16 ) ^ x );
@@ -54,7 +63,7 @@ uint64_t minimizer_number((uint64_t)1<<(2*minimizer_size));
 
 
 
-  uint64_t revhash ( uint64_t x ) {
+uint64_t revhash ( uint64_t x ) {
 	x = ( ( x >> 32 ) ^ x ) * 0xD6E8FEB86659FD93;
 	x = ( ( x >> 32 ) ^ x ) * 0xD6E8FEB86659FD93;
 	x = ( ( x >> 32 ) ^ x );
@@ -94,6 +103,7 @@ uint64_t canonize(uint64_t x,uint64_t n){
 }
 
 
+
 uint64_t get_minimizer(uint64_t seq){
 	uint64_t mini,mmer,hash_mini(-1);
 	mmer=seq%minimizer_number;
@@ -110,6 +120,7 @@ uint64_t get_minimizer(uint64_t seq){
 	}
 	return revhash((uint64_t)mini)%minimizer_number;
 }
+
 
 
 uint64_t nuc2int(char c){
@@ -154,13 +165,14 @@ return 'A';
 
 
 
- string revComp(const string& s){
+string revComp(const string& s){
 string rc(s.size(),0);
 for (int i((int)s.length() - 1); i >= 0; i--){
 	rc[s.size()-1-i] = revCompChar(s[i]);
 }
 return rc;
 }
+
 
 
 int64_t kmer_in_super_kmer(const string& super_kmer,const string& kmer){
@@ -174,6 +186,7 @@ int64_t kmer_in_super_kmer(const string& super_kmer,const string& kmer){
 			}
 		return -1;
 }
+
 
 
 int compact(string& super_kmer,const string& kmer){
@@ -197,6 +210,7 @@ int compact(string& super_kmer,const string& kmer){
 }
 
 
+
 uint64_t str2num(const string& str){
 uint64_t res(0);
 for(uint64_t i(0);i<str.size();i++){
@@ -215,6 +229,7 @@ void dump_count(const SKC& skc){
 		cout<<skc.sk.substr(i,k)<<" "<<(uint64_t)skc.counts[i]<<endl;
 	}
 }
+
 
 
 void insert_kmer(const string& str_kmer, vector<vector<SKC>>& skc){
@@ -244,7 +259,6 @@ void insert_kmer(const string& str_kmer, vector<vector<SKC>>& skc){
 
 
 
-
 void dump_counting(vector<vector<SKC>>& buckets){
 	for(uint64_t i(0);i< buckets.size();++i) {
 		for(uint64_t ii(0);ii<buckets[i].size();++ii){
@@ -255,21 +269,24 @@ void dump_counting(vector<vector<SKC>>& buckets){
 }
 
 
+
 string getCanonical(const string& str){
  return (min(str,revComp(str)));
 }
-	uint64_t nb_kmer_read(0);
+
+
+
+uint64_t nb_kmer_read(0);
+
+
+
 void count_line(const string& line, vector<vector<SKC>>& buckets){
   string str_kmer;
-
   for(uint64_t i=0;i+k<=line.size();++i){
     str_kmer=getCanonical(line.substr(i,k));
     insert_kmer(str_kmer,buckets);
 		nb_kmer_read++;
   }
-	// nb_kmer_read+= line.size()-k+1;
-	// cout<<nb_kmer_read<<endl;
-	// cin.get();
 }
 
 
@@ -283,13 +300,10 @@ void read_fasta_file(const string& filename,vector<vector<SKC>>& buckets){
     count_line(line,buckets);
 		line_count++;
 		if(line_count%1000==0){
-			cout<<"-"<<flush;
+			cerr<<"-"<<flush;
 		}
   }
-	// cout<<nb_kmer_read<<endl;
-	// cin.get();
 }
-
 
 
 
