@@ -25,3 +25,8 @@ If you have `clang-format` installed on your system, please setup the pre-commit
 .scripts/install_hooks.sh
 ```
 
+## Benchmarks
+
+Please use the snakefile to compare latest KMC version with KFC.
+It's under construction.
+

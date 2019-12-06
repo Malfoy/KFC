@@ -12,3 +12,7 @@ tests/tests
 *.gcno
 gmon.out
 *.orig
+
+.snakemake/
+bin/
+bench/
