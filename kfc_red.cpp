@@ -37,9 +37,78 @@
 #include <tmmintrin.h>
 #include <math.h>
 #include <algorithm>
+#include "robin_hood.h"
 
 
 using namespace std;
+
+
+bool check=false;
+robin_hood::unordered_map<string,uint64_t> real_count;
+
+
+
+// Represents the cardinality of a pow2 sized set. Allows div/mod arithmetic operations on indexes.
+template<typename T>
+struct Pow2 {
+	Pow2(uint_fast8_t bits) : _bits(bits) {
+		// assume(bits < CHAR_BIT*sizeof(T), "Pow2(%u > %u)", unsigned(bits), unsigned(CHAR_BIT*sizeof(T)));
+	}
+
+	uint_fast8_t bits() const { return _bits; }
+	T value() const { return T(1) << _bits; }
+	explicit operator T() const { return value(); }
+	T max() const { return value() - T(1); }
+	Pow2& operator=(const Pow2&) = default;
+
+	Pow2():_bits(0){}
+	Pow2(const Pow2&) = default;
+
+	friend T operator*(const T& x, const Pow2& y) { return x << y._bits; }
+	friend T& operator*=(T& x, const Pow2& y) { return x <<= y._bits; }
+	friend T operator/(const T& x, const Pow2& y) { return x >> y._bits; }
+	friend T& operator/=(T& x, const Pow2& y) { return x >>= y._bits; }
+	friend T operator%(const T& x, const Pow2& y) { return x & y.max(); }
+	friend T& operator%=(T& x, const Pow2& y) { return x &= y.max(); }
+	Pow2& operator>>=(uint_fast8_t d) { _bits -= d; return *this; }
+	Pow2& operator<<=(uint_fast8_t d) { _bits += d; return *this; }
+	friend bool operator<(const T& x, const Pow2& y) { return x < y.value(); }
+	friend bool operator<=(const T& x, const Pow2& y) { return x < y.value(); }
+	friend T operator+(const T& x, const Pow2& y) { return x + y.value(); }
+	friend T& operator+=(T& x, const Pow2& y) { return x += y.value(); }
+	friend T operator-(const T& x, const Pow2& y) { return x - y.value(); }
+	friend T& operator-=(T& x, const Pow2& y) { return x -= y.value(); }
+private:
+	uint_fast8_t _bits;
+};
+
+
+
+string kmer2str(__uint128_t num,uint k=31){
+	string res;
+	Pow2<__uint128_t> anc(2*(k-1));
+	for(uint64_t i(0);i<k;++i){
+		__uint128_t nuc=num/anc;
+		num=num%anc;
+		if(nuc==3){
+			res+="G";
+		}
+		if(nuc==2){
+			res+="T";
+		}
+		if(nuc==1){
+			res+="C";
+		}
+		if(nuc==0){
+			res+="A";
+		}
+		if (nuc>=4){
+			cout<<"WTF"<<endl;
+		}
+		anc>>=2;
+	}
+	return res;
+}
 
 
 
@@ -319,14 +388,30 @@ int64_t kmer_in_super_kmer(const string& super_kmer,const string& kmer){
 }
 
 
+string getCanonical(const string& str){
+ return (min(str,revComp(str)));
+}
+
+
+uint64_t str2num(const string& str){
+uint64_t res(0);
+for(uint64_t i(0);i<str.size();i++){
+	res<<=2;
+	res+=(str[i]/2)%4;
+}
+return res;
+}
+
+
 
 int64_t kmer_in_super_kmer2(const SKC2& super_kmer,const uint64_t& kmer){
 	__uint128_t superkmer=super_kmer.sk;
+	uint64_t rc(rcb(kmer));
 	for(uint64_t i=0;i<super_kmer.counts.size();++i){
-		if(kmer==(superkmer&((1<<62)-1))){
+		if(kmer==(uint64_t)(superkmer&((1<<62)-1)) or rc ==(uint64_t)(superkmer&((1<<62)-1))) {
 			return i;
 		}
-		superkmer<<=2;
+		superkmer>>=2;
 	}
 	return -1;
 }
@@ -354,22 +439,43 @@ int compact(string& super_kmer,const string& kmer){
 }
 
 
+uint64_t compaction(0);
+
 
 int compact2(SKC2& super_kmer, uint64_t kmer){
+	// return -1;
 	__uint128_t superkmer=super_kmer.sk;
 	uint64_t sizesk=super_kmer.counts.size();
-	uint64_t end_sk=superkmer<<(2*sizesk);
-	uint64_t beg_k=kmer&((1<<62)-1);
+	// cout<<"super	"<<kmer2str(super_kmer.sk,sizesk+30)<<endl;
+	__uint128_t end_sk=superkmer>>(2*sizesk);
+	// cout<<"super	"<<kmer2str(end_sk,sizesk+30)<<endl;
+	__uint128_t beg_k=kmer&((1<<62)-1);
+	// cout<<"beg kmer	"<<kmer2str(beg_k,33)<<endl;
+	// cout<<"end skmer	"<<kmer2str(end_sk,33)<<endl;
 	if(end_sk==beg_k){
-		super_kmer.sk+=(((kmer<<62)>>62)+sizesk);
+		// cout<<"compact1"<<endl;
+		// cout<<"kmer	"<<kmer2str(kmer,31)<<endl;
+		// cout<<"super	"<<kmer2str(super_kmer.sk,30+sizesk)<<endl;
+			// cout<<"kmer	"<<kmer2str(kmer>>60,31)<<endl;
+		super_kmer.sk+=( ( (__uint128_t)(kmer>>60)<<(2*(31+sizesk)) ));
+		// cout<<"super	"<<kmer2str(super_kmer.sk,31+sizesk)<<endl;
+		// cin.get();
 		super_kmer.counts.push_back(1);
+		compaction++;
 		return sizesk+1;
 	}
-	rcb(kmer);
+	kmer=rcb(kmer);
 	beg_k=kmer&((1<<62)-1);
 	if(end_sk==beg_k){
-		super_kmer.sk+=(((kmer<<62)>>62)+sizesk);
+		// cout<<"compact2"<<endl;
+		// cout<<"kmer	"<<kmer2str(kmer,31)<<endl;
+		// cout<<"super	"<<kmer2str(super_kmer.sk,sizesk+30)<<endl;
+		// super_kmer.sk<<=2;
+		// cout<<"super	"<<kmer2str(super_kmer.sk,sizesk+31)<<endl;
+		super_kmer.sk+=( ( (__uint128_t)(kmer>>60)<<(2*(31+sizesk)) ));
+		// cout<<"super	"<<kmer2str(super_kmer.sk,sizesk+31)<<endl;
 		super_kmer.counts.push_back(1);
+		compaction++;
 		return sizesk+1;
 	}
 	return -1;
@@ -377,20 +483,38 @@ int compact2(SKC2& super_kmer, uint64_t kmer){
 
 
 
-uint64_t str2num(const string& str){
-uint64_t res(0);
-for(uint64_t i(0);i<str.size();i++){
-	res<<=2;
-	res+=(str[i]/2)%4;
-}
-return res;
-}
-
-
-
 void dump_count(const SKC& skc){
 	for(uint64_t i(0);i<skc.counts.size();++i){
-		cout<<skc.sk.substr(i,k)<<" "<<(uint64_t)skc.counts[i]<<"\n";
+		cout<<">"<<(uint64_t)skc.counts[i]<<"\n"<<getCanonical(skc.sk.substr(i,k))<<"\n";
+		// cout<<getCanonical(skc.sk.substr(i,k))<<" "<<(uint64_t)skc.counts[i]<<"\n";
+	}
+}
+
+
+void dump_count2(const SKC2& skc){
+	string skmer(kmer2str(skc.sk,skc.counts.size()+30));
+	// cout<<skc.counts.size()<<endl;
+	// cout<<skmer.size()<<endl;
+	// reverse(skc.counts.begin(),skc.counts.end());
+	for(uint64_t i(0);i<skc.counts.size();++i){
+			// cout<<">"<<(uint64_t)skc.counts[i]<<"\n"<<getCanonical(skmer.substr(i,k))<<"\n";
+			// cout<<getCanonical(skmer.substr(i,k))<<" "<<(uint64_t)skc.counts[i]<<endl;
+			// if( skmer.substr(i,k)=="CTCATTCCCCAGTAGTACTGCAAGAGGTTCC") {
+			// 	cout<<skmer<<endl;
+			// 	for(uint64_t ii(0);ii<skc.counts.size();++ii){
+			// 		cout<<(uint64_t)skc.counts[ii]<<endl;
+			// 	}
+			//
+			// }
+			if(check){
+				if(real_count[getCanonical(skmer.substr(i,k))] != (uint64_t)skc.counts[skc.counts.size()-1-i]) {
+					cerr<<"fail "<<getCanonical(skmer.substr(i,k))<<" "<<real_count[getCanonical(skmer.substr(i,k))]<<" "
+					<<(uint64_t)skc.counts[skc.counts.size()-1-i]<<endl;
+				}
+			}
+
+			// 	// cin.get();
+			// }
 	}
 }
 
@@ -406,16 +530,16 @@ void insert_kmer(const string& str_kmer, vector<vector<SKC>>& skc){
     }
   }
 
-  for(uint64_t i(0); i < skc[min].size();i++){
-	 	int64_t pos(compact(skc[min][i].sk,str_kmer));
-    if(pos>	0){
-      if(skc[min][i].counts.size()<pos){
-        skc[min][i].counts.resize(pos,0);
-      }
-      skc[min][i].counts[pos-1]++;
-			return;
-    }
-  }
+  // for(uint64_t i(0); i < skc[min].size();i++){
+	//  	int64_t pos(compact(skc[min][i].sk,str_kmer));
+  //   if(pos>	0){
+  //     if(skc[min][i].counts.size()<pos){
+  //       skc[min][i].counts.resize(pos,0);
+  //     }
+  //     skc[min][i].counts[pos-1]++;
+	// 		return;
+  //   }
+  // }
 	skc[min].push_back({str_kmer,{1}});
 }
 
@@ -424,6 +548,7 @@ void insert_kmer(const string& str_kmer, vector<vector<SKC>>& skc){
 void insert_kmer2(const uint64_t& kmer, vector<vector<SKC2>>& skc){
   uint64_t min=(get_minimizer(kmer));
 	for(uint64_t i=(0); i < skc[min].size();i++){
+		// cout<<"searchsk"<<endl;
 	 	int64_t pos=(kmer_in_super_kmer2(skc[min][i],kmer));
     if(pos>=0){
       skc[min][i].counts[pos]++;
@@ -432,12 +557,9 @@ void insert_kmer2(const uint64_t& kmer, vector<vector<SKC2>>& skc){
   }
 
   for(uint64_t i=(0); i < skc[min].size();i++){
+			// cout<<"search compact"<<endl;
 	 	int64_t pos=(compact2(skc[min][i],kmer));
-    if(pos>	0){
-      if(skc[min][i].counts.size()<pos){
-        skc[min][i].counts.resize(pos,0);
-      }
-      skc[min][i].counts[pos-1]++;
+    if(pos>0){
 			return;
     }
   }
@@ -456,8 +578,13 @@ void dump_counting(vector<vector<SKC>>& buckets){
 
 
 
-string getCanonical(const string& str){
- return (min(str,revComp(str)));
+void dump_counting2(vector<vector<SKC2>>& buckets){
+	for(uint64_t i(0);i< buckets.size();++i) {
+		for(uint64_t ii(0);ii<buckets[i].size();++ii){
+			dump_count2(buckets[i][ii]);
+		}
+	}
+	if(check){cout<<"The results were checked"<<endl;}
 }
 
 
@@ -481,10 +608,18 @@ void count_line2(const string& line, vector<vector<SKC2>>& buckets){
   uint64_t kmer;
 	uint64_t seq=(str2num(line.substr(0,k))),rcSeq(rcb(seq)),canon(min(seq,rcSeq));
 	insert_kmer2(canon,buckets);
-  for(uint64_t i=1;i+k<=line.size();++i){
+	// cout<<kmer2str(canon)<<endl;;
+	if(check){
+		real_count[getCanonical(line.substr(0,k))]++;
+	}
+  for(uint64_t i=0;i+k<line.size();++i){
+		if(check){
+			real_count[getCanonical(line.substr(i+1,k))]++;
+		}
 		updateK(seq,line[i+k]);
 		updateRCK(rcSeq,line[i+k]);
 		canon=(min(seq,rcSeq));
+		// cout<<kmer2str(canon)<<endl;;
 		insert_kmer2(canon,buckets);
   }
 }
@@ -519,6 +654,7 @@ void read_fasta_file2(const string& filename,vector<vector<SKC2>>& buckets){
 			cerr<<"-"<<flush;
 		}
   }
+	cout<<compaction<<endl;
 }
 
 
@@ -529,8 +665,14 @@ int main(int argc, char ** argv){
 		cout<<"[fasta file]"<<endl;
 		exit(0);
 	}
-	vector<vector<SKC>> buckets(minimizer_number);
-  read_fasta_file(argv[1],buckets);
-	dump_counting(buckets);
+	if(false){
+		vector<vector<SKC>> buckets(minimizer_number);
+	  read_fasta_file(argv[1],buckets);
+		dump_counting(buckets);
+	}else{
+		vector<vector<SKC2>> buckets(minimizer_number);
+	  read_fasta_file2(argv[1],buckets);
+		dump_counting2(buckets);
+	}
   return 0;
 }
