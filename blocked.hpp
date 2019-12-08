@@ -10,9 +10,9 @@
 #include <exception>
 #include <iostream>
 
-#include "MurmurHash3.h"
 #undef assert // FIXME upstream
 #include <gatbl/common.hpp>
+#include <gatbl/kmer.hpp>
 
 /**
  * Type traits for mutating integers of small bitwidth
@@ -102,6 +102,7 @@ struct Block : public _subword_traits {
 	using typename _subword_traits::word_t;
 	static constexpr size_t nwords = block_bytes / sizeof(word_t);
 	static constexpr size_t nsubwords = _subword_traits::nsubwords * nwords;
+	static constexpr size_t idx_bits = gatbl::bits::ilog2(nsubwords);
 
 	const_reference at(size_t idx) const {
 		assume(idx <= nsubwords, "Access out of bound in block %llu > %llu", idx, nwords);
@@ -173,13 +174,36 @@ class AlignedVector {
 	const size_t m_size;
 };
 
-template<uint8_t counter_bits = 2, uint8_t hash_funcs = 3>
+/// Extract a block indice from a hash, then extract hash_funcs block position and gives references to these to callback f
+template<uint8_t hash_funcs, typename block_t, typename F, typename hash_t>
+auto for_each_hash(AlignedVector<block_t>& arr, uint8_t m_log2size, hash_t hash0, F&& f) {
+	uint8_t remaining_bits = gatbl::bits::bitwidth<hash_t>();
+	block_t& block = arr.at(static_cast<size_t>(hash0) & ((size_t(1) << m_log2size) - 1));
+	hash_t hash = hash0 >> m_log2size;
+	remaining_bits -= m_log2size;
+
+	constexpr hash_t idx_mask = (hash_t(1) << block_t::idx_bits) - 1;
+	for (unsigned i = 0; i < hash_funcs; i++) {
+		if (remaining_bits < block_t::idx_bits) {
+			hash0 = gatbl::ReversibleHash()(hash0);
+			hash = hash0;
+			remaining_bits = gatbl::bits::bitwidth<hash_t>();
+		}
+
+		size_t counter_idx = hash & idx_mask;
+		hash >>= block_t::idx_bits;
+		remaining_bits -= block_t::idx_bits;
+
+		f(block.at(counter_idx));
+	}
+}
+
+template<uint8_t counter_bits = 2, uint8_t hash_funcs = 3, typename hash_t = uint64_t>
 class BlockedCMS {
 	using subword_trait = subword_traits<counter_bits>;
 	using block_t = Block<subword_trait>;
 	using array_t = AlignedVector<block_t>;
 	using word_t = typename subword_trait::word_t;
-    using hash_t = __uint128_t;
 
 	static constexpr size_t ncounter_per_block = block_t::nsubwords;
 
@@ -190,84 +214,51 @@ class BlockedCMS {
 	/// @param log2size: log2 of the number of block
 	BlockedCMS(uint8_t log2size)
 	  : m_arr(size_t(1) << log2size)
-      , m_log2size(log2size) {
-        assume(log2size * hash_funcs <= CHAR_BIT * sizeof(hash_t), "not enough bits in hash type");
-    }
+	  , m_log2size(log2size) {}
 
-	word_t aproximate(void* data, size_t len) {
-        hash_t hash0;
-		MurmurHash3_x64_128(data, static_cast<int>(len), 0, &hash0);
-        this->aproximate(hash0);
-    }
-
-    word_t aproximate(hash_t hash) {
-        block_t& block = m_arr.at(static_cast<size_t>(hash) % (size_t(1) << m_log2size));
-        hash >>= m_log2size;
+	word_t aproximate(hash_t hash0) {
+		uint8_t remaining_bits = gatbl::bits::bitwidth<hash_t>();
+		block_t& block = m_arr.at(static_cast<size_t>(hash0) % (size_t(1) << m_log2size));
+		hash_t hash = hash0 >> m_log2size;
+		remaining_bits -= remaining_bits;
 
 		auto min_val = ~word_t(0);
-		for (unsigned i = 0; i < hash_funcs; i++) {
-			size_t counter_idx = hash % ncounter_per_block;
-			hash /= ncounter_per_block;
-
-			word_t val = block.at(counter_idx * counter_bits, counter_bits);
+		for_each_hash<hash_funcs>(m_arr, m_log2size, hash0, [&](auto ref) {
+			word_t val = ref;
 			min_val = val < min_val ? val : min_val;
+		});
+
+		return min_val;
+	}
+
+	/**
+	 * Increment the counter
+	 * @returns the previous value
+	 */
+	word_t add(hash_t hash0) {
+		auto min_val = ~word_t(0);
+		for_each_hash<hash_funcs>(m_arr, m_log2size, hash0, [&](auto ref) {
+			word_t val = ref;
+			min_val = val < min_val ? val : min_val;
+		});
+
+		// Max count achieved by minimum : reset all associated counters
+		if (min_val == max_count) {
+			for_each_hash<hash_funcs>(m_arr, m_log2size, hash0, [&](auto ref) {
+				word_t val = ref;
+				if (val == max_count) val = 0;
+			});
+		} else { // Increment the counters equal to the minimum
+			for_each_hash<hash_funcs>(m_arr, m_log2size, hash0, [&](auto ref) {
+				word_t val = ref;
+				if (val == min_val) ref = val + 1;
+			});
 		}
 
 		return min_val;
 	}
 
-    /**
-     * Increment the counter
-     * @returns the previous value
-     */
-    word_t add(void* data, size_t len) {
-        hash_t hash0;
-        MurmurHash3_x64_128(data, static_cast<int>(len), 0, &hash0);
-
-        return this->add(hash0);
-    }
-
-    /**
-     * Increment the counter
-     * @returns the previous value
-     */
-    word_t add(hash_t hash0) {
-        block_t& block = m_arr.at(static_cast<size_t>(hash0) % (size_t(1) << m_log2size));
-        hash0 >>= m_log2size;
-
-        hash_t hash = hash0;
-        auto min_val = ~word_t(0);
-        for (unsigned i = 0; i < hash_funcs; i++) {
-            word_t val = block.at(hash % ncounter_per_block);
-            hash /= ncounter_per_block;
-
-            min_val = val < min_val ? val : min_val;
-        }
-
-        // Max count achieved by minimum : reset all associated counters
-        if (min_val == max_count) {
-            hash = hash0;
-            for (unsigned i = 0; i < hash_funcs; i++) {
-                auto ref = block.at(hash % ncounter_per_block);
-                hash /= ncounter_per_block;
-                ref = 0;
-            }
-        } else { // Increment the counters equal to the minimum
-            hash = hash0;
-            for (unsigned i = 0; i < hash_funcs; i++) {
-                auto ref = block.at(hash % ncounter_per_block);
-                hash /= ncounter_per_block;
-
-                word_t val = ref;
-                if (val == min_val) ref = val + 1;
-                // else if(val > min_val) ref = val - 1;
-            }
-        }
-
-        return min_val;
-    }
-
-    std::array<size_t, max_count + 1> histogram() const {
+	std::array<size_t, max_count + 1> histogram() const {
 		std::array<size_t, max_count + 1> res{};
 		for (size_t i = 0; i < m_arr.size(); i++) {
 			auto block = m_arr.at(i);
@@ -279,13 +270,13 @@ class BlockedCMS {
 		return res;
 	}
 
-    size_t size() const { return m_arr.size() * ncounter_per_block; }
+	size_t size() const { return m_arr.size() * ncounter_per_block; }
 
-    friend std::ostream& operator<<(std::ostream& out, const BlockedCMS& that) {
-        std::array<size_t, max_count + 1> hist = that.histogram();
-        size_t ncounters = that.size();
+	friend std::ostream& operator<<(std::ostream& out, const BlockedCMS& that) {
+		std::array<size_t, max_count + 1> hist = that.histogram();
+		size_t ncounters = that.size();
 		for (size_t i = 0; i <= max_count; i++)
-            out << "\tP(x=" << i << ") =\t" << hist[i] << '/' << ncounters << "\t= " << double(hist[i]) / ncounters << std::endl;
+			out << "\tP(x=" << i << ") =\t" << hist[i] << '/' << ncounters << "\t= " << double(hist[i]) / double(ncounters) << std::endl;
 		return out;
 	}
 
@@ -294,13 +285,12 @@ class BlockedCMS {
 	const uint8_t m_log2size;
 };
 
-template<uint8_t hash_funcs = 3>
+template<uint8_t hash_funcs = 3, typename hash_t = uint64_t>
 class BlockedBloom {
 	using subword_trait = subword_traits<1>;
 	using block_t = Block<subword_trait>;
 	using array_t = AlignedVector<block_t>;
 	using word_t = typename subword_trait::word_t;
-    using hash_t = __uint128_t;
 
 	static constexpr size_t nbits_per_block = block_t::nsubwords;
 
@@ -310,75 +300,31 @@ class BlockedBloom {
 	BlockedBloom(uint8_t log2size)
 	  : m_arr(size_t(1) << log2size)
 	  , m_bits_set(0)
-      , m_log2size(log2size) {
-        assume(log2size * hash_funcs <= CHAR_BIT * sizeof(hash_t), "not enough bits in hash type");
-    }
-
-    /**
-     * Add an element
-     * @returns the previous value
-     */
-    word_t add(void* data, size_t len) {
-        hash_t hash0;
-        MurmurHash3_x64_128(data, static_cast<int>(len), 0, &hash0);
-
-        return this->add(hash0);
-    }
-
+	  , m_log2size(log2size) {}
 	/**
 	 * Add an element
 	 * @returns the previous value
 	 */
-    bool add(hash_t hash0) {
-		block_t& block = m_arr.at(static_cast<size_t>(hash0) % (size_t(1) << m_log2size));
-		hash0 >>= m_log2size;
+	bool add(hash_t hash0) {
 
-        hash_t hash = hash0;
 		bool was_present = true;
-		for (unsigned i = 0; i < hash_funcs; i++) {
-			auto ref = block.at(hash % nbits_per_block);
-			hash /= nbits_per_block;
-
+		for_each_hash<hash_funcs>(m_arr, m_log2size, hash0, [&](auto ref) {
 			bool was_set = ref;
 			was_present &= was_set;
 			m_bits_set += !was_set;
 			ref = 1;
-		}
-
-		if (was_present) {
-			hash = hash0;
-			for (unsigned i = 0; i < hash_funcs; i++) {
-				block.at(hash % nbits_per_block) = 0;
-				hash /= nbits_per_block;
-			}
-			assume(m_bits_set >= hash_funcs, "Negative number of bits ?");
-			m_bits_set -= hash_funcs;
-		}
-
+		});
 		return was_present;
 	}
 
-	bool possiblyContains(void* data, size_t len) {
-        hash_t hash0;
-		MurmurHash3_x64_128(data, static_cast<int>(len), 0, &hash0);
-        return this->possiblyContains(hash0);
-    }
-
-    bool possiblyContains(hash_t hash0) {
-		block_t& block = m_arr.at(static_cast<size_t>(hash0) % (size_t(1) << m_log2size));
-		hash0 >>= m_log2size;
-
-        hash_t hash = hash0;
+	bool possiblyContains(hash_t hash0) {
 		bool present = true;
-		for (unsigned i = 0; i < hash_funcs; i++) {
-			present &= block.at(hash % nbits_per_block);
-			hash /= nbits_per_block;
-		}
+		for_each_hash<hash_funcs>(m_arr, m_log2size, hash0, [&](auto ref) { present &= bool(ref); });
 
 		return present;
 	}
 
-    size_t size() const { return m_arr.size() * nbits_per_block; }
+	size_t size() const { return m_arr.size() * nbits_per_block; }
 
 	void reset() {
 		m_bits_set = 0;
@@ -395,12 +341,12 @@ class BlockedBloom {
 
 	size_t nbBitsSet() const { return m_bits_set; }
 
-    friend std::ostream& operator<<(std::ostream& out, const BlockedBloom& that) {
-        size_t set = that.nbBitsSet();
-        size_t size = that.size();
-        out << "\tP(x=1) =\t" << set << '/' << size << "\t= " << double(set) / size << std::endl;
-        return out;
-    }
+	friend std::ostream& operator<<(std::ostream& out, const BlockedBloom& that) {
+		size_t set = that.nbBitsSet();
+		size_t size = that.size();
+		out << "\tP(x=1) =\t" << set << '/' << size << "\t= " << double(set) / double(size) << std::endl;
+		return out;
+	}
 
   private:
 	array_t m_arr;

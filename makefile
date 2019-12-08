@@ -37,27 +37,26 @@ WARNS+= -Wall
 CFLAGS+=-std=c++17 -pipe -fopenmp ${WARNS}
 LDFLAGS+=-lpthread -fopenmp -lz
 
-INCS=-Ithirdparty/gatb-lite/include/ -isystem thirdparty/sparsepp -isystem thirdparty/BBHash -Ithirdparty/smhasher/src/ -Ithirdparty/robin-hood-hashing/src/include
-EXT_BUILT_LIBS=thirdparty/smhasher/src/libSMHasherSupport.a
-SUBMODULE_TOKEN=thirdparty/smhasher/README.md
+INCS=-Ithirdparty/gatb-lite/include/ -Ithirdparty/robin-hood-hashing/src/include
+SUBMODULE_TOKEN=thirdparty/gatb-lite/README.md
 
 CPPS = $(wildcard *.cpp)
 OBJS = $(CPPS:.cpp=.o)
 DEPS = $(OBJS:%.o=%.d)
-KFC_OBJ = SolidSampler.o BitSet.o BloomFilter.o Hash.o CascadingBloomFilter.o index_min.o BitSet.o
+KFC_OBJ = SolidSampler.o BitSet.o BloomFilter.o Hash.o CascadingBloomFilter.o BitSet.o
 
 EXEC=kfc_blue kfc_red kmerCountEvaluator
 LIB=kfc_blue.a
 
 all: $(EXEC) $(LIB) tests
 
-kmerCountEvaluator: evaluator.o $(EXT_BUILT_LIBS)
+kmerCountEvaluator: evaluator.o
 	@echo "[LD] $@"
-	@$(CC) -o $@ $^ $(LDFLAGS) $(EXT_BUILT_LIBS)
+	@$(CC) -o $@ $^ $(LDFLAGS)
 
 kfc_blue: $(KFC_OBJ) $(EXT_BUILT_LIBS) kfc_blue.o
 	@echo "[LD] $@"
-	@$(CC) -o $@ $^ $(LDFLAGS) $(EXT_BUILT_LIBS)
+	@$(CC) -o $@ $^ $(LDFLAGS)
 
 kfc_red:  kfc_red.o
 	@echo "[LD] $@"
@@ -72,10 +71,6 @@ kfc_blue.a: $(KFC_OBJ)
 %.o: %.cpp $(SUBMODULE_TOKEN)
 	@echo "[CC] $<"
 	@$(CC) $(CFLAGS) $(INCS) -MMD -o $@ -c $<
-
-thirdparty/smhasher/src/libSMHasherSupport.a: $(SUBMODULE_TOKEN)
-	cd thirdparty/smhasher/src/ && cmake .
-	$(MAKE) -sC thirdparty/smhasher/src/ SMHasherSupport
 
 $(SUBMODULE_TOKEN):
 	git submodule update --init

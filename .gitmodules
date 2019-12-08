@@ -1,13 +1,3 @@
-[submodule "BBHash"]
-	path = thirdparty/BBHash
-	url = https://github.com/rizkg/BBHash
-[submodule "smhasher"]
-	path = thirdparty/smhasher
-	url = https://github.com/aappleby/smhasher
-	ignore = untracked
-[submodule "sparsepp"]
-	path = thirdparty/sparsepp
-	url = https://github.com/greg7mdp/sparsepp
 [submodule "thirdparty/gatb-lite"]
 	path = thirdparty/gatb-lite
 	url = https://github.com/Piezoid/gatb-lite.git

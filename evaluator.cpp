@@ -6,11 +6,9 @@
 #include <algorithm>
 #include <chrono>
 #include <unordered_set>
-#include "sparsepp/spp.h"
+#include <robin_hood.h>
 #include <omp.h>
 #include <sstream>
-
-using spp::sparse_hash_map;
 
 //~ uint64_t xs(uint64_t y){
 //~ y^=(y<<13); y^=(y>>17);y=(y^=(y<<15)); return y;
@@ -108,7 +106,7 @@ int main(int argc, char** argv) {
 		omp_init_lock(&(lock[i]));
 
 	for (unsigned HASH(0); HASH < nbHash; ++HASH) {
-		vector<sparse_hash_map<string, uint64_t>> genomicKmers;
+		vector<robin_hood::unordered_map<string, uint64_t>> genomicKmers;
 		genomicKmers.resize(1024);
 
 		#pragma omp parallel num_threads(nb_cores)

@@ -1,6 +1,6 @@
 CC=g++
-CFLAGS= -Wall -g -std=c++11 -I.. -I../thirdparty/smhasher/src/  -I../thirdparty/sparsepp -I../thirdparty/BBHash -I../thirdparty/ -O0
-LDFLAGS=-lpthread -g -lz ../thirdparty/smhasher/src/libSMHasherSupport.a
+CFLAGS= -Wall -g -std=c++11 -I..  -O0
+LDFLAGS=-lpthread -g -lz
 
 CPPS = $(wildcard *.cpp)
 OBJS = $(CPPS:.cpp=.o)
@@ -10,7 +10,7 @@ all: $(EXEC)
 
 
 
-$(EXEC): $(OBJS) ../kfc.a
+$(EXEC): $(OBJS) ../kfc_blue.a
 	@echo "[LD] $@"
 	@$(CC) -o $@ $^ $(LDFLAGS)
 
@@ -20,9 +20,9 @@ $(EXEC): $(OBJS) ../kfc.a
 	@echo "[CC] $<"
 	@$(CC) $(CFLAGS) -MMD -o $@ -c $<
 
-../kfc.a:
-	@echo "[build kfc.a]"
-	@$(MAKE) -s -C .. kfc.a
+../kfc_blue.a:
+	@echo "[build kfc_blue.a]"
+	@$(MAKE) -s -C .. kfc_blue.a
 
 clean:
 	@echo "[clean tests/]"
