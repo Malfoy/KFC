@@ -14,6 +14,7 @@ addons:
 git:
     depth: 2
     submodules: false
+    lfs_skip_smudge: true
 jobs:
   include:
     - stage: "compile"
@@ -39,3 +40,5 @@ env:
   - MATRIX_EVAL="CC=g++-8"
 before_install:
   - eval "${MATRIX_EVAL}"
+  - echo -e "machine github.com\n  login $GITHUB_TOKEN" > ~/.netrc
+  - git lfs pull
