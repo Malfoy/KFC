@@ -1,0 +1,18 @@
+# Travis example for Modern C++ by Rafał Pocztarski
+# For more languages and info see:
+# https://github.com/rsp/travis-hello#readme
+
+sudo: false
+language: cpp
+compiler:
+  - gcc
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - g++-8
+install:
+- "[ $CXX = g++ ] && export CXX=g++-8 || true"
+script:
+  - make kfc_red
