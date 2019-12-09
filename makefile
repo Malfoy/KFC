@@ -52,16 +52,19 @@ all: $(EXEC) $(LIB) tests
 
 kmerCountEvaluator: evaluator.o
 	@echo "[LD] $@"
+	@mkdir --parents ./bin
 	@$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 	@mv kmerCountEvaluator bin/
 
 kfc_blue: $(KFC_BLUE_OBJ) $(EXT_BUILT_LIBS) kfc_blue.o
 	@echo "[LD] $@"
+	@mkdir --parents ./bin
 	@$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 	@mv kfc_blue bin/
 
 kfc_red: kfc_red.o
 	@echo "[LD] $@"
+	@mkdir --parents ./bin
 	@$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 	@mv kfc_red bin/
 
