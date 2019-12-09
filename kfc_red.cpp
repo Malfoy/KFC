@@ -497,24 +497,13 @@ void dump_count2(const SKC2& skc){
 	// cout<<skmer.size()<<endl;
 	// reverse(skc.counts.begin(),skc.counts.end());
 	for(uint64_t i(0);i<skc.counts.size();++i){
-			// cout<<">"<<(uint64_t)skc.counts[i]<<"\n"<<getCanonical(skmer.substr(i,k))<<"\n";
-			// cout<<getCanonical(skmer.substr(i,k))<<" "<<(uint64_t)skc.counts[i]<<endl;
-			// if( skmer.substr(i,k)=="CTCATTCCCCAGTAGTACTGCAAGAGGTTCC") {
-			// 	cout<<skmer<<endl;
-			// 	for(uint64_t ii(0);ii<skc.counts.size();++ii){
-			// 		cout<<(uint64_t)skc.counts[ii]<<endl;
-			// 	}
-			//
-			// }
+			cout<<getCanonical(skmer.substr(i,k))<<" "<<(uint64_t)skc.counts[skc.counts.size()-1-i]<<endl;
 			if(check){
 				if(real_count[getCanonical(skmer.substr(i,k))] != (uint64_t)skc.counts[skc.counts.size()-1-i]) {
 					cerr<<"fail "<<getCanonical(skmer.substr(i,k))<<" "<<real_count[getCanonical(skmer.substr(i,k))]<<" "
 					<<(uint64_t)skc.counts[skc.counts.size()-1-i]<<endl;
 				}
 			}
-
-			// 	// cin.get();
-			// }
 	}
 }
 
@@ -654,7 +643,7 @@ void read_fasta_file2(const string& filename,vector<vector<SKC2>>& buckets){
 			cerr<<"-"<<flush;
 		}
   }
-	cout<<compaction<<endl;
+	cerr<<compaction<<endl;
 }
 
 
