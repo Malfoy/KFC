@@ -69,6 +69,7 @@ kfc_blue.a: $(KFC_OBJ)
 -include $(DEPS)
 
 %.o: %.cpp $(SUBMODULE_TOKEN)
+	@gcc --version
 	@echo "[CC] $<"
 	@$(CC) $(CFLAGS) $(INCS) -MMD -o $@ -c $<
 
