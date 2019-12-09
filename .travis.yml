@@ -19,15 +19,14 @@ env:
   - DEBUG=1
   - DEBUG=0 ASSERTS=1
 jobs:
-  include:
-    - stage: "compile"
-      script:
-        - make check_buildsys
-        - make kfc_blue
-        - make tests
-    - script:
-        - make check_buildsys
-        - make kfc_red
+  - stage: "compile"
+    script:
+      - make check_buildsys
+      - make kfc_blue
+      - make tests
+  - script:
+      - make check_buildsys
+      - make kfc_red
 env:
   - MATRIX_EVAL="CC=g++-8"
 before_install:
