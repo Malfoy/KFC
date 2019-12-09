@@ -33,6 +33,10 @@ ifeq ($(DEBUG_SYMS), 1)
 	LDFLAGS+=-g
 endif
 
+ifeq ($(VERBOSE), 1)
+	SHELL=sh -x
+endif
+
 WARNS+= -Wall
 CFLAGS+=-std=c++14 -pipe -fopenmp ${WARNS}
 LDFLAGS+=-lpthread -fopenmp -lz
@@ -50,27 +54,27 @@ LIB=kfc_blue.a
 
 all: $(EXEC) $(LIB) tests
 
-kmerCountEvaluator: evaluator.o
-	@echo "[LD] $@"
-	@mkdir --parents ./bin
-	@$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
-	@mv kmerCountEvaluator bin/
+bin:
+	@mkdir --parent ./bin
 
-kfc_blue: $(KFC_BLUE_OBJ) $(EXT_BUILT_LIBS) kfc_blue.o
+kmerCountEvaluator: bin bin/kmerCountEvaluator
+bin/kmerCountEvaluator: evaluator.o
 	@echo "[LD] $@"
-	@mkdir --parents ./bin
-	@$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
-	@mv kfc_blue bin/
+	+@$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
-kfc_red: kfc_red.o
+kfc_blue: bin bin/kfc_blue
+bin/kfc_blue: $(KFC_BLUE_OBJ) kfc_blue.o
 	@echo "[LD] $@"
-	@mkdir --parents ./bin
-	@$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
-	@mv kfc_red bin/
+	+@$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
+
+kfc_red: bin bin/kfc_red
+bin/kfc_red: kfc_red.o
+	@echo "[LD] $@"
+	+@$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
 kfc_blue.a: $(KFC_BLUE_OBJ)
 	@echo "[AR] $@"
-	@$(AR) rcs kfc_blue.a $(KFC_BLUE_OBJ)
+	@$(AR) rcs $@ $(KFC_BLUE_OBJ)
 
 -include $(DEPS)
 
@@ -89,7 +93,7 @@ tests: kfc_blue.a
 # TODO release: we remove the 'kfc' and 'bin/kfc' binary files for convenience when tests; remove that later
 clean:
 	@echo "[clean]"
-	@rm -f $(EXEC) $(LIB) $(OBJS) $(DEPS) kfc bin/bin
+	@rm -rf bin $(LIB) $(OBJS) $(DEPS) kfc
 	@$(MAKE) -s -C tests/ clean
 
 rebuild: clean
@@ -101,4 +105,4 @@ check_buildsys: $(SUBMODULE_TOKEN)
 	@echo CFLAGS=$(CFLAGS)
 	@echo LDFLAGS=$(LDFLAGS)
 
-.PHONY: all tests clean rebuild
+.PHONY: all $(EXEC) tests clean rebuild
