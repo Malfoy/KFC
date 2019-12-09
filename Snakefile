@@ -2,16 +2,49 @@
 KMC_REPO="https://github.com/refresh-bio/KMC.git"
 KMC_DIR="bench/softwares/kmc"
 INPUT="data/ecoli_150bp_50kreads.fasta"
+K=31
+
+def raw_files(wildcards):
+    if "color" in config and (config["color"] == "red" or config["color"] == "blue"):
+        return f"bench/diff_{config['color']}.txt"
+    return ["bench/diff_red.txt", "bench/diff_blue.txt"]
+
+rule all:
+    input: raw_files
 
 
-rule kfc_red_build_exec:
+rule compare_kfcs_kmc:
+    input:
+        kfc="bench/kfc_{color}_kmers.txt",
+        kmc="bench/kmc_kmers.txt"
+    output:
+        kfc_o="bench/diff_{color}.txt"
+    shell:
+        f"./bin/kmerCountEvaluator {{input.kfc}} {{input.kmc}} {K} > {{output.kfc_o}};"
+
+
+rule kfc_red_exec:
     input:
         data=INPUT,
     output:
         "bench/kfc_red_kmers.txt"
     shell:
-        "make kfc_red ;"
-        "kfc_red {input.data} > {output}"
+        "./bin/kfc_red {input.data} > {output};"
+        "python3 scripts/canonize_kmer_counts.py {output} > tmp_red_kmers.csv;"
+        "sort tmp_red_kmers.csv -o {output};"
+        "rm tmp_red_kmers.csv;"
+
+
+rule kfc_blue_exec:
+    input:
+        data=INPUT,
+    output:
+        "bench/kfc_blue_kmers.txt"
+    shell:
+        "./bin/kfc_blue {input.data} > {output};"
+        "python3 scripts/canonize_kmer_counts.py {output} > tmp_blue_kmers.csv;"
+        "sort tmp_blue_kmers.csv -o {output};"
+        "rm tmp_blue_kmers.csv;"
 
 
 rule kmc_exec:
@@ -22,9 +55,11 @@ rule kmc_exec:
     output:
         "bench/kmc_kmers.txt"
     shell:
-        "{input.bin} -fm {input.data} tmp_bin . ;"
+        f"{{input.bin}} -fm -k{K} {{input.data}} tmp_bin . ;"
         "{input.bin}_dump tmp_bin {output} ;"
-        "rm tmp_bin* {input.update}"
+        "python3 scripts/canonize_kmer_counts.py {output} > tmp_kmc_kmers.csv;"
+        "sort tmp_kmc_kmers.csv -o {output};"
+        "rm tmp_bin* tmp_kmc_kmers.csv {input.update}"
 
 
 rule kmc_update_compile:
