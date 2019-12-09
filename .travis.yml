@@ -3,7 +3,7 @@
 # https://github.com/rsp/travis-hello#readme
 
 sudo: false
-language: cpp
+language: minimal
 dist: bionic
 compiler:
   - gcc
