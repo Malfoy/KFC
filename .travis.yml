@@ -11,11 +11,18 @@ addons:
   apt:
     packages:
     - g++-8
+git:
+    depth: 2
+    submodules: false
 jobs:
   include:
     - stage: "compile"
-      script: make kfc_red
-    - script: make kfc_blue
+      script:
+        - make check_buildsys kfc_red
+        - make check_buildsys kfc_blue tests
+      env:
+        - DEBUG=1
+        - DEBUG=0 ASSERTS=1
 env:
   - MATRIX_EVAL="CC=g++-8"
 before_install:
