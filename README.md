@@ -9,18 +9,18 @@ kmer week experiment
 Prior to any compilation, please check your gcc version. It must be 8+.
 
 To build a debug version (default in this early development stage):
-<!-- ``` bash
+``` bash
 git clone https://github.com/Malfoy/KFC.git
 cd KFC
-./install.sh
-``` -->
-
-<!-- For an optimized build add `DEBUG=0` to the make command:
+make -j
 ```
-make DEBUG=0 -j
-``` -->
 
-<!-- For building with optimizations while keeping asserts enabled, use `DEBUG=0 ASSERTS=1` -->
+For an optimized build add `DEBUG=0` to the make command:
+```
+make -j DEBUG=0
+```
+
+For building with optimizations while keeping asserts enabled, use `make -j DEBUG=0 ASSERTS=1`
 
 ## Development
 
