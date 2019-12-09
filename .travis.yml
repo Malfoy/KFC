@@ -21,14 +21,21 @@ jobs:
         - make check_buildsys
         - make kfc_blue
         - make tests
+      env: DEBUG=1
     - script:
         - make check_buildsys
         - make kfc_red
+      env: DEBUG=1
+    - script:
+        - make check_buildsys
+        - make kfc_blue
+        - make tests
+      env: DEBUG=0 ASSERTS=1
+    - script:
+        - make check_buildsys
+        - make kfc_red
+      env: DEBUG=0 ASSERTS=1
 env:
-  jobs:
-    - DEBUG=1
-    - DEBUG=0 ASSERTS=1
-  global:
-    - MATRIX_EVAL="CC=g++-8"
+  - MATRIX_EVAL="CC=g++-8"
 before_install:
   - eval "${MATRIX_EVAL}"
