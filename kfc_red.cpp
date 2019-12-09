@@ -8,35 +8,13 @@
 #include <unordered_map>
 #include <stdint.h>
 #include <stdio.h>
-#include <fstream>
-#include <iostream>
-#include <vector>
 #include <atomic>
 #include <mutex>
-#include <stdint.h>
-#include <unordered_map>
-#include <pthread.h>
-#include <chrono>
 #include <omp.h>
-#include <tmmintrin.h>
 #include <math.h>
-#include <algorithm>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <stdio.h>
-#include <fstream>
-#include <iostream>
-#include <vector>
-#include <atomic>
-#include <mutex>
-#include <stdint.h>
-#include <unordered_map>
-#include <pthread.h>
-#include <chrono>
-#include <omp.h>
 #include <tmmintrin.h>
-#include <math.h>
-#include <algorithm>
 #include "robin_hood.h"
 
 
@@ -126,15 +104,7 @@ string getLineFasta(ifstream* in) {
 
 
 
-
-
 struct SKC{
-  string sk;
-  vector<uint8_t> counts;
-};
-
-
-struct SKC2{
   __uint128_t sk;
   vector<uint8_t> counts;
 };
@@ -375,19 +345,6 @@ return rc;
 
 
 
-int64_t kmer_in_super_kmer(const string& super_kmer,const string& kmer){
-	size_t found = super_kmer.find(kmer);
-    if (found != string::npos){
-			return found;
-		}
-		found = super_kmer.find(revComp(kmer));
-	    if (found != string::npos){
-				return found;
-			}
-		return -1;
-}
-
-
 string getCanonical(const string& str){
  return (min(str,revComp(str)));
 }
@@ -404,7 +361,7 @@ return res;
 
 
 
-int64_t kmer_in_super_kmer2(const SKC2& super_kmer,const uint64_t& kmer){
+int64_t kmer_in_super_kmer(const SKC& super_kmer,const uint64_t& kmer){
 	__uint128_t superkmer=super_kmer.sk;
 	uint64_t rc(rcb(kmer));
 	for(uint64_t i=0;i<super_kmer.counts.size();++i){
@@ -418,48 +375,17 @@ int64_t kmer_in_super_kmer2(const SKC2& super_kmer,const uint64_t& kmer){
 
 
 
-int compact(string& super_kmer,const string& kmer){
-	uint64_t ssk(super_kmer.size()),sk(kmer.size());
-	if(sk==0){return -1;}
-	if(ssk==0){
-		super_kmer=kmer;
-		return 0;
-	}
-	string rc_k(revComp(kmer)),end_sk(super_kmer.substr(ssk-k+1,k-1)), beg_k(kmer.substr(0,k-1));
-	if(end_sk==beg_k){
-		super_kmer=super_kmer+(kmer.substr(k-1));
-		return super_kmer.size()-k+1;
-	}
-	string beg_rck(rc_k.substr(0,k-1));
-	if(end_sk==beg_rck){
-		super_kmer=super_kmer+(rc_k.substr(k-1));
-		return super_kmer.size()-k+1;
-	}
-	return -1;
-}
-
-
 uint64_t compaction(0);
 
 
-int compact2(SKC2& super_kmer, uint64_t kmer){
-	// return -1;
+
+int compact(SKC& super_kmer, uint64_t kmer){
 	__uint128_t superkmer=super_kmer.sk;
 	uint64_t sizesk=super_kmer.counts.size();
-	// cout<<"super	"<<kmer2str(super_kmer.sk,sizesk+30)<<endl;
 	__uint128_t end_sk=superkmer>>(2*sizesk);
-	// cout<<"super	"<<kmer2str(end_sk,sizesk+30)<<endl;
 	__uint128_t beg_k=kmer&((1<<62)-1);
-	// cout<<"beg kmer	"<<kmer2str(beg_k,33)<<endl;
-	// cout<<"end skmer	"<<kmer2str(end_sk,33)<<endl;
 	if(end_sk==beg_k){
-		// cout<<"compact1"<<endl;
-		// cout<<"kmer	"<<kmer2str(kmer,31)<<endl;
-		// cout<<"super	"<<kmer2str(super_kmer.sk,30+sizesk)<<endl;
-			// cout<<"kmer	"<<kmer2str(kmer>>60,31)<<endl;
 		super_kmer.sk+=( ( (__uint128_t)(kmer>>60)<<(2*(31+sizesk)) ));
-		// cout<<"super	"<<kmer2str(super_kmer.sk,31+sizesk)<<endl;
-		// cin.get();
 		super_kmer.counts.push_back(1);
 		compaction++;
 		return sizesk+1;
@@ -467,13 +393,7 @@ int compact2(SKC2& super_kmer, uint64_t kmer){
 	kmer=rcb(kmer);
 	beg_k=kmer&((1<<62)-1);
 	if(end_sk==beg_k){
-		// cout<<"compact2"<<endl;
-		// cout<<"kmer	"<<kmer2str(kmer,31)<<endl;
-		// cout<<"super	"<<kmer2str(super_kmer.sk,sizesk+30)<<endl;
-		// super_kmer.sk<<=2;
-		// cout<<"super	"<<kmer2str(super_kmer.sk,sizesk+31)<<endl;
 		super_kmer.sk+=( ( (__uint128_t)(kmer>>60)<<(2*(31+sizesk)) ));
-		// cout<<"super	"<<kmer2str(super_kmer.sk,sizesk+31)<<endl;
 		super_kmer.counts.push_back(1);
 		compaction++;
 		return sizesk+1;
@@ -484,18 +404,7 @@ int compact2(SKC2& super_kmer, uint64_t kmer){
 
 
 void dump_count(const SKC& skc){
-	for(uint64_t i(0);i<skc.counts.size();++i){
-		cout<<">"<<(uint64_t)skc.counts[i]<<"\n"<<getCanonical(skc.sk.substr(i,k))<<"\n";
-		// cout<<getCanonical(skc.sk.substr(i,k))<<" "<<(uint64_t)skc.counts[i]<<"\n";
-	}
-}
-
-
-void dump_count2(const SKC2& skc){
 	string skmer(kmer2str(skc.sk,skc.counts.size()+30));
-	// cout<<skc.counts.size()<<endl;
-	// cout<<skmer.size()<<endl;
-	// reverse(skc.counts.begin(),skc.counts.end());
 	for(uint64_t i(0);i<skc.counts.size();++i){
 			cout<<getCanonical(skmer.substr(i,k))<<" "<<(uint64_t)skc.counts[skc.counts.size()-1-i]<<endl;
 			if(check){
@@ -509,36 +418,10 @@ void dump_count2(const SKC2& skc){
 
 
 
-void insert_kmer(const string& str_kmer, vector<vector<SKC>>& skc){
-  uint64_t min(get_minimizer(str2num(str_kmer)));
-	for(uint64_t i(0); i < skc[min].size();i++){
-	 	int64_t pos(kmer_in_super_kmer(skc[min][i].sk,str_kmer));
-    if(pos>=0){
-      skc[min][i].counts[pos]++;
-			return;
-    }
-  }
-
-  // for(uint64_t i(0); i < skc[min].size();i++){
-	//  	int64_t pos(compact(skc[min][i].sk,str_kmer));
-  //   if(pos>	0){
-  //     if(skc[min][i].counts.size()<pos){
-  //       skc[min][i].counts.resize(pos,0);
-  //     }
-  //     skc[min][i].counts[pos-1]++;
-	// 		return;
-  //   }
-  // }
-	skc[min].push_back({str_kmer,{1}});
-}
-
-
-
-void insert_kmer2(const uint64_t& kmer, vector<vector<SKC2>>& skc){
+void insert_kmer(const uint64_t& kmer, vector<vector<SKC>>& skc){
   uint64_t min=(get_minimizer(kmer));
 	for(uint64_t i=(0); i < skc[min].size();i++){
-		// cout<<"searchsk"<<endl;
-	 	int64_t pos=(kmer_in_super_kmer2(skc[min][i],kmer));
+	 	int64_t pos=(kmer_in_super_kmer(skc[min][i],kmer));
     if(pos>=0){
       skc[min][i].counts[pos]++;
 			return;
@@ -546,8 +429,7 @@ void insert_kmer2(const uint64_t& kmer, vector<vector<SKC2>>& skc){
   }
 
   for(uint64_t i=(0); i < skc[min].size();i++){
-			// cout<<"search compact"<<endl;
-	 	int64_t pos=(compact2(skc[min][i],kmer));
+	 	int64_t pos=(compact(skc[min][i],kmer));
     if(pos>0){
 			return;
     }
@@ -563,16 +445,6 @@ void dump_counting(vector<vector<SKC>>& buckets){
 			dump_count(buckets[i][ii]);
 		}
 	}
-}
-
-
-
-void dump_counting2(vector<vector<SKC2>>& buckets){
-	for(uint64_t i(0);i< buckets.size();++i) {
-		for(uint64_t ii(0);ii<buckets[i].size();++ii){
-			dump_count2(buckets[i][ii]);
-		}
-	}
 	if(check){cout<<"The results were checked"<<endl;}
 }
 
@@ -583,21 +455,9 @@ uint64_t nb_kmer_read(0);
 
 
 void count_line(const string& line, vector<vector<SKC>>& buckets){
-  string str_kmer;
-  for(uint64_t i=0;i+k<=line.size();++i){
-    str_kmer=getCanonical(line.substr(i,k));
-    insert_kmer(str_kmer,buckets);
-		nb_kmer_read++;
-  }
-}
-
-
-
-void count_line2(const string& line, vector<vector<SKC2>>& buckets){
   uint64_t kmer;
 	uint64_t seq=(str2num(line.substr(0,k))),rcSeq(rcb(seq)),canon(min(seq,rcSeq));
-	insert_kmer2(canon,buckets);
-	// cout<<kmer2str(canon)<<endl;;
+	insert_kmer(canon,buckets);
 	if(check){
 		real_count[getCanonical(line.substr(0,k))]++;
 	}
@@ -608,10 +468,10 @@ void count_line2(const string& line, vector<vector<SKC2>>& buckets){
 		updateK(seq,line[i+k]);
 		updateRCK(rcSeq,line[i+k]);
 		canon=(min(seq,rcSeq));
-		// cout<<kmer2str(canon)<<endl;;
-		insert_kmer2(canon,buckets);
+		insert_kmer(canon,buckets);
   }
 }
+
 
 
 
@@ -622,22 +482,6 @@ void read_fasta_file(const string& filename,vector<vector<SKC>>& buckets){
   while(in.good()){
     line=getLineFasta(&in);
     count_line(line,buckets);
-		line_count++;
-		if(line_count%1000==0){
-			cerr<<"-"<<flush;
-		}
-  }
-}
-
-
-
-void read_fasta_file2(const string& filename,vector<vector<SKC2>>& buckets){
-  ifstream in(filename);
-  string line;
-	uint64_t line_count;
-  while(in.good()){
-    line=getLineFasta(&in);
-    count_line2(line,buckets);
 		line_count++;
 		if(line_count%1000==0){
 			cerr<<"-"<<flush;
@@ -654,14 +498,8 @@ int main(int argc, char ** argv){
 		cout<<"[fasta file]"<<endl;
 		exit(0);
 	}
-	if(false){
-		vector<vector<SKC>> buckets(minimizer_number);
-	  read_fasta_file(argv[1],buckets);
-		dump_counting(buckets);
-	}else{
-		vector<vector<SKC2>> buckets(minimizer_number);
-	  read_fasta_file2(argv[1],buckets);
-		dump_counting2(buckets);
-	}
+	vector<vector<SKC>> buckets(minimizer_number);
+  read_fasta_file(argv[1],buckets);
+	// dump_counting2(buckets);
   return 0;
 }
