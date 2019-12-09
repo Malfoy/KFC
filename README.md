@@ -1,6 +1,8 @@
 # KFC
 kmer week experiment
 
+[![Build Status](https://travis-ci.com/Malfoy/KFC.svg?branch=master)](https://travis-ci.com/Malfoy/KFC)
+
 
 ## Building
 
@@ -10,15 +12,15 @@ To build a debug version (default in this early development stage):
 ``` bash
 git clone https://github.com/Malfoy/KFC.git
 cd KFC
-./install.sh
+make -j
 ```
 
 For an optimized build add `DEBUG=0` to the make command:
 ```
-make DEBUG=0 -j
+make -j DEBUG=0
 ```
 
-For building with optimizations while keeping asserts enabled, use `DEBUG=0 ASSERTS=1`
+For building with optimizations while keeping asserts enabled, use `make -j DEBUG=0 ASSERTS=1`
 
 ## Development
 

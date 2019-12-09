@@ -34,11 +34,11 @@ ifeq ($(DEBUG_SYMS), 1)
 endif
 
 WARNS+= -Wall
-CFLAGS+=-std=c++17 -pipe -fopenmp ${WARNS}
+CFLAGS+=-std=c++14 -pipe -fopenmp ${WARNS}
 LDFLAGS+=-lpthread -fopenmp -lz
 
-INCS=-Ithirdparty/gatb-lite/include/ -Ithirdparty/robin-hood-hashing/src/include
-SUBMODULE_TOKEN=thirdparty/gatb-lite/README.md
+INCS=-isystem thirdparty/gatb-lite/include/ -isystem thirdparty/robin-hood-hashing/src/include
+SUBMODULE_TOKEN=thirdparty/gatb-lite/CMakeLists.txt
 
 CPPS = $(wildcard *.cpp)
 OBJS = $(CPPS:.cpp=.o)
