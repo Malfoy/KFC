@@ -1,24 +1,26 @@
 # KFC
 kmer week experiment
 
+[![Build Status](https://travis-ci.com/Malfoy/KFC.svg?branch=master)](https://travis-ci.com/Malfoy/KFC)
+
 
 ## Building
 
 Prior to any compilation, please check your gcc version. It must be 8+.
 
 To build a debug version (default in this early development stage):
-``` bash
+<!-- ``` bash
 git clone https://github.com/Malfoy/KFC.git
 cd KFC
 ./install.sh
-```
+``` -->
 
-For an optimized build add `DEBUG=0` to the make command:
+<!-- For an optimized build add `DEBUG=0` to the make command:
 ```
 make DEBUG=0 -j
-```
+``` -->
 
-For building with optimizations while keeping asserts enabled, use `DEBUG=0 ASSERTS=1`
+<!-- For building with optimizations while keeping asserts enabled, use `DEBUG=0 ASSERTS=1` -->
 
 ## Development
 
