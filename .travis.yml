@@ -15,6 +15,9 @@ git:
     depth: 2
     submodules: false
     lfs_skip_smudge: true
+env:
+  - DEBUG=1
+  - DEBUG=0 ASSERTS=1
 jobs:
   include:
     - stage: "compile"
@@ -22,20 +25,9 @@ jobs:
         - make check_buildsys
         - make kfc_blue
         - make tests
-      env: DEBUG=1
     - script:
         - make check_buildsys
         - make kfc_red
-      env: DEBUG=1
-    - script:
-        - make check_buildsys
-        - make kfc_blue
-        - make tests
-      env: DEBUG=0 ASSERTS=1
-    - script:
-        - make check_buildsys
-        - make kfc_red
-      env: DEBUG=0 ASSERTS=1
 env:
   - MATRIX_EVAL="CC=g++-8"
 before_install:
