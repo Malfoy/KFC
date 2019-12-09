@@ -11,10 +11,10 @@ addons:
   apt:
     packages:
     - g++-8
-jobs:
-  include:
-    stage: compile
-      script: make
+# jobs:
+#   include:
+stage: compile
+  script: make kfc_red
 env:
   - MATRIX_EVAL="CC=g++-8"
 before_install:
