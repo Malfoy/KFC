@@ -1,0 +1,1 @@
+data/ecoli_150bp_50kreads.fasta filter=lfs diff=lfs merge=lfs -text

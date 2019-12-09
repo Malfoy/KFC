@@ -15,8 +15,8 @@ ifeq ($(DEBUG), 1)
         -Werror=volatile-register-var -Wsuggest-final-types
         DEBUG_SYMS=1
 else
-        CFLAGS+=-O3 -flto -march=native -mtune=native
-        LDFLAGS+=-O3 -flto -march=native -mtune=native
+        CFLAGS+=-O3 -fno-fat-lto-objects -flto=jobserver -march=native -mtune=native
+        LDFLAGS+=-fuse-linker-plugin
         WARNS=-Wfatal-errors
 endif
 
@@ -43,7 +43,7 @@ SUBMODULE_TOKEN=thirdparty/gatb-lite/CMakeLists.txt
 CPPS = $(wildcard *.cpp)
 OBJS = $(CPPS:.cpp=.o)
 DEPS = $(OBJS:%.o=%.d)
-KFC_OBJ = SolidSampler.o BitSet.o BloomFilter.o Hash.o CascadingBloomFilter.o BitSet.o
+KFC_BLUE_OBJ = SolidSampler.o BitSet.o BloomFilter.o Hash.o CascadingBloomFilter.o BitSet.o
 
 EXEC=kfc_blue kfc_red kmerCountEvaluator
 LIB=kfc_blue.a
@@ -52,24 +52,29 @@ all: $(EXEC) $(LIB) tests
 
 kmerCountEvaluator: evaluator.o
 	@echo "[LD] $@"
-	@$(CC) -o $@ $^ $(LDFLAGS)
+	@mkdir --parents ./bin
+	@$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
+	@mv kmerCountEvaluator bin/
 
-kfc_blue: $(KFC_OBJ) $(EXT_BUILT_LIBS) kfc_blue.o
+kfc_blue: $(KFC_BLUE_OBJ) $(EXT_BUILT_LIBS) kfc_blue.o
 	@echo "[LD] $@"
-	@$(CC) -o $@ $^ $(LDFLAGS)
+	@mkdir --parents ./bin
+	@$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
+	@mv kfc_blue bin/
 
-kfc_red:  kfc_red.o
+kfc_red: kfc_red.o
 	@echo "[LD] $@"
-	@$(CC) -o $@ $^ $(LDFLAGS)
+	@mkdir --parents ./bin
+	@$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
+	@mv kfc_red bin/
 
-kfc_blue.a: $(KFC_OBJ)
+kfc_blue.a: $(KFC_BLUE_OBJ)
 	@echo "[AR] $@"
-	@$(AR) rcs kfc_blue.a $(KFC_OBJ)
+	@$(AR) rcs kfc_blue.a $(KFC_BLUE_OBJ)
 
 -include $(DEPS)
 
 %.o: %.cpp $(SUBMODULE_TOKEN)
-	@gcc --version
 	@echo "[CC] $<"
 	@$(CC) $(CFLAGS) $(INCS) -MMD -o $@ -c $<
 
@@ -89,5 +94,11 @@ clean:
 
 rebuild: clean
 	@$(MAKE) -s all
+
+check_buildsys: $(SUBMODULE_TOKEN)
+	$(CC) --version
+	$(AR) --version
+	@echo CFLAGS=$(CFLAGS)
+	@echo LDFLAGS=$(LDFLAGS)
 
 .PHONY: all tests clean rebuild
