@@ -275,20 +275,48 @@ uint64_t canonize(uint64_t x,uint64_t n){
 
 
 uint64_t get_minimizer(uint64_t seq){
-	uint64_t mini,mmer,hash_mini(-1);
+	uint64_t mini,mmer;
 	mmer=seq%minimizer_number;
 	mini=mmer=canonize(mmer,minimizer_size);
+	uint64_t hash_mini=unrevhash(mmer);
 	for(uint64_t i(1);i<=k-minimizer_size;i++){
 		seq>>=2;
 		mmer=seq%minimizer_number;
 		mmer=canonize(mmer,minimizer_size);
+		// uint64_t hash = ((mmer));
 		uint64_t hash = (unrevhash(mmer));
 		if(hash_mini>hash){
 			mini=mmer;
 			hash_mini=hash;
 		}
 	}
-	return revhash((uint64_t)mini)%minimizer_number;
+	return ((uint64_t)mini)%minimizer_number;
+}
+
+
+
+uint64_t get_minimizer_pos(uint64_t seq,uint64_t& position){
+	uint64_t mini,mmer;
+	mmer=seq%minimizer_number;
+	mini=mmer=canonize(mmer,minimizer_size);
+	uint64_t hash_mini=unrevhash(mmer);
+	position=0;
+	for(uint64_t i(1);i<=k-minimizer_size;i++){
+		seq>>=2;
+		mmer=seq%minimizer_number;
+		mmer=canonize(mmer,minimizer_size);
+		uint64_t hash = (unrevhash(mmer));
+		// uint64_t hash = ((mmer));
+		if(hash_mini>hash){
+			// cout<<i<<endl;
+			// cout<<"kmer"<<kmer2str(seq,k)<<endl;
+			// cout<<"min"<<kmer2str(hash,minimizer_size)<<endl;
+			position=i;
+			mini=mmer;
+			hash_mini=hash;
+		}
+	}
+	return ((uint64_t)mini)%minimizer_number;
 }
 
 
@@ -305,7 +333,8 @@ uint64_t nuc2intrc(char c){
 
 
 
-uint64_t offsetUpdateAnchor((uint64_t)1<<62);
+uint64_t offsetUpdateAnchor((uint64_t)1<<(2*k));
+uint64_t offsetUpdateAnchorMin((uint64_t)1<<(2*(minimizer_size)));
 
 
 
@@ -316,10 +345,24 @@ inline void updateK(uint64_t& min, char nuc){
 }
 
 
+inline void updateM(uint64_t& min, char nuc){
+	min<<=2;
+	min+=nuc2int(nuc);
+	min%=offsetUpdateAnchorMin;
+}
+
+
 
 inline void updateRCK(uint64_t& min, char nuc){
 	min>>=2;
 	min+=(nuc2intrc(nuc)<<(2*k-2));
+}
+
+
+
+inline void updateRCM(uint64_t& min, char nuc){
+	min>>=2;
+	min+=(nuc2intrc(nuc)<<(2*minimizer_size-2));
 }
 
 
@@ -406,7 +449,7 @@ int compact(SKC& super_kmer, uint64_t kmer){
 void dump_count(const SKC& skc){
 	string skmer(kmer2str(skc.sk,skc.counts.size()+30));
 	for(uint64_t i(0);i<skc.counts.size();++i){
-			cout<<getCanonical(skmer.substr(i,k))<<" "<<(uint64_t)skc.counts[skc.counts.size()-1-i]<<endl;
+			// cout<<getCanonical(skmer.substr(i,k))<<" "<<(uint64_t)skc.counts[skc.counts.size()-1-i]<<endl;
 			if(check){
 				if(real_count[getCanonical(skmer.substr(i,k))] != (uint64_t)skc.counts[skc.counts.size()-1-i]) {
 					cerr<<"fail "<<getCanonical(skmer.substr(i,k))<<" "<<real_count[getCanonical(skmer.substr(i,k))]<<" "
@@ -418,23 +461,22 @@ void dump_count(const SKC& skc){
 
 
 
-void insert_kmer(const uint64_t& kmer, vector<vector<SKC>>& skc){
-  uint64_t min=(get_minimizer(kmer));
-	for(uint64_t i=(0); i < skc[min].size();i++){
-	 	int64_t pos=(kmer_in_super_kmer(skc[min][i],kmer));
+void insert_kmer(const uint64_t& kmer, vector<SKC>& skc){
+	for(uint64_t i=(0); i < skc.size();i++){
+	 	int64_t pos=(kmer_in_super_kmer(skc[i],kmer));
     if(pos>=0){
-      skc[min][i].counts[pos]++;
+      skc[i].counts[pos]++;
 			return;
     }
   }
 
-  for(uint64_t i=(0); i < skc[min].size();i++){
-	 	int64_t pos=(compact(skc[min][i],kmer));
+  for(uint64_t i=(0); i < skc.size();i++){
+	 	int64_t pos=(compact(skc[i],kmer));
     if(pos>0){
 			return;
     }
   }
-	skc[min].push_back({kmer,{1}});
+	skc.push_back({kmer,{1}});
 }
 
 
@@ -449,15 +491,43 @@ void dump_counting(vector<vector<SKC>>& buckets){
 }
 
 
+void dump_counting_stats(vector<vector<SKC>>& buckets){
+	for(uint64_t i(0);i< buckets.size();++i) {
+		if(buckets[i].size()!=0)
+			cout<<buckets[i].size()<<" ";
+	}
+	cout<<endl;
+}
+
+
 
 uint64_t nb_kmer_read(0);
 
 
 
 void count_line(const string& line, vector<vector<SKC>>& buckets){
+	// cout<<"countline"<<endl;
   uint64_t kmer;
 	uint64_t seq=(str2num(line.substr(0,k))),rcSeq(rcb(seq)),canon(min(seq,rcSeq));
-	insert_kmer(canon,buckets);
+	uint64_t min_seq=(str2num(line.substr(k-minimizer_size,minimizer_size))),min_rcseq(rcbc(min_seq,minimizer_size)),min_canon(min(min_seq,min_rcseq));
+	// cout<<"newmin: "<<kmer2str(min_seq,minimizer_size)<<endl;
+	// cout<<"newmin: "<<kmer2str(min_rcseq,minimizer_size)<<endl;
+
+	uint64_t position_min;
+	uint64_t minimizer=get_minimizer_pos(rcSeq,position_min);
+	// if(get_minimizer(canon)!=minimizer){
+	// 	cout<<"bug1"<<endl;
+	// 	cout<<get_minimizer(canon)<<" "<<minimizer<<endl;
+	// 	cin.get();
+	// }
+	// if( canonize(str2num(line.substr(position_min,minimizer_size)),minimizer_size) !=minimizer ) {
+	// 	cout<<"bug3"<<endl;
+	// 	cout<<position_min<<endl;
+	// 	cout<<"min: "<<kmer2str(minimizer,minimizer_size)<<endl;
+	// 	cout<<line.substr(position_min,minimizer_size)<<endl;
+	// 	cin.get();
+	// }
+	insert_kmer(canon,buckets[minimizer]);
 	if(check){
 		real_count[getCanonical(line.substr(0,k))]++;
 	}
@@ -468,7 +538,48 @@ void count_line(const string& line, vector<vector<SKC>>& buckets){
 		updateK(seq,line[i+k]);
 		updateRCK(rcSeq,line[i+k]);
 		canon=(min(seq,rcSeq));
-		insert_kmer(canon,buckets);
+		// cout<<endl<<"KMER"<<kmer2str(seq,k)<<endl;
+		// cout<<"min: "<<kmer2str(minimizer,minimizer_size)<<endl;
+		updateM(min_seq,line[i+k]);
+		updateRCM(min_rcseq,line[i+k]);
+		min_canon=(min(min_seq,min_rcseq));
+		// cout<<"oldmin: "<<kmer2str(minimizer,minimizer_size)<<endl;
+		// cout<<"newmin: "<<kmer2str(min_seq,minimizer_size)<<endl;
+		// cout<<"newmin: "<<kmer2str(min_rcseq,minimizer_size)<<endl;
+		//the new Mmer is a MINIMIZER
+		if(unrevhash(min_canon)<unrevhash(minimizer)){
+			// cout<<"minREAL: "<<kmer2str(get_minimizer(canon),minimizer_size)<<endl;
+			// cout<<"oldmin: "<<kmer2str(minimizer,minimizer_size)<<endl;
+			// cout<<"newmin: "<<kmer2str(min_canon,minimizer_size)<<endl;
+			// cout<<"up1"<<endl;
+			minimizer=min_canon;
+			position_min=i+k-minimizer_size+1;
+			// if( canonize(str2num(line.substr(position_min,minimizer_size)),minimizer_size) !=minimizer ) {
+			// 	cout<<"bug4"<<endl;
+			// 	cout<<get_minimizer(str2num(line.substr(position_min,minimizer_size)))<<" "<<minimizer<<endl;
+			// 	cin.get();
+			// }
+		}
+		//the previous MINIMIZER is outdated
+		if(i>=position_min){
+			// cout<<"up2"<<endl;
+			minimizer=get_minimizer_pos(rcSeq,position_min);
+			position_min+=i+1;
+			// if( canonize(str2num(line.substr(position_min,minimizer_size)),minimizer_size) !=minimizer ) {
+			// 	cout<<"bug5"<<endl;
+			// 	cout<<get_minimizer(str2num(line.substr(position_min,minimizer_size)))<<" "<<minimizer<<endl;
+			// 	cin.get();
+			// }
+		}
+		// if(get_minimizer(canon)!=minimizer){
+		// 	cout<<i<<" "<<position_min<<endl;
+		// 	cout<<"bug2"<<endl;
+		// 	cout<<"minreal: "<<kmer2str(get_minimizer(canon),minimizer_size)<<endl;
+		// 	cout<<"min: "<<kmer2str(minimizer,minimizer_size)<<endl;
+		// 	cin.get();
+		// }
+
+		insert_kmer(canon,buckets[minimizer]);
   }
 }
 
@@ -488,6 +599,7 @@ void read_fasta_file(const string& filename,vector<vector<SKC>>& buckets){
 		}
   }
 	cerr<<compaction<<endl;
+	cerr<<line_count<<endl;
 }
 
 
@@ -498,8 +610,12 @@ int main(int argc, char ** argv){
 		cout<<"[fasta file]"<<endl;
 		exit(0);
 	}
+	if(argc>2){
+		check=true;
+	}
 	vector<vector<SKC>> buckets(minimizer_number);
   read_fasta_file(argv[1],buckets);
-	// dump_counting2(buckets);
+	dump_counting(buckets);
+	// dump_counting_stats(buckets);
   return 0;
 }
