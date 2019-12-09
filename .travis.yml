@@ -13,9 +13,9 @@ addons:
     - g++-8
 jobs:
   include:
-    - stage: compile
+    - stage: "compile"
       script: make kfc_red
-      script: make kfc_blue
+    - script: make kfc_blue
 env:
   - MATRIX_EVAL="CC=g++-8"
 before_install:
