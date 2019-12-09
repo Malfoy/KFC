@@ -86,10 +86,10 @@ tests: kfc_blue.a
 	@echo "[run tests]"
 	@tests/tests
 
-# TODO release: we remove the 'kfc' binary file for convenience when tests; remove that later
+# TODO release: we remove the 'kfc' and 'bin/kfc' binary files for convenience when tests; remove that later
 clean:
 	@echo "[clean]"
-	@rm -f $(EXEC) $(LIB) $(OBJS) $(DEPS) kfc
+	@rm -f $(EXEC) $(LIB) $(OBJS) $(DEPS) kfc bin/bin
 	@$(MAKE) -s -C tests/ clean
 
 rebuild: clean

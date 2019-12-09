@@ -4,3 +4,6 @@
 [submodule "thirdparty/robin-hood-hashing"]
 	path = thirdparty/robin-hood-hashing
 	url = https://github.com/martinus/robin-hood-hashing.git
+[submodule "dsk_phase2/gatb-core"]
+	path = dsk_phase2/gatb-core
+	url = https://github.com/GATB/gatb-core
