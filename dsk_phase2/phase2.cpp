@@ -167,7 +167,7 @@ template<size_t span> struct Functor  {  void operator ()  (Parameter parameter)
     }
 
     u_int64_t mem = (max_memory*MBYTE)/nbCores;
-    typedef typename Kmer<span>::Count                                      Count;
+    typedef typename Kmer<span>::Count  Count;
 	size_t cacheSize = std::min ((u_int64_t)(200*1000), mem/(50*sizeof(Count)));
 
     std::string _tmpStorageName_superK; // TODO maybe needs to be set
