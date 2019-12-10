@@ -1,7 +1,4 @@
-kfc_blue
-kfc_red
-kmerCountEvaluator
-tests/tests
+/tests/tests
 *.o
 *.a
 *.d
@@ -14,7 +11,7 @@ tests/tests
 gmon.out
 *.orig
 
-/thirdparty/
 .snakemake/
-bin/
-bench/
+/bin/
+/bench/
+/dsk_phase2/gatb-core-stripped/build/
