@@ -32,5 +32,8 @@ If you have `clang-format` installed on your system, please setup the pre-commit
 ## Benchmarks
 
 Please use the snakefile to compare latest KMC version with KFC.
-It's under construction.
+```
+snakemake --config color="blue"
+snakemake --config color="red"
+```
 
