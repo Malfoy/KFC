@@ -41,7 +41,7 @@ def compare_files(verif, ref):
             if v_count == r_count:
                 identical += 1
             else:
-                invalide += 1
+                diff_count += 1
                 print(f"~{r_kmer} {v_count}->{r_count}")
 
     # Go to the end of the files
