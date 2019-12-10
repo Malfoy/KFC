@@ -3,6 +3,7 @@ KMC_REPO="https://github.com/refresh-bio/KMC.git"
 KMC_DIR="bench/softwares/kmc"
 INPUT="data/ecoli_150bp_50kreads.fasta"
 K=31
+KMC_BLUE_MEM=67
 
 def raw_files(wildcards):
     if "color" in config and (config["color"] == "red" or config["color"] == "blue"):
@@ -41,7 +42,7 @@ rule kfc_blue_exec:
     output:
         "bench/kfc_blue_kmers.txt"
     shell:
-        "./bin/kfc_blue {input.data} > {output};"
+        "./bin/kfc_blue {input.data} {KMC_BLUE_MEM} > {output};"
         "python3 scripts/canonize_kmer_counts.py {output} > tmp_blue_kmers.csv;"
         "sort tmp_blue_kmers.csv -o {output};"
         "rm tmp_blue_kmers.csv;"

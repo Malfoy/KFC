@@ -11,9 +11,6 @@
 #include <gatbl/kmer.hpp>
 #include <robin_hood.h>
 
-using namespace std;
-using namespace chrono;
-
 template<typename Window = gatbl::kmer_window<kmer_t>>
 class sampling_parser : public gatbl::details::sequence2kmers_base<sampling_parser<Window>, Window> {
   public:
@@ -23,7 +20,7 @@ class sampling_parser : public gatbl::details::sequence2kmers_base<sampling_pars
 	  : base(std::forward<W>(window))
 	  , _sampler(memory_size) {}
 
-	vector<uint64_t>&& get_aboundant_kmers() && { return std::move(_sampler.get_kmers()); }
+	std::vector<uint64_t>&& get_aboundant_kmers() && { return std::move(_sampler.get_kmers()); }
 
   protected:
 	friend base;
@@ -91,35 +88,40 @@ class counting_parser : public gatbl::details::sequence2kmers_base<counting_pars
 };
 
 int main(int argc, char** argv) {
-	uint64_t size = (uint64_t(1) << 22);
-	if (argc < 2) {
-		cerr << "[Fasta file]" << endl;
-		exit(0);
+	if (argc < 3) {
+		std::cerr << argv[0] << " input.fa/fq memory_in_MB" << std::endl;
+		std::exit(1);
 	}
 
+	const std::string input_path = argv[1];
+	uint64_t size = size_t(std::stod(argv[2]) * double(size_t(1) << 20));
 	const gatbl::ksize_t k = 31;
 
 	// WE TRY TO FIND THE ABUNDANT KMERS
 
-	high_resolution_clock::time_point t1 = high_resolution_clock::now();
-	vector<uint64_t> abundant_kmer;
+	using clock = std::chrono::high_resolution_clock;
+	using std::chrono::duration;
+	using std::chrono::duration_cast;
+
+	auto t1 = clock::now();
+	std::vector<uint64_t> abundant_kmer;
 	{
 		sampling_parser<> sampler(k, size);
-		sampler.read_fastx(argv[1]);
+		sampler.read_fastx(input_path);
 		abundant_kmer = std::move(sampler).get_aboundant_kmers();
 	}
-	high_resolution_clock::time_point t2 = high_resolution_clock::now();
-	duration<double> time_span1 = duration_cast<duration<double>>(t2 - t1);
+	auto t2 = clock::now();
+	auto time_span1 = duration_cast<duration<double>>(t2 - t1);
 
-	std::cerr << "SAMPLING DONE" << endl;
-	std::cerr << "It took me " << time_span1.count() << " seconds.\n" << endl;
+	std::cerr << "SAMPLING DONE" << std::endl;
+	std::cerr << "It took me " << time_span1.count() << " seconds.\n" << std::endl;
 
 	counting_parser<> counter(k, std::move(abundant_kmer));
-	counter.read_fastx(argv[1]);
+	counter.read_fastx(input_path);
 
-	high_resolution_clock::time_point t3 = high_resolution_clock::now();
-	duration<double> time_span2 = duration_cast<duration<double>>(t3 - t2);
-	std::cerr << "It took me " << time_span2.count() << " seconds.\n" << endl;
+	auto t3 = clock::now();
+	auto time_span2 = duration_cast<duration<double>>(t3 - t2);
+	std::cerr << "It took me " << time_span2.count() << " seconds.\n" << std::endl;
 
 	std::cout << counter;
 
