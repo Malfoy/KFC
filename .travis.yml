@@ -39,7 +39,7 @@ jobs:
     - stage: "compare"
       before_script:
         - pip install snakemake --user
-    - script:
+      script:
         - make check_buildsys
         - make kfc_blue
         - snakemake --config color="blue"
