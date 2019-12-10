@@ -42,6 +42,7 @@ jobs:
     - stage: "compare"
       before_script:
         - pip3 install snakemake --user
+        - pip3 install biopython
       script:
         - make check_buildsys
         - make kfc_blue
@@ -49,6 +50,7 @@ jobs:
       env: DEBUG=0 ASSERTS=1
     - before_script:
         - pip3 install snakemake --user
+        - pip3 install biopython
       script:
         - make check_buildsys
         - make kfc_red
