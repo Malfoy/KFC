@@ -20,7 +20,7 @@ rule compare_kfcs_kmc:
     output:
         kfc_o="bench/diff_{color}.txt"
     shell:
-        f"./bin/kmerCountEvaluator {{input.kfc}} {{input.kmc}} {K} > {{output.kfc_o}};"
+        f"python3 scripts/eval_kmers.py {{input.kfc}} {{input.kmc}} > {{output.kfc_o}};"
 
 
 rule kfc_red_exec:
@@ -55,8 +55,8 @@ rule kmc_exec:
     output:
         "bench/kmc_kmers.txt"
     shell:
-        f"{{input.bin}} -fm -k{K} {{input.data}} tmp_bin . ;"
-        "{input.bin}_dump tmp_bin {output} ;"
+        f"{{input.bin}} -fm -k{K} -ci0 -cs2048 -cx4294967295 {{input.data}} tmp_bin . ;"
+        "{input.bin}_dump -ci0 -cx4294967295 tmp_bin {output} ;"
         "python3 scripts/canonize_kmer_counts.py {output} > tmp_kmc_kmers.csv;"
         "sort tmp_kmc_kmers.csv -o {output};"
         "rm tmp_bin* tmp_kmc_kmers.csv {input.update}"

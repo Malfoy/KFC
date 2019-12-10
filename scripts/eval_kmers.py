@@ -48,10 +48,12 @@ def compare_files(verif, ref):
     while v_line != '':
         v_kmer, v_count = re.split("\t| ", v_line.strip())
         print(f"+{v_kmer}")
+        invalide += 1
         v_line = verif.readline()
     while r_line != '':
         r_kmer, r_count = re.split("\t| ", r_line.strip())
         print(f"-{r_kmer}")
+        absent += 1
         r_line = ref.readline()
 
     return identical, diff_count, absent, invalide
@@ -61,4 +63,7 @@ if __name__ == "__main__":
     args = parse_arguments()
     with open(args.kmer_count) as verif, open(args.reference_count) as ref:
         counts = compare_files(verif, ref)
-        print(counts, file=sys.stderr)
+        print(f"{counts[0]} valid kmers", file=sys.stderr)
+        print(f"{counts[1]} kmers with wrong count", file=sys.stderr)
+        print(f"{counts[2]} missed kmers", file=sys.stderr)
+        print(f"{counts[3]} kmers that should not be present", file=sys.stderr)
