@@ -41,8 +41,8 @@ rule kfc_red_exec:
         "bench/kfc_red_kmers.txt"
     shell:
         "./bin/kfc_red {input.data} > {output};"
-        "python3 scripts/canonize_kmer_counts.py {output} > tmp_red_kmers.csv;"
-        "sort tmp_red_kmers.csv -o {output};"
+        "python3 -O scripts/canonize_kmer_counts.py {output} > tmp_red_kmers.csv;"
+        "LC_ALL=C sort tmp_red_kmers.csv -o {output};"
         "rm tmp_red_kmers.csv;"
 
 
@@ -53,8 +53,8 @@ rule kfc_blue_exec:
         "bench/kfc_blue_kmers.txt"
     shell:
         "./bin/kfc_blue {input.data} {KMC_BLUE_MEM} > {output};"
-        "python3 scripts/canonize_kmer_counts.py {output} > tmp_blue_kmers.csv;"
-        "sort tmp_blue_kmers.csv -o {output};"
+        "python3 -O scripts/canonize_kmer_counts.py {output} > tmp_blue_kmers.csv;"
+        "LC_ALL=C sort tmp_blue_kmers.csv -o {output};"
         "rm tmp_blue_kmers.csv;"
 
 
@@ -68,8 +68,8 @@ rule kmc_exec:
     shell:
         f"{{input.bin}} -fm -k{K} -ci0 -cs2048 -cx4294967295 -m6 {{input.data}} tmp_bin . ;"
         "{input.bin}_dump -ci0 -cx4294967295 tmp_bin {output} ;"
-        "python3 scripts/canonize_kmer_counts.py {output} > tmp_kmc_kmers.csv;"
-        "sort tmp_kmc_kmers.csv -o {output};"
+        "python3 -O scripts/canonize_kmer_counts.py {output} > tmp_kmc_kmers.csv;"
+        "LC_ALL=C sort tmp_kmc_kmers.csv -o {output};"
         "rm tmp_bin* tmp_kmc_kmers.csv {input.update}"
 
 
