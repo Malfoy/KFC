@@ -12,6 +12,16 @@ def raw_files(wildcards):
 
 rule all:
     input: raw_files
+    run:
+        import os
+        failed = False
+        for file in input:
+            if os.stat(file).st_size != 0:
+                print(f"Kmer difference with the reference is not empty for {file}", file=sys.stderr)
+                failed = True
+        if failed:
+            exit(1)
+
 
 
 rule compare_kfcs_kmc:
@@ -20,8 +30,8 @@ rule compare_kfcs_kmc:
         kmc="bench/kmc_kmers.txt"
     output:
         kfc_o="bench/diff_{color}.txt"
-    shell:
-        f"python3 scripts/eval_kmers.py {{input.kfc}} {{input.kmc}} > {{output.kfc_o}};"
+    run:
+        shell(f"python3 scripts/eval_kmers.py {{input.kfc}} {{input.kmc}} > {{output.kfc_o}}")
 
 
 rule kfc_red_exec:
