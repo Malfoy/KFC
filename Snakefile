@@ -22,41 +22,46 @@ rule all:
         if failed:
             exit(1)
 
-
-
 rule compare_kfcs_kmc:
     input:
-        kfc="bench/kfc_{color}_kmers.txt",
-        kmc="bench/kmc_kmers.txt"
+        kfc="bench/kfc_{color}_sortedkmers.txt",
+        kmc="bench/kmc_sortedkmers.txt"
     output:
         kfc_o="bench/diff_{color}.txt"
     run:
-        shell(f"python3 scripts/eval_kmers.py {{input.kfc}} {{input.kmc}} > {{output.kfc_o}}")
+        shell(f"python3 -O scripts/eval_kmers.py {{input.kfc}} {{input.kmc}} > {{output.kfc_o}}")
 
+rule sort_connonize_counts:
+    input:
+        input="bench/{name}_kmers.txt"
+    output:
+        output="bench/{name}_sortedkmers.txt"
+    shell:
+        "python3 -O scripts/canonize_kmer_counts.py {input} | LC_ALL=C sort -o {output}"
 
 rule kfc_red_exec:
     input:
         data=INPUT,
+        bin="bin/kfc_red"
     output:
         "bench/kfc_red_kmers.txt"
     shell:
-        "./bin/kfc_red {input.data} > {output};"
-        "python3 scripts/canonize_kmer_counts.py {output} > tmp_red_kmers.csv;"
-        "sort tmp_red_kmers.csv -o {output};"
-        "rm tmp_red_kmers.csv;"
-
+        "{input.bin} {input.data} > {output};"
 
 rule kfc_blue_exec:
     input:
         data=INPUT,
+        bin="bin/kfc_blue"
     output:
         "bench/kfc_blue_kmers.txt"
     shell:
-        "./bin/kfc_blue {input.data} {KMC_BLUE_MEM} > {output};"
-        "python3 scripts/canonize_kmer_counts.py {output} > tmp_blue_kmers.csv;"
-        "sort tmp_blue_kmers.csv -o {output};"
-        "rm tmp_blue_kmers.csv;"
+        "{input.bin} {input.data} {KMC_BLUE_MEM} > {output};"
 
+rule build_kfc:
+    output:
+        "bin/{exec}"
+    shell:
+        "make DEBUG=0 ASSERTS=1 check_buildsys {wildcards.exec}"
 
 rule kmc_exec:
     input:
@@ -68,10 +73,6 @@ rule kmc_exec:
     shell:
         f"{{input.bin}} -fm -k{K} -ci0 -cs2048 -cx4294967295 -m6 {{input.data}} tmp_bin . ;"
         "{input.bin}_dump -ci0 -cx4294967295 tmp_bin {output} ;"
-        "python3 scripts/canonize_kmer_counts.py {output} > tmp_kmc_kmers.csv;"
-        "sort tmp_kmc_kmers.csv -o {output};"
-        "rm tmp_bin* tmp_kmc_kmers.csv {input.update}"
-
 
 rule kmc_update_compile:
     input:
