@@ -56,7 +56,7 @@ rule kmc_exec:
     output:
         "bench/kmc_kmers.txt"
     shell:
-        f"{{input.bin}} -fm -k{K} -ci0 -cs2048 -cx4294967295 {{input.data}} tmp_bin . ;"
+        f"{{input.bin}} -fm -k{K} -ci0 -cs2048 -cx4294967295 -m6 {{input.data}} tmp_bin . ;"
         "{input.bin}_dump -ci0 -cx4294967295 tmp_bin {output} ;"
         "python3 scripts/canonize_kmer_counts.py {output} > tmp_kmc_kmers.csv;"
         "sort tmp_kmc_kmers.csv -o {output};"
@@ -73,7 +73,7 @@ rule kmc_update_compile:
     shell:
         f"cd {KMC_DIR}/;"
         "git pull origin master;"
-        "make -j;"
+        "make;"
         "./bin/kmc | head -n 1 | cut -d ' ' -f5 > ./kmc_version_checked.lock;"
         "git rev-parse HEAD >> ./kmc_version_checked.lock;"
         "cd -;"
