@@ -115,7 +115,7 @@ uint64_t k=(31);
 
 
 
-uint64_t minimizer_size(9);
+uint64_t minimizer_size(10);
 
 
 uint64_t minimizer_number((uint64_t)1<<(2*minimizer_size));
@@ -306,11 +306,7 @@ uint64_t get_minimizer_pos(uint64_t seq,uint64_t& position){
 		mmer=seq%minimizer_number;
 		mmer=canonize(mmer,minimizer_size);
 		uint64_t hash = (unrevhash(mmer));
-		// uint64_t hash = ((mmer));
 		if(hash_mini>hash){
-			// cout<<i<<endl;
-			// cout<<"kmer"<<kmer2str(seq,k)<<endl;
-			// cout<<"min"<<kmer2str(hash,minimizer_size)<<endl;
 			position=i;
 			mini=mmer;
 			hash_mini=hash;
@@ -411,8 +407,9 @@ void dump_count(const SKC& skc){
 			cout<<getCanonical(skmer.substr(i,k))<<" "<<(uint64_t)skc.counts[skc.counts.size()-1-i]<<endl;
 			if(check){
 				if(real_count[getCanonical(skmer.substr(i,k))] != (uint64_t)skc.counts[skc.counts.size()-1-i]) {
-					cerr<<"fail "<<getCanonical(skmer.substr(i,k))<<" "<<real_count[getCanonical(skmer.substr(i,k))]<<" "
-					<<(uint64_t)skc.counts[skc.counts.size()-1-i]<<endl;
+					cout<<i<<" "<<skc.counts.size()-1-i<<endl;
+					cerr<<"fail "<<(skmer.substr(i,k))<<" "<<revComp(skmer.substr(i,k))<<real_count[getCanonical(skmer.substr(i,k))]<<" "
+					<<(uint64_t)skc.counts[skc.counts.size()-1-i]<<endl;cin.get();
 				}
 			}
 	}
@@ -458,19 +455,36 @@ struct kmer_full{
 int64_t kmer_in_super_kmer(const SKC& super_kmer,const kmer_full& kmer){
 	__uint128_t superkmer=super_kmer.sk;
 	uint64_t skc_size=super_kmer.counts.size();
-	// cout<<"superkmer:"<<kmer2str(superkmer,k+30)<<endl;
-	// cout<<"kmer:"<<kmer2str(kmer.kmer_s,k)<<endl;
-	// cout<<"kmerrc:"<<kmer2str(kmer.kmer_rc,k)<<endl;
 	for(uint64_t i=0;i<skc_size;++i){
-		// cout<<"subsuperkmer:"<<kmer2str((uint64_t)(superkmer&(((uint64_t)1<<62)-1)),k+3)<<endl;
 		if(kmer.kmer_s==(uint64_t)(superkmer&(((uint64_t)1<<62)-1)) or kmer.kmer_rc==(uint64_t)(superkmer&(((uint64_t)1<<62)-1))) {
-			// cout<<"found"<<endl;cin.get();
 			return i;
 		}
 		superkmer>>=2;
 	}
-		// cout<<"not found"<<endl;
 	return -1;
+}
+
+
+
+vector<bool> kmers_in_super_kmer( vector<SKC>& super_kmers, const vector<kmer_full>& kmers){
+	uint64_t size_bucket=(super_kmers.size());
+	uint64_t buffer_size=kmers.size();
+		vector<bool> res(buffer_size,false);
+	for(uint64_t b=(0); b < size_bucket;b++){
+		__uint128_t superkmer=super_kmers[b].sk;
+		uint64_t sk_size=super_kmers[b].counts.size();
+		for(uint64_t i=0;i<sk_size;++i){
+			for(uint64_t j=0;j<buffer_size;++j){
+				if(kmers[j].kmer_s==(uint64_t)(superkmer&(((uint64_t)1<<62)-1)) or kmers[j].kmer_rc==(uint64_t)(superkmer&(((uint64_t)1<<62)-1))) {
+					super_kmers[b].counts[i]++;
+					res[j]=true;
+				}
+			}
+		}
+		superkmer>>=2;
+	}
+	return res;
+
 }
 
 
@@ -487,13 +501,9 @@ int compact(SKC& super_kmer, kmer_full kmer){
 	uint64_t end_sk=superkmer;
 	end_sk&=(((uint64_t)1<<60)-1);
 	uint64_t beg_k=kmer.kmer_s>>2;
-	// cout<<"beg:"<<kmer2str(beg_k,k+3)<<endl;
-	// cout<<"end:"<<kmer2str(end_sk,k+3)<<endl;
 	if(end_sk==beg_k){
 		super_kmer.sk<<=2;
 		super_kmer.sk+=( ( (kmer.kmer_s%4	 )));
-		// cout<<kmer2str(super_kmer.sk,k+3)<<endl;
-		// cin.get();
 		super_kmer.counts.push_back(1);
 		compaction++;
 		return sizesk+1;
@@ -505,8 +515,6 @@ int compact(SKC& super_kmer, kmer_full kmer){
 		compaction++;
 		return sizesk+1;
 	}
-	// cout<<kmer2str(kmer.kmer_s,k)<<endl;
-	// cout<<kmer2str(super_kmer.sk,k+sizesk+3)<<endl;
 	miss_compaction++;
 	return -1;
 }
@@ -524,7 +532,6 @@ void insert_kmers( vector<kmer_full>& kmers, vector<SKC>& skc){
 			//IS IT HERE?
 		 	int64_t pos=(kmer_in_super_kmer(skc[i],kmer));
 	    if(pos>=0){
-				// cout<<"FOUND IN SUPERKMER"<<endl;
 	      skc[i].counts[pos]++;
 				placed=true;
 	    }
@@ -557,7 +564,7 @@ void insert_kmers2( vector<kmer_full>& kmers, vector<SKC>& skc){
 		// // FOREACh SUPERKMER
 		for(uint64_t i=(0); i < size_skc and (not placed);i++){
 			//IS IT HERE?
-		 	int64_t pos=(kmer_in_super_kmer(skc[i],kmer));
+		 	int64_t pos=(kmer_in_super_kmer(skc[i],{kmer}));
 	    if(pos>=0){
 	      skc[i].counts[pos]++;
 				placed=true;
@@ -580,10 +587,34 @@ void insert_kmers2( vector<kmer_full>& kmers, vector<SKC>& skc){
 }
 
 
+void insert_kmers3( vector<kmer_full>& kmers, vector<SKC>& skc){
+	uint64_t size_sk(kmers.size());
+	uint64_t size_skc(skc.size());
+	bool fresh(false);
+
+	auto vb=kmers_in_super_kmer(skc,kmers);
+	for(uint64_t ik=0;ik<size_sk;++ik){
+		if(vb[ik]){
+			kmer_full kmer=kmers[ik];
+			int64_t pos=-1;
+			if(size_skc!=0 and fresh){
+				pos=(compact(skc[size_skc-1],kmer));
+			}
+			if(pos<0){
+				fresh=true;
+				skc.push_back({kmer.kmer_s,{1}});
+				size_skc++;
+			}
+		}
+	}
+	kmers.clear();
+}
+
+
 
 uint64_t nb_kmer_read(0);
 
-
+uint64_t line_count(0);
 
 void count_line(const string& line, vector<vector<SKC>>& buckets){
   vector<kmer_full> kmers;
@@ -592,7 +623,6 @@ void count_line(const string& line, vector<vector<SKC>>& buckets){
 	uint64_t position_min;
 	uint64_t minimizer=get_minimizer_pos(rcSeq,position_min);
 	kmers.push_back({seq,rcSeq});
-	// insert_kmers(kmers,buckets[minimizer]);
 	if(check){
 		real_count[getCanonical(line.substr(0,k))]++;
 	}
@@ -609,20 +639,20 @@ void count_line(const string& line, vector<vector<SKC>>& buckets){
 
 		//THE NEW mmer is a MINIMIZER
 		if(unrevhash(min_canon)<unrevhash(minimizer)){
-			insert_kmers2(kmers,buckets[minimizer]);
+			insert_kmers3(kmers,buckets[minimizer]);
 			minimizer=min_canon;
 			position_min=i+k-minimizer_size+1;
 		}else{
 			//the previous MINIMIZER is outdated
 			if(i>=position_min){
-				insert_kmers2(kmers,buckets[minimizer]);
+				insert_kmers3(kmers,buckets[minimizer]);
 				minimizer=get_minimizer_pos(rcSeq,position_min);
 				position_min+=i+1;
 			}
 		}
 		kmers.push_back({seq,rcSeq});
   }
-	insert_kmers2(kmers,buckets[minimizer]);
+	insert_kmers3(kmers,buckets[minimizer]);
 }
 
 
@@ -631,7 +661,7 @@ void count_line(const string& line, vector<vector<SKC>>& buckets){
 void read_fasta_file(const string& filename,vector<vector<SKC>>& buckets){
   ifstream in(filename);
   string line;
-	uint64_t line_count;
+
   while(in.good()){
     line=getLineFasta(&in);
     count_line(line,buckets);
@@ -640,9 +670,6 @@ void read_fasta_file(const string& filename,vector<vector<SKC>>& buckets){
 			cerr<<"-"<<flush;
 		}
   }
-	// cerr<<"compaction:"<<compaction<<endl;
-	// cerr<<"misscompaction:"<<miss_compaction<<endl;
-	// cerr<<"line:"<<line_count<<endl;
 }
 
 
