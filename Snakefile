@@ -61,7 +61,7 @@ rule build_kfc:
     output:
         "bin/{exec}"
     shell:
-        "make DEBUG=0 ASSERTS=1 {wildcards.exec}"
+        "make DEBUG=0 ASSERTS=1 check_buildsys {wildcards.exec}"
 
 rule kmc_exec:
     input:

@@ -30,30 +30,15 @@ jobs:
         - make check_buildsys
         - make kfc_red
       env: DEBUG=1
-    - script:
-        - make check_buildsys
-        - make kfc_blue
-        - make tests
-      env: DEBUG=0 ASSERTS=1
-    - script:
-        - make check_buildsys
-        - make kfc_red
-      env: DEBUG=0 ASSERTS=1
     - stage: "compare"
       before_script:
         - pip3 install snakemake --user
       script:
-        - make check_buildsys
-        - make kfc_blue
         - snakemake --config color="blue"
-      env: DEBUG=0 ASSERTS=1
     - before_script:
         - pip3 install snakemake --user
       script:
-        - make check_buildsys
-        - make kfc_red
         - snakemake --config color="red"
-      env: DEBUG=0 ASSERTS=1
 env:
   - MATRIX_EVAL="CC=g++-8"
 before_install:
