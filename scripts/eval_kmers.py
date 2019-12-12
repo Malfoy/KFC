@@ -40,7 +40,7 @@ def compare_files(verif, ref):
                 identical += 1
             else:
                 diff_count += 1
-                stdout.write(b'-%s %s->%s\n' % r_kmer)
+                stdout.write(b'-%s %s->%s\n' % (r_kmer, v_count, r_count))
 
     # Go to the end of the files
     while v_line:
