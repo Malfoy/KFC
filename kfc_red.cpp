@@ -13,9 +13,15 @@
 #include <omp.h>
 #include <math.h>
 #include <sys/stat.h>
+#include <sys/resource.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <tmmintrin.h>
+#include <gatbl/common.hpp>
+#include <gatbl/kmer.hpp>
+
 #include "robin_hood.h"
+
 
 
 using namespace std;
@@ -30,7 +36,7 @@ robin_hood::unordered_map<string,uint64_t> real_count;
 template<typename T>
 struct Pow2 {
 	Pow2(uint_fast8_t bits) : _bits(bits) {
-		// assume(bits < CHAR_BIT*sizeof(T), "Pow2(%u > %u)", unsigned(bits), unsigned(CHAR_BIT*sizeof(T)));
+		assume(bits < 8*sizeof(T), "Pow2(%u > %u)", unsigned(bits), unsigned(8*sizeof(T)));
 	}
 
 	uint_fast8_t bits() const { return _bits; }
@@ -112,13 +118,12 @@ struct SKC{
 
 
 uint64_t k=(31);
-
-
-
 uint64_t minimizer_size(10);
+Pow2<uint64_t> minimizer_number(2*minimizer_size);
+Pow2<uint64_t> offsetUpdateAnchor(2*k);
+Pow2<uint64_t> offsetUpdateAnchorMin(2*minimizer_size);
 
 
-uint64_t minimizer_number((uint64_t)1<<(2*minimizer_size));
 
 
 
@@ -163,7 +168,7 @@ uint64_t unrevhash ( uint64_t x ) {
 // See: https://stackoverflow.com/questions/34478328/the-best-way-to-shift-a-m128i
   __m128i mm_bitshift_left(__m128i x, unsigned count)
 {
-	// assume(count < 128, "count=%u >= 128", count);
+	assume(count < 128, "count=%u >= 128", count);
 	__m128i carry = _mm_slli_si128(x, 8);
 	if (count >= 64) //TODO: bench: Might be faster to skip this fast-path branch
 		return _mm_slli_epi64(carry, count-64);  // the non-carry part is all zero, so return early
@@ -178,7 +183,7 @@ uint64_t unrevhash ( uint64_t x ) {
 
   __m128i mm_bitshift_right(__m128i x, unsigned count)
 {
-	// assume(count < 128, "count=%u >= 128", count);
+	assume(count < 128, "count=%u >= 128", count);
 	__m128i carry = _mm_srli_si128(x, 8);
 	if (count >= 64)
 		return _mm_srli_epi64(carry, count-64);  // the non-carry part is all zero, so return early
@@ -193,7 +198,7 @@ uint64_t unrevhash ( uint64_t x ) {
 
 
 uint64_t rcbc(uint64_t in, uint64_t n){
-  //assume(n <= 32, "n=%u > 32", n);
+  assume(n <= 32, "n=%u > 32", n);
   // Complement, swap byte order
   uint64_t res = __builtin_bswap64(in ^ 0xaaaaaaaaaaaaaaaa);
   // Swap nuc order in bytes
@@ -211,7 +216,7 @@ uint64_t rcbc(uint64_t in, uint64_t n){
 
 inline __uint128_t rcb(const __uint128_t& in){
 
-	// assume(k <= 64, "k=%u > 64", k);
+	assume(k <= 64, "k=%u > 64", k);
 
 	union kmer_u { __uint128_t k; __m128i m128i; uint64_t u64[2]; uint8_t u8[16];};
 
@@ -251,7 +256,7 @@ inline __uint128_t rcb(const __uint128_t& in){
 
 
 inline uint64_t  rcb(const uint64_t& in){
-    // assume(k <= 32, "k=%u > 32", k);
+    assume(k <= 32, "k=%u > 32", k);
     // Complement, swap byte order
     uint64_t res = __builtin_bswap64(in ^ 0xaaaaaaaaaaaaaaaa);
     // Swap nuc order in bytes
@@ -274,25 +279,6 @@ uint64_t canonize(uint64_t x,uint64_t n){
 
 
 
-uint64_t get_minimizer(uint64_t seq){
-	uint64_t mini,mmer;
-	mmer=seq%minimizer_number;
-	mini=mmer=canonize(mmer,minimizer_size);
-	uint64_t hash_mini=unrevhash(mmer);
-	for(uint64_t i(1);i<=k-minimizer_size;i++){
-		seq>>=2;
-		mmer=seq%minimizer_number;
-		mmer=canonize(mmer,minimizer_size);
-		// uint64_t hash = ((mmer));
-		uint64_t hash = (unrevhash(mmer));
-		if(hash_mini>hash){
-			mini=mmer;
-			hash_mini=hash;
-		}
-	}
-	return ((uint64_t)mini)%minimizer_number;
-}
-
 
 
 uint64_t get_minimizer_pos(uint64_t seq,uint64_t& position){
@@ -312,25 +298,21 @@ uint64_t get_minimizer_pos(uint64_t seq,uint64_t& position){
 			hash_mini=hash;
 		}
 	}
-	return ((uint64_t)mini)%minimizer_number;
+	return revhash((uint64_t)mini)%minimizer_number;
 }
 
 
 
-uint64_t nuc2int(char c){
+inline uint64_t nuc2int(char c){
 	return (c/2)%4;
 }
 
 
 
-uint64_t nuc2intrc(char c){
+inline uint64_t nuc2intrc(char c){
 	return ((c/2)%4)^2;
 }
 
-
-
-uint64_t offsetUpdateAnchor((uint64_t)1<<(2*k));
-uint64_t offsetUpdateAnchorMin((uint64_t)1<<(2*(minimizer_size)));
 
 
 
@@ -588,8 +570,9 @@ void insert_kmers2( vector<kmer_full>& kmers, vector<SKC>& skc){
 
 
 void insert_kmers3( vector<kmer_full>& kmers, vector<SKC>& skc){
+
 	uint64_t size_sk(kmers.size());
-	uint64_t size_skc(skc.size());
+	uint64_t size_skc(skc.size());//ICI
 	bool fresh(false);
 
 	auto vb=kmers_in_super_kmer(skc,kmers);
@@ -612,16 +595,23 @@ void insert_kmers3( vector<kmer_full>& kmers, vector<SKC>& skc){
 
 
 
+
 uint64_t nb_kmer_read(0);
+
+
 
 uint64_t line_count(0);
 
+vector<omp_lock_t> MutexWall(4096);
+
 void count_line(const string& line, vector<vector<SKC>>& buckets){
+	if(line.size()<k){return;}
   vector<kmer_full> kmers;
 	uint64_t seq=(str2num(line.substr(0,k))),rcSeq(rcb(seq));
 	uint64_t min_seq=(str2num(line.substr(k-minimizer_size,minimizer_size))),min_rcseq(rcbc(min_seq,minimizer_size)),min_canon(min(min_seq,min_rcseq));
 	uint64_t position_min;
 	uint64_t minimizer=get_minimizer_pos(rcSeq,position_min);
+	uint64_t hash_mini=unrevhash(minimizer);
 	kmers.push_back({seq,rcSeq});
 	if(check){
 		real_count[getCanonical(line.substr(0,k))]++;
@@ -632,38 +622,56 @@ void count_line(const string& line, vector<vector<SKC>>& buckets){
 			real_count[getCanonical(line.substr(i+1,k))]++;
 		}
 		updateK(seq,line[i+k]);
+		// rcSeq=rcb(seq);
 		updateRCK(rcSeq,line[i+k]);
+		// min_canon=(min(min_seq,min_rcseq));
+		// min_canon=canonize(seq);
 		updateM(min_seq,line[i+k]);
+		// min_canon=canonize(min_seq,minimizer_size);
 		updateRCM(min_rcseq,line[i+k]);
 		min_canon=(min(min_seq,min_rcseq));
 
 		//THE NEW mmer is a MINIMIZER
-		if(unrevhash(min_canon)<unrevhash(minimizer)){
+		uint64_t new_hash(unrevhash(min_canon));
+		if(new_hash<hash_mini){
+			omp_set_lock(&MutexWall[minimizer%4096]);
 			insert_kmers3(kmers,buckets[minimizer]);
-			minimizer=min_canon;
+			omp_unset_lock(&MutexWall[minimizer%4096]);
+			minimizer=(min_canon);
+			hash_mini=new_hash;
 			position_min=i+k-minimizer_size+1;
 		}else{
 			//the previous MINIMIZER is outdated
 			if(i>=position_min){
+				omp_set_lock(&MutexWall[minimizer%4096]);
 				insert_kmers3(kmers,buckets[minimizer]);
+				omp_unset_lock(&MutexWall[minimizer%4096]);
 				minimizer=get_minimizer_pos(rcSeq,position_min);
 				position_min+=i+1;
 			}
 		}
 		kmers.push_back({seq,rcSeq});
   }
+	omp_set_lock(&MutexWall[minimizer%4096]);
 	insert_kmers3(kmers,buckets[minimizer]);
+	omp_unset_lock(&MutexWall[minimizer%4096]);
 }
 
 
 
 
 void read_fasta_file(const string& filename,vector<vector<SKC>>& buckets){
+	for(uint64_t i(0);i<4096;++i){
+		omp_init_lock(&MutexWall[i]);
+	}
   ifstream in(filename);
   string line;
-
+	// #pragma omp parallel
   while(in.good()){
-    line=getLineFasta(&in);
+		#pragma omp critical
+		{
+    	line=getLineFasta(&in);
+		}
     count_line(line,buckets);
 		line_count++;
 		if(line_count%10000==0){
@@ -690,7 +698,7 @@ int main(int argc, char ** argv){
 	if(mode>1){
 		check=true;
 	}
-	vector<vector<SKC>> buckets(minimizer_number);
+	vector<vector<SKC>> buckets(minimizer_number.value());
   read_fasta_file(argv[1],buckets);
 	if(mode%2==0){
 		dump_counting(buckets);
