@@ -118,7 +118,7 @@ struct SKC{
 
 
 uint64_t k=(31);
-uint64_t minimizer_size(10);
+uint64_t minimizer_size(5);
 Pow2<uint64_t> minimizer_number(2*minimizer_size);
 Pow2<uint64_t> offsetUpdateAnchor(2*k);
 Pow2<uint64_t> offsetUpdateAnchorMin(2*minimizer_size);
@@ -285,20 +285,22 @@ uint64_t get_minimizer_pos(uint64_t seq,uint64_t& position){
 	uint64_t mini,mmer;
 	mmer=seq%minimizer_number;
 	mini=mmer=canonize(mmer,minimizer_size);
-	uint64_t hash_mini=unrevhash(mmer);
+	uint64_t hash_mini=revhash(mmer);
 	position=0;
 	for(uint64_t i(1);i<=k-minimizer_size;i++){
 		seq>>=2;
 		mmer=seq%minimizer_number;
 		mmer=canonize(mmer,minimizer_size);
-		uint64_t hash = (unrevhash(mmer));
+		uint64_t hash = (revhash(mmer));
 		if(hash_mini>hash){
 			position=i;
 			mini=mmer;
 			hash_mini=hash;
 		}
 	}
-	return revhash((uint64_t)mini)%minimizer_number;
+	// return revhash((uint64_t)mini)%minimizer_number;
+	return ((uint64_t)mini);
+
 }
 
 
@@ -390,7 +392,7 @@ void dump_count(const SKC& skc){
 			if(check){
 				if(real_count[getCanonical(skmer.substr(i,k))] != (uint64_t)skc.counts[skc.counts.size()-1-i]) {
 					cout<<i<<" "<<skc.counts.size()-1-i<<endl;
-					cerr<<"fail "<<(skmer.substr(i,k))<<" "<<revComp(skmer.substr(i,k))<<real_count[getCanonical(skmer.substr(i,k))]<<" "
+					cerr<<"fail "<<(skmer.substr(i,k))<<" "<<revComp(skmer.substr(i,k))<<" real: "<<real_count[getCanonical(skmer.substr(i,k))]<<" output:"
 					<<(uint64_t)skc.counts[skc.counts.size()-1-i]<<endl;cin.get();
 				}
 			}
@@ -448,25 +450,24 @@ int64_t kmer_in_super_kmer(const SKC& super_kmer,const kmer_full& kmer){
 
 
 
-vector<bool> kmers_in_super_kmer( vector<SKC>& super_kmers, const vector<kmer_full>& kmers){
+vector<bool> kmers_in_super_kmer(vector<SKC>& super_kmers, const vector<kmer_full>& kmers){
 	uint64_t size_bucket=(super_kmers.size());
 	uint64_t buffer_size=kmers.size();
-		vector<bool> res(buffer_size,false);
+	vector<bool> res(buffer_size,false);
 	for(uint64_t b=(0); b < size_bucket;b++){
 		__uint128_t superkmer=super_kmers[b].sk;
 		uint64_t sk_size=super_kmers[b].counts.size();
 		for(uint64_t i=0;i<sk_size;++i){
 			for(uint64_t j=0;j<buffer_size;++j){
-				if(kmers[j].kmer_s==(uint64_t)(superkmer&(((uint64_t)1<<62)-1)) or kmers[j].kmer_rc==(uint64_t)(superkmer&(((uint64_t)1<<62)-1))) {
+				if(kmers[j].kmer_s==(uint64_t)(superkmer&(((uint64_t)1<<62)-1)) or kmers[j].kmer_rc==(uint64_t)(superkmer&(((uint64_t)1<<62)-1))){
 					super_kmers[b].counts[i]++;
 					res[j]=true;
 				}
 			}
+			superkmer>>=2;
 		}
-		superkmer>>=2;
 	}
 	return res;
-
 }
 
 
@@ -570,15 +571,16 @@ void insert_kmers2( vector<kmer_full>& kmers, vector<SKC>& skc){
 
 
 void insert_kmers3( vector<kmer_full>& kmers, vector<SKC>& skc){
-
 	uint64_t size_sk(kmers.size());
 	uint64_t size_skc(skc.size());//ICI
 	bool fresh(false);
 
 	auto vb=kmers_in_super_kmer(skc,kmers);
 	for(uint64_t ik=0;ik<size_sk;++ik){
-		if(vb[ik]){
+		if(not vb[ik]){
 			kmer_full kmer=kmers[ik];
+			uint64_t nadine;
+
 			int64_t pos=-1;
 			if(size_skc!=0 and fresh){
 				pos=(compact(skc[size_skc-1],kmer));
@@ -611,7 +613,7 @@ void count_line(const string& line, vector<vector<SKC>>& buckets){
 	uint64_t min_seq=(str2num(line.substr(k-minimizer_size,minimizer_size))),min_rcseq(rcbc(min_seq,minimizer_size)),min_canon(min(min_seq,min_rcseq));
 	uint64_t position_min;
 	uint64_t minimizer=get_minimizer_pos(rcSeq,position_min);
-	uint64_t hash_mini=unrevhash(minimizer);
+	uint64_t hash_mini=revhash(minimizer);
 	kmers.push_back({seq,rcSeq});
 	if(check){
 		real_count[getCanonical(line.substr(0,k))]++;
@@ -631,8 +633,9 @@ void count_line(const string& line, vector<vector<SKC>>& buckets){
 		updateRCM(min_rcseq,line[i+k]);
 		min_canon=(min(min_seq,min_rcseq));
 
+
 		//THE NEW mmer is a MINIMIZER
-		uint64_t new_hash(unrevhash(min_canon));
+		uint64_t new_hash=(revhash(min_canon));
 		if(new_hash<hash_mini){
 			omp_set_lock(&MutexWall[minimizer%4096]);
 			insert_kmers3(kmers,buckets[minimizer]);
@@ -643,10 +646,12 @@ void count_line(const string& line, vector<vector<SKC>>& buckets){
 		}else{
 			//the previous MINIMIZER is outdated
 			if(i>=position_min){
+				uint64_t nadine;
 				omp_set_lock(&MutexWall[minimizer%4096]);
 				insert_kmers3(kmers,buckets[minimizer]);
 				omp_unset_lock(&MutexWall[minimizer%4096]);
 				minimizer=get_minimizer_pos(rcSeq,position_min);
+				hash_mini=revhash(minimizer);
 				position_min+=i+1;
 			}
 		}
