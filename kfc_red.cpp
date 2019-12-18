@@ -638,7 +638,7 @@ void count_line(const string& line, vector<vector<SKC>>& buckets){
 		uint64_t new_hash=(revhash(min_canon));
 		if(new_hash<hash_mini){
 			omp_set_lock(&MutexWall[minimizer%4096]);
-			insert_kmers3(kmers,buckets[minimizer]);
+			insert_kmers2(kmers,buckets[minimizer]);
 			omp_unset_lock(&MutexWall[minimizer%4096]);
 			minimizer=(min_canon);
 			hash_mini=new_hash;
@@ -648,7 +648,7 @@ void count_line(const string& line, vector<vector<SKC>>& buckets){
 			if(i>=position_min){
 				uint64_t nadine;
 				omp_set_lock(&MutexWall[minimizer%4096]);
-				insert_kmers3(kmers,buckets[minimizer]);
+				insert_kmers2(kmers,buckets[minimizer]);
 				omp_unset_lock(&MutexWall[minimizer%4096]);
 				minimizer=get_minimizer_pos(rcSeq,position_min);
 				hash_mini=revhash(minimizer);
@@ -658,7 +658,7 @@ void count_line(const string& line, vector<vector<SKC>>& buckets){
 		kmers.push_back({seq,rcSeq});
   }
 	omp_set_lock(&MutexWall[minimizer%4096]);
-	insert_kmers3(kmers,buckets[minimizer]);
+	insert_kmers2(kmers,buckets[minimizer]);
 	omp_unset_lock(&MutexWall[minimizer%4096]);
 }
 
