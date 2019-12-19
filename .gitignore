@@ -15,3 +15,4 @@ gmon.out
 /bin/
 /bench/
 /dsk_phase2/gatb-core-stripped/build/
+thirdparty/
