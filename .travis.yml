@@ -21,6 +21,7 @@ git:
 jobs:
   include:
     - stage: "compile"
+      name: "blue compile"
       script:
         - make check_buildsys
         - make kfc_blue
@@ -29,14 +30,17 @@ jobs:
     - script:
         - make check_buildsys
         - make kfc_red
+      name: "red compile"
       env: DEBUG=1
     - stage: "compare"
+      name: "blue exec"
       before_script:
         - pip3 install snakemake --user
       script:
         - snakemake --config color="blue"
     - before_script:
         - pip3 install snakemake --user
+      name: "red exec"
       script:
         - snakemake --config color="red"
 env:
