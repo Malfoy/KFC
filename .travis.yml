@@ -18,6 +18,9 @@ git:
     depth: 2
     submodules: false
     lfs_skip_smudge: true
+cache:
+  directories:
+    - .git/lfs
 jobs:
   include:
     - stage: "compile"
