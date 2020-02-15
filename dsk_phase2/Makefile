@@ -6,11 +6,16 @@
 GATB=$(shell pwd)/gatb-core-stripped
 
 GATB_LIB=$(GATB)/build/lib
-CONFIG=$(GATB)/build/src/gatb/system/api/config.hpp
+CONFIG=$(GATB)/build/include/gatb/system/api/config.hpp
 
-CXXFLAGS =  -std=c++0x -O3  -I$(GATB)/src  -I$(GATB)/build/include -I$(GATB)/thirdparty 
-LDFLAGS=   -L$(GATB_LIB) -lgatbcore  -lpthread -lhdf5 -lz -std=c++0x -ldl -static
+CXXFLAGS =  -std=c++0x  -I$(GATB)/src  -I$(GATB)/build/include -I$(GATB)/thirdparty 
+LDFLAGS=   -L$(GATB_LIB) -lgatbcore  -lpthread -lhdf5 -lz -std=c++0x -ldl 
 
+ifeq ($(deb),1)
+ CXXFLAGS+=-O0 -g
+ else
+ CXXFLAGS+=-O3
+endif
 
 SRCS = $(wildcard *.cpp)
 OBJS = $(patsubst %.cpp,%,$(SRCS))

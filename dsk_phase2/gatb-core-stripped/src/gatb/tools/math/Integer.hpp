@@ -116,12 +116,6 @@ public:
      */
     const size_t getSize ()         { return boost::apply_visitor (Integer_size(),  *(*this)); }
 
-    /** Get the HDF5 type for the the class used by the variant  (ie. one of the Ti template class parameters)
-     * \param[in] isCompound : tells whether the type is composed or not
-     * \return a HDF5 identifier for the type.
-     */
-    hid_t hdf5 (bool& isCompound)   { return boost::apply_visitor (Integer_hdf5(isCompound),  *(*this)); }
-
     /** Operator +
      * \param[in] a : first operand
      * \param[in] b : second operand
@@ -379,10 +373,6 @@ private:
         Arg1 arg1;
         Arg2 arg2;
     };
-
-    struct Integer_hdf5 : public Visitor<hid_t,bool&>   {
-        Integer_hdf5 (bool& c) : Visitor<IntegerTemplate,bool&>(c) {}
-        template<typename T>  hid_t operator() (const T& a)  { return a.hdf5 (this->arg);  }};
 
     struct Integer_mult : public Visitor<IntegerTemplate,const int>    {
         Integer_mult (const int& c) : Visitor<IntegerTemplate,const int>(c) {}

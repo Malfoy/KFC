@@ -10,10 +10,6 @@ public:
     /** Constructor. */
     DSK ();
 
-    /** Get the default Storage mode.
-     * \return the storage mode (likely HDF5).  */
-    static StorageMode_e getStorageMode() { return STORAGE_HDF5; }
-
 private:
 
     /** \copydoc Tool::execute. */

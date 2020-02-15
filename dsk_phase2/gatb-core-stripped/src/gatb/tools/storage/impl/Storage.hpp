@@ -67,8 +67,6 @@ enum StorageMode_e
 {
     /** Simple file. */
     STORAGE_FILE,
-    /** HDF5 file. */
-    STORAGE_HDF5,
     /** Experimental. */
     STORAGE_GZFILE,
     /** Experimental. */
@@ -161,7 +159,6 @@ private:
  *
  * In a regular implementation, a Group could be a directory.
  *
- * In a HDF5 implementation, a group could be a HDF5 group.
  */
 class Group : public Cell
 {
@@ -196,14 +193,14 @@ public:
     void remove ();
 
     /** Associate a [key,value] to the group. Note: according to the kind of storage,
-     * this feature may be not supported (looks like it's only supported in HDF5).
+     * this feature may be not supported (looks like it's only supported in the cursed h d f 5).
      * \param[in] key : key
      * \param[in] value : value
      */
     virtual void addProperty (const std::string& key, const std::string value) { throw system::ExceptionNotImplemented (); }
 
     /** Get a [key,value] from the group. Note: according to the kind of storage,
-     * this feature may be not supported (looks like it's only supported in HDF5).
+     * this feature may be not supported (looks like it's only supported in h d f 5).
      * \param[in] key : key
      * \return the value associated to the string.
      */
@@ -509,7 +506,6 @@ protected:
  * It is a template class: one should provide the actual type of the collections containers.
  * Possible template types could be designed for:
  *   - classical file system
- *   - HDF5 files
  *   - memory
  */
 class Storage : public Cell
@@ -603,7 +599,7 @@ class StorageFactory : public system::SmartPointer
 public:
 
     /** Constructor
-     * \param[in] mode : kind of storage to be used (HDF5 for instance)
+     * \param[in] mode : kind of storage to be used ()
      */
     StorageFactory (StorageMode_e mode) : _mode(mode)  {}
 

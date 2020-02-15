@@ -78,7 +78,7 @@ public:
     }
 
 
-    /* R: some code duplication with GroupFile, but it's the same in the HDF5 case. not the best design.
+    /* R: some code duplication with GroupFile, but it's the same in the h d f 5 case. not the best design.
      * so, collections can hold properties, so can groups.. */
 
     /** \copydoc tools::collections::Collection::addProperty */

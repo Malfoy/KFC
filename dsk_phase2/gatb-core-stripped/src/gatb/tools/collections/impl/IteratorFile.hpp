@@ -206,7 +206,7 @@ public:
     /* from ../src/gatb/tools/collections/api/Iterable.hpp:
        Return a buffer of items.
         * \param[out] buffer : the buffer
-        * \param[in] start : index where to start in the buffer --> NOTE: it is ignored here because we're not buffering anything (this ties in with a different behavior in istream of Storage with CurrentIdx, depending on STORAGE_FILE or STORAGE_HDF5, currentIdx should be set to 0 when calling getItems, which in turns calls this function)
+        * \param[in] start : index where to start in the buffer --> NOTE: it is ignored here because we're not buffering anything (this ties in with a different behavior in istream of Storage with CurrentIdx, depending on STORAGE_FILE, currentIdx should be set to 0 when calling getItems, which in turns calls this function)
         * \param[in] nb : number of items to be retrieved
         * \return the number of items retrieved 
     */

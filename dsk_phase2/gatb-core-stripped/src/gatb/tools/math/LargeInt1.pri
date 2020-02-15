@@ -211,12 +211,6 @@ public:
     }
 
     /********************************************************************************/
-    static hid_t hdf5 (bool& isCompound)
-    {
-        return H5Tcopy (H5T_NATIVE_UINT64);
-    }
-
-    /********************************************************************************/
     template<typename Map>
     static LargeInt<1> polynom (const char* data, size_t size, Map fct)
     {

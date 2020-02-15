@@ -209,7 +209,7 @@ set (gatb-core-flags ${LIBRARY_COMPILE_DEFINITIONS})
 set (gatb-core-includes ${PROJECT_BINARY_DIR}/include  ${PROJECT_BINARY_DIR}/include/${CMAKE_BUILD_TYPE} ${PROJECT_SOURCE_DIR}/src  ${PROJECT_SOURCE_DIR}/thirdparty ${gatb-core-extra-libraries-inc})
 
 # We define the libraries used for linking binary based on gatb core
-set (gatb-core-libraries   gatbcore-static  dl  pthread  z hdf5-static ${gatb-core-extra-libraries})
+set (gatb-core-libraries   gatbcore-static  dl  pthread  z ${gatb-core-extra-libraries})
 
 # We define the directory where to find cmake helpers
 set (gatb-core-cmake  ${CMAKE_MODULE_PATH})
@@ -232,12 +232,6 @@ set (gatb-core-klist   ${gatb-core-klist}  PARENT_SCOPE)
 #  THIRD PARTY GENERATION (
 ################################################################################
 ADD_SUBDIRECTORY(thirdparty)
-
-################################################################################
-#  DEPENDENCIES 
-################################################################################
-# we must be sure that hdf5 is built and installed before building gatb-core
-ADD_DEPENDENCIES (gatbcore-static hdf5-static hdf5_postbuild)
 
 ################################################################################
 #  INSTALL 

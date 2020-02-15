@@ -66,7 +66,7 @@ namespace impl      {
                     std::cout << "created directory " << folder << std::endl; // doesn't seem to be ever printed
 					}   
 				}
-				/** We may need to create the HDF5 group. Empty name means root group, which is constructed by default. */
+				/** We may need to create the h d f 5 group. Empty name means root group, which is constructed by default. */
                 if (name.empty() == false)
                 {
                     filename = folder + parent->getFullId('.') + std::string(".") + name;
@@ -120,7 +120,7 @@ namespace impl      {
                 return "";
             }
 
-            /* this is unused - also the json api we're using doesn't support it - hdf5 needed it for stupid reasons */
+            /* this is unused - also the json api we're using doesn't support it - h d f 5 needed it for stupid reasons */
             void delProperty (const std::string& key)
             {
                 j[key]="";

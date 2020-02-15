@@ -506,7 +506,6 @@ inline void PartitionCacheSorted<Type>::remove ()
 } } } } } /* end of namespaces. */
 /********************************************************************************/
 
-#include <gatb/tools/storage/impl/StorageHDF5.hpp>
 #include <gatb/tools/storage/impl/StorageFile.hpp>
 
 /********************************************************************************/
@@ -529,7 +528,6 @@ inline Storage* StorageFactory::create (const std::string& name, bool deleteIfEx
 {
     switch (_mode)
     {
-        case STORAGE_HDF5:  return StorageHDF5Factory::createStorage (name, deleteIfExist, autoRemove, dont_add_extension, append);
         case STORAGE_FILE:  return StorageFileFactory::createStorage (name, deleteIfExist, autoRemove);
         case STORAGE_GZFILE:  return StorageGzFileFactory::createStorage (name, deleteIfExist, autoRemove);
         case STORAGE_COMPRESSED_FILE:  return StorageSortedFactory::createStorage (name, deleteIfExist, autoRemove);
@@ -543,7 +541,6 @@ inline bool StorageFactory::exists (const std::string& name)
 {
     switch (_mode)
     {
-        case STORAGE_HDF5:              return StorageHDF5Factory::exists (name);
         case STORAGE_FILE:              return StorageFileFactory::exists (name);
         case STORAGE_GZFILE:            return StorageGzFileFactory::exists (name);
         case STORAGE_COMPRESSED_FILE:   return StorageSortedFactory::exists (name);
@@ -557,7 +554,6 @@ inline Group* StorageFactory::createGroup (ICell* parent, const std::string& nam
 {
     switch (_mode)
     {
-        case STORAGE_HDF5:  return StorageHDF5Factory::createGroup (parent, name);
         case STORAGE_FILE:  return StorageFileFactory::createGroup (parent, name);
         case STORAGE_GZFILE:  return StorageGzFileFactory::createGroup (parent, name);
         case STORAGE_COMPRESSED_FILE:  return StorageSortedFactory::createGroup (parent, name);
@@ -573,7 +569,6 @@ inline Partition<Type>* StorageFactory::createPartition (ICell* parent, const st
 {
     switch (_mode)
     {
-        case STORAGE_HDF5:  return StorageHDF5Factory::createPartition<Type> (parent, name, nb);
         case STORAGE_FILE:  return StorageFileFactory::createPartition<Type> (parent, name, nb);
         case STORAGE_GZFILE:  return StorageGzFileFactory::createPartition<Type> (parent, name, nb);
         case STORAGE_COMPRESSED_FILE:  return StorageSortedFactory::createPartition<Type> (parent, name, nb);
@@ -589,7 +584,6 @@ inline CollectionNode<Type>* StorageFactory::createCollection (ICell* parent, co
 {
     switch (_mode)
     {
-        case STORAGE_HDF5:  return StorageHDF5Factory::createCollection<Type> (parent, name, synchro);
         case STORAGE_FILE:  return StorageFileFactory::createCollection<Type> (parent, name, synchro);
         case STORAGE_GZFILE:  return StorageGzFileFactory::createCollection<Type> (parent, name, synchro);
         case STORAGE_COMPRESSED_FILE:  return StorageSortedFactory::createCollection<Type> (parent, name, synchro);

@@ -225,7 +225,7 @@ class Storage_istreambuf : public std::streambuf
             {
                 std::cout << "Error: trying to read more elements " << (start - base) << " = (" << start << " - " << base << ") than the buffer size" << std::endl; exit(1);
             }
-            size_t offset = currentIdx ; // in hdf5: needs to be currentIdx; in file: needs to be 0 (but it will be fixed in IteratorFile, ok, not here)
+            size_t offset = currentIdx ; // in h d f 5: needs to be currentIdx; in file: needs to be 0 (but it will be fixed in IteratorFile, ok, not here)
             size_t n = _collection->getItems (start2, offset, buffer_.size() - (start - base));
             currentIdx += n;
 

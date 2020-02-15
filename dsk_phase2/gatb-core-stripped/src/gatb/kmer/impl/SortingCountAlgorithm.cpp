@@ -219,8 +219,7 @@ IOptionsParser* SortingCountAlgorithm<span>::getOptionsParser (bool mandatory)
     parser->push_back (new OptionOneParam (STR_URI_OUTPUT,        "output file",                                    false));
     parser->push_back (new OptionOneParam (STR_URI_OUTPUT_DIR,    "output directory",                               false, "."));
     parser->push_back (new OptionOneParam (STR_URI_OUTPUT_TMP,    "output directory for temporary files",           false, "."));
-    parser->push_back (new OptionOneParam (STR_COMPRESS_LEVEL,    "h5 compression level (0:none, 9:best)",          false, "0"));
-    parser->push_back (new OptionOneParam (STR_STORAGE_TYPE,      "storage type of kmer counts ('hdf5' or 'file')", false, "hdf5"  ));
+    parser->push_back (new OptionOneParam (STR_STORAGE_TYPE,      "storage type of kmer counts ('file')", false, "file"  ));
 	parser->push_back (new OptionOneParam (STR_HISTO2D,"compute the 2D histogram (with first file = genome, remaining files = reads)",false,"0"));
 	parser->push_back (new OptionOneParam (STR_HISTO,"output the kmer abundance histogram",false,"0"));
 
@@ -512,17 +511,12 @@ void SortingCountAlgorithm<span>::configure ()
         }
 
         string storage_type = getInput()->getStr(STR_STORAGE_TYPE);
-        if (storage_type == "hdf5")
-            _storage_type = tools::storage::impl::STORAGE_HDF5;
+        if (storage_type == "file")
+            _storage_type = tools::storage::impl::STORAGE_FILE;
         else
-        {
-            if (storage_type == "file")
-                _storage_type = tools::storage::impl::STORAGE_FILE;
-            else
-            {std::cout << "Error: unknown storage type specified: " << storage_type << std::endl; exit(1); }
-        }
+        {std::cout << "Error: unknown storage type specified: " << storage_type << std::endl; exit(1); }
 
-        storage = StorageFactory(_storage_type).create (output, true, false); //// this is the storage for the output (kmer counts), formerly fixed to HDF5
+        storage = StorageFactory(_storage_type).create (output, true, false); //// this is the storage for the output (kmer counts)
     }
 
     /** In case the storage is created in this method, we need to keep an eye on it. */
@@ -1411,7 +1405,7 @@ void SortingCountAlgorithm<span>::fillSolidKmers_aux (ICountProcessor<span>* pro
          *  NOTE : it is important to save solid kmers by big chunks (ie cache size) in each partition.
          *  Indeed, if we directly iterate the solid kmers through a Partition::iterator() object,
          *  one partition is iterated after another one, which doesn't reflect the way they are in filesystem,
-         *  (ie by chunks of solid kmers) which may lead to many moves into the global HDF5 file.
+         *  (ie by chunks of solid kmers) which may lead to many moves into the global  h d f 5 file.
          *  One solution is to make sure that the written chunks of solid kmers are big enough: here
          *  we accept to provide at most 2% of the max memory, or chunks of 200.000 items.
          */

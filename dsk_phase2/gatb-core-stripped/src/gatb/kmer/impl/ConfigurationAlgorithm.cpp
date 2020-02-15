@@ -215,7 +215,7 @@ ConfigurationAlgorithm<span>::ConfigurationAlgorithm (bank::IBank* bank, IProper
     _config._nb_bits_per_kmer = Type::getSize();
     
     std::string storage_type = input->getStr(STR_STORAGE_TYPE);
-    _config._storage_type = (storage_type == "hdf5") ? tools::storage::impl::STORAGE_HDF5 : tools::storage::impl::STORAGE_FILE;
+    _config._storage_type =  tools::storage::impl::STORAGE_FILE;
 }
 
 /*********************************************************************
@@ -358,7 +358,7 @@ void ConfigurationAlgorithm<span>::execute ()
     if (_config._storage_type == tools::storage::impl::STORAGE_FILE)
     {
         std::cout << "using less max_open_open files (" << max_open_files << "), by 3x, due to storage file setting" << std::endl;
-        max_open_files /= 3; // will need to open twice in STORAGE_FILE instead of HDF5, so this adjustment is needed. needs to be fixed later by putting partitions inside the same file. but i'd rather not do it in the current messy collection/group/partition hdf5-inspired system. overall, that's a FIXME
+        max_open_files /= 3; // will need to open twice in STORAGE_FILE instead of h d f 5, so this adjustment is needed. needs to be fixed later by putting partitions inside the same file. but i'd rather not do it in the current messy collection/group/partition h d f 5-inspired system. overall, that's a FIXME
     }
 
 #if 0

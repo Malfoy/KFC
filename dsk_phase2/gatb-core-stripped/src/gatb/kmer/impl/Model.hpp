@@ -1561,7 +1561,7 @@ struct Kmer
     /** \brief Structure associating a kmer value with an abundance value.
      *
      * This structure is useful for methods that counts kmer, such as the SortingCount algorithm.
-     * It is also interesting to save [kmer,abundance] in a HDF5 format.
+     * It is also interesting to save [kmer,abundance] in a h d f 5 format.
      *
      * By default, the abundance value is coded on 32 bits, so abundance up to 1<<32 can be used.
      */

@@ -35,7 +35,6 @@
 #include <stdint.h>
 #include <algorithm>
 #include <iostream>
-#include <hdf5/hdf5.h>
 
 #include <gatb/system/api/Exception.hpp>
 #include <gatb/system/api/config.hpp>
@@ -645,18 +644,6 @@ public:
 
         /** We return the output stream. */
         return s;
-    }
-
-    /********************************************************************************/
-    /** Get the HDF5 type for the the class used by the variant  (ie. one of the Ti template class parameters)
-     * \param[in] isCompound : tells whether the type is composed or not
-     * \return a HDF5 identifier for the type.
-     */
-    inline static hid_t hdf5 (bool& isCompound)
-    {
-        hid_t result = H5Tcopy (H5T_NATIVE_INT);
-        H5Tset_precision (result, 64*precision);
-        return result;
     }
 
     /********************************************************************************/

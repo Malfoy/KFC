@@ -160,8 +160,8 @@ private:
 
     /** We keep the possibility to load/save Bloom filters in two different ways.
      * The old one (with 'insert') has the drawback that the Bloom filter was read/written in
-     * one shot, which made big memory usage by HDF5 (one buffer for memory, one buffer for file).
-     * The new way uses io streams for HDF5 (splits the read/write operations in chunks), which
+     * one shot, which made big memory usage by h d f 5 (one buffer for memory, one buffer for file).
+     * The new way uses io streams for h d f 5 (splits the read/write operations in chunks), which
      * may use less memory. */
     static const int bloomMode = 1;  // 0: uses insert    1: uses Storage:[oi]stream
 };
