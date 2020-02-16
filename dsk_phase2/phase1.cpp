@@ -73,7 +73,8 @@ template<size_t span> struct Functor  {  void operator ()  (Parameter parameter)
     configAlgo.execute();
     gatb::core::kmer::impl::Configuration _config = configAlgo.getConfiguration();
 
-    gatb::core::tools::storage::impl::Storage* storage = StorageFactory(gatb::core::tools::storage::impl::STORAGE_FILE).create ("dummy.storage", true, false);
+    string prefix = basename(props->getStr("-file").c_str());
+    gatb::core::tools::storage::impl::Storage* storage = StorageFactory(gatb::core::tools::storage::impl::STORAGE_FILE).create (prefix+"_storage", true, false);
     RepartitorAlgorithm<span> repart (
                 bank, 
                 storage->getGroup("minimizers"), 
@@ -83,10 +84,9 @@ template<size_t span> struct Functor  {  void operator ()  (Parameter parameter)
         repart.execute ();
     Repartitor*             repartitor = new Repartitor(storage->getGroup("minimizers"));
 
-    string _tmpStorageName_superK = System::file().getTemporaryFilename("superK_partitions");
+    string _tmpStorageName_superK = prefix+"_superK_partitions";
     std::cout << "nb_partitions determined by ConfigurationAlgorithm: " << _config._nb_partitions << std::endl;;
     std::cout << "nb cores from ConfigurationAlgorithm: " <<  _config._nbCores << " " << _config._nbCores_per_partition << " " << _config._nb_partitions_in_parallel <<std::endl;
-
     uint nb_partitions = _config._nb_partitions;
 
     gatb::core::tools::storage::impl::SuperKmerBinFiles*  _superKstorage = new SuperKmerBinFiles(_tmpStorageName_superK,"superKparts", nb_partitions) ;
@@ -143,6 +143,8 @@ template<size_t span> struct Functor  {  void operator ()  (Parameter parameter)
     _superKstorage->flushFiles();
     _superKstorage->closeFiles();
 
+    _superKstorage->saveInfoFile(_tmpStorageName_superK);
+    pInfo.saveInfoFile(_tmpStorageName_superK);
 } };
 
 /*********************************************************************

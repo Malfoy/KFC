@@ -21,6 +21,9 @@
 
 #include <gatb/tools/storage/impl/Storage.hpp>
 
+#include <iostream>
+#include <fstream>
+
 /********************************************************************************/
 namespace gatb { namespace core {  namespace tools {  namespace storage {  namespace impl {
 /********************************************************************************/
@@ -315,6 +318,51 @@ SuperKmerBinFiles::SuperKmerBinFiles(const std::string& path,const std::string& 
 	openFiles("wb"); //at construction will open file for writing
 	// then use close() and openFiles() to open for reading
 	
+}
+
+// Rayan: added for dsk separation into phase1 and phase2
+SuperKmerBinFiles::SuperKmerBinFiles(const std::string& prefix)
+{
+    std::ifstream myfile (prefix+"/SuperKmerBinInfoFile");
+    std::string line;
+    if (myfile.is_open())
+    {
+        getline (myfile,line); _basefilename = line; 
+        getline (myfile,line); _path = line;
+        getline (myfile,line); _nb_files = atoi(line.c_str());
+	
+        _nbKmerperFile.resize(_nb_files,0);
+    	_FileSize.resize(_nb_files,0);
+	    _files.resize(_nb_files,0);
+    	_synchros.resize(_nb_files,0);
+
+        for(unsigned int ii=0;ii<_files.size();ii++)
+        {
+            getline (myfile,line); _nbKmerperFile[ii] = atol(line.c_str());
+            getline (myfile,line); _FileSize[ii] = atol(line.c_str());
+        }
+        myfile.close();
+    }
+    else
+    {
+        std::cout << "error reading infoFile at " << prefix << std::endl; exit(1);
+    }
+}
+
+void SuperKmerBinFiles::saveInfoFile(const std::string& prefix)
+{
+  // noob C++ style :) -Rayan
+  std::ofstream myfile;
+  myfile.open (prefix + "/SuperKmerBinInfoFile");
+  myfile << _basefilename << std::endl;
+  myfile << _path << std::endl;
+  myfile << _nb_files << std::endl;
+  for(unsigned int ii=0;ii<_files.size();ii++)
+  {
+	myfile << _nbKmerperFile[ii] << std::endl;
+	myfile << _FileSize[ii] << std::endl;
+  }
+  myfile.close();
 }
 
 void SuperKmerBinFiles::openFile( const char* mode, int fileId)

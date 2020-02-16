@@ -262,6 +262,64 @@ public:
         FREE (_mmer_bin_records);
     }
 
+
+    void saveInfoFile(const std::string& prefix)
+    {
+        std::ofstream myfile;
+        myfile.open (prefix + "/PartiInfoFile");
+        myfile << _nbpart << std::endl;
+        myfile << _num_mm_bins << std::endl;
+        myfile << _nb_superk_total << std::endl;
+        myfile << _nb_kmer_total << std::endl;
+        for (int np = 0; np < _nbpart; np++) {
+            myfile <<  _parti_records[np].nb_kmers << std::endl;
+            myfile <<  _parti_records[np].nb_kxmers << std::endl;
+             for(int i = 0 ; i < xmer * 256 ; i++) {
+                myfile <<  _parti_records[np].nbk_per_radix[i] << std::endl;
+            }
+        }
+        for (int ii = 0; ii < _num_mm_bins; ii++) {
+            myfile << _mmer_bin_records[ii].nb_superks << std::endl;
+            myfile << _mmer_bin_records[ii].nb_kmers << std::endl;
+            myfile << _mmer_bin_records[ii].nb_kxmers << std::endl;
+        }
+        myfile.close();
+    }
+    
+    PartiInfo(const std::string& prefix)
+    {
+        std::ifstream myfile (prefix+"/PartiInfoFile");
+        std::string line;
+        if (myfile.is_open())
+        {
+            getline (myfile,line); _nbpart = atoi(line.c_str());
+            getline (myfile,line); _num_mm_bins = atoi(line.c_str());
+            getline (myfile,line); _nb_superk_total = atoi(line.c_str());
+            getline (myfile,line); _nb_kmer_total = atoi(line.c_str());
+
+            _parti_records = (parti_record*) CALLOC (_nbpart, sizeof(parti_record));
+            _mmer_bin_records = (mmer_bin_record*) CALLOC (_num_mm_bins, sizeof(mmer_bin_record));
+            for (int np = 0; np < _nbpart; np++) {
+                getline (myfile,line); _parti_records[np].nb_kmers = atoi(line.c_str());
+                getline (myfile,line); _parti_records[np].nb_kxmers = atoi(line.c_str());
+                for(int i = 0 ; i < xmer * 256 ; i++) {
+                    getline (myfile,line); _parti_records[np].nbk_per_radix[i] = atoi(line.c_str());
+                }
+            }
+            for (int ii = 0; ii < _num_mm_bins; ii++) {
+                getline (myfile,line); _mmer_bin_records[ii].nb_superks = atoi(line.c_str());
+                getline (myfile,line); _mmer_bin_records[ii].nb_kmers = atoi(line.c_str());
+                getline (myfile,line); _mmer_bin_records[ii].nb_kxmers = atoi(line.c_str());
+            }
+            myfile.close();
+        }
+        else
+        {
+            std::cout << "error reading PartiInfoFile at " << prefix << std::endl; exit(1);
+        }
+    }
+
+
 private:
     std::mutex _mut = {}; // Locking for merging with main PartiInfo
     u_int64_t _nbpart;

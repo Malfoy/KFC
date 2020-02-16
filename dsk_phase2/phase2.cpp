@@ -35,14 +35,16 @@ public:
     /** Constructor */
     CountProcessorDumpTxt (
         size_t                                  kmerSize,
+        CountNumber                             min_abundance,
         //system::ISynchronizer*                  synchronizer = 0,
         //tools::storage::impl::Partition<Count>* solidCounts  = 0,
         size_t                                  nbPartsPerPass = 0
     )
-        : _kmerSize(kmerSize), _nbPartsPerPass(nbPartsPerPass) 
+        : _kmerSize(kmerSize), _nbPartsPerPass(nbPartsPerPass), _min_abundance(min_abundance)
         //_synchronizer(0), 
          // _solidCounts(0), _solidKmers(0)
     {
+        model = new typename Kmer<span>::ModelCanonical(kmerSize);
     }
 
     /** Destructor */
@@ -91,39 +93,45 @@ public:
     /*   METHODS CALLED ON ONE CLONED INSTANCE (in a separate thread).  */
     /********************************************************************/
 
+    /* not sure what these two functions do */
     /** \copydoc ICountProcessor<span>::beginPart */
-    void beginPart (size_t passId, size_t partId, size_t cacheSize, const char* name)
-    {
-        /** We get the actual partition idx in function of the current partition AND pass identifiers. */
-        size_t actualPartId = partId + (passId * _nbPartsPerPass);
+        void beginPart (size_t passId, size_t partId, size_t cacheSize, const char* name)
+        {
+            /** We get the actual partition idx in function of the current partition AND pass identifiers. */
+            size_t actualPartId = partId + (passId * _nbPartsPerPass);
 
-        /** We get a handle on the current solid bag (with a cache). */
-        //setSolidKmers (new tools::collections::impl::BagCache<Count> (& (*_solidCounts)[actualPartId], cacheSize, _synchronizer));
+            /** We get a handle on the current solid bag (with a cache). */
+            //setSolidKmers (new tools::collections::impl::BagCache<Count> (& (*_solidCounts)[actualPartId], cacheSize, _synchronizer));
 
-        /** We update some stats (want to know how many "hash" or "vector" partitions we use). */
-        _namesOccur[name] ++;
-    }
+            /** We update some stats (want to know how many "hash" or "vector" partitions we use). */
+            _namesOccur[name] ++;
+        }
 
-    /** \copydoc ICountProcessor<span>::endPart */
-    void endPart (size_t passId, size_t partId)
-    {
-        /** We flush the current collection for the partition just processed. */
-        //_solidKmers->flush();
-    }
+        /** \copydoc ICountProcessor<span>::endPart */
+        void endPart (size_t passId, size_t partId)
+        {
+            /** We flush the current collection for the partition just processed. */
+            //_solidKmers->flush();
+        }
 
     /** \copydoc ICountProcessor<span>::process */
+    /* note: CountProcessorChain compute the sum, otherwise it's 0 */
     bool process (size_t partId, const Type& kmer, const CountVector& count, CountNumber sum)
     {
         //this->_solidKmers->insert (Count(kmer,sum));
         
         // TODO output the kmer here
-        std::cout << kmer << sum << std::endl;
+        CountNumber kmer_count = count[0];
+        if (kmer_count >= _min_abundance)
+            std::cout << model->toString(kmer).c_str() << " " << kmer_count << std::endl;
         return true;
     }
 
 private:
 
+    typename Kmer<span>::ModelCanonical *model;
     size_t _kmerSize;
+    size_t _min_abundance;
 
     size_t _nbPartsPerPass;
 
@@ -134,13 +142,6 @@ private:
 
 template<size_t span> struct Functor  {  void operator ()  (Parameter parameter)
 {
-    DSK&         dsk   = parameter.dsk;
-    IProperties* props = parameter.props;
-
-    /** We get a handle on tha bank. */
-    IBank* bank = Bank::open(props->getStr("-file"));
-    LOCAL (bank);
-
 
     // TODO change all of this 
     // ---------------snip------------------
@@ -148,31 +149,36 @@ template<size_t span> struct Functor  {  void operator ()  (Parameter parameter)
 	uint nbCores_per_partition = 1;
 	uint kmerSize = 31;
     uint max_memory = 4000;
+    uint min_abundance = 2;
     
     uint current_core = 0;
 
-    uint nb_partitions = 100;
     uint minim_size = 10;
-    PartiInfo<5> pInfo (nb_partitions, minim_size);// not sure if useful
+    // ---------------snip------------------
 
-    // FIXME put the number of items in the bucket here
-    vector<size_t> nbItemsPerBankPerPart;
-    for (size_t i=0; i<nb_partitions; i++)
-    {
-        nbItemsPerBankPerPart.push_back (1000000);
-    }
 
+    DSK&         dsk   = parameter.dsk;
+    IProperties* props = parameter.props;
+
+    string prefix = basename(props->getStr("-file").c_str()); // same as phase1
+    
+    vector<size_t> nbItemsPerBankPerPart; // vector of length > 1: offsets for multibank counting
     u_int64_t mem = (max_memory*MBYTE)/nbCores;
     typedef typename Kmer<span>::Count  Count;
 	size_t cacheSize = std::min ((u_int64_t)(200*1000), mem/(50*sizeof(Count)));
 
-    std::string _tmpStorageName_superK; // TODO maybe needs to be set
-    gatb::core::tools::storage::impl::SuperKmerBinFiles* _superKstorage = new SuperKmerBinFiles(_tmpStorageName_superK,"superKparts", nb_partitions) ;
+    std::string _tmpStorageName_superK = prefix + "_superK_partitions";
+    gatb::core::tools::storage::impl::SuperKmerBinFiles* _superKstorage = new SuperKmerBinFiles(_tmpStorageName_superK) ; // a custom constructor that's not in vanilla gatb-core
+    PartiInfo<5> pInfo (_tmpStorageName_superK);
+    
+    uint nb_partitions = _superKstorage->nbFiles();
 
-    // ---------------snip------------------
-    
 	MemAllocator pool (nbCores);
-    
+    const u_int64_t  MBYTE = (1ULL << 20);
+    uint64_t memoryPoolSize = max_memory*MBYTE; 
+    if (pool.getCapacity() == 0)  {  pool.reserve (memoryPoolSize); }
+	else if (memoryPoolSize > pool.getCapacity()) { pool.reserve(0); pool.reserve (memoryPoolSize); }
+
 	uint pass = 0; // probably shouldn't change
     
     gatb::core::tools::misc::impl::TimeInfo _fillTimeInfo;
@@ -196,15 +202,21 @@ template<size_t span> struct Functor  {  void operator ()  (Parameter parameter)
 	processorClone->use();
 	clones.push_back (processorClone);
     */
-    CountProcessorDumpTxt<span>* dump_processor = new CountProcessorDumpTxt<span>(kmerSize, nb_partitions);
+    CountProcessorDumpTxt<span>* dump_processor = new CountProcessorDumpTxt<span>(kmerSize, min_abundance, nb_partitions);
     
-    gatb::core::tools::dp::IteratorListener* _progress;
+    gatb::core::tools::dp::IteratorListener* _progress(new ProgressSynchro (
+                                            new IteratorListener (),
+                                           System::thread().newSynchronizer()));
     _progress->init ();
 
     ICommand* cmd = new PartitionsByVectorCommand<span> (dump_processor, cacheSize, _progress, _fillTimeInfo,
 											   pInfo, pass, current_core, nbCores_per_partition, kmerSize, pool, nbItemsPerBankPerPart, _superKstorage);
 
 	cmd->execute();
+	
+	// free internal memory of pool here
+	pool.free_all();
+	_superKstorage->closeFiles();
 
 } };
 

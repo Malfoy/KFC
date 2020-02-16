@@ -248,6 +248,7 @@ public:
 	//construtor will open the files for writing
 	//use closeFiles to close them all then openFiles to open in different mode
 	SuperKmerBinFiles(const std::string& path,const std::string& name, size_t nb_files);
+	SuperKmerBinFiles(const std::string& infofile);
 	
 	~SuperKmerBinFiles();
 
@@ -271,6 +272,8 @@ public:
 
 	
 	std::string getFileName(int fileId);
+
+    void saveInfoFile(const std::string& infoFile); 
 private:
 
 	std::string _basefilename;
