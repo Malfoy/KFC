@@ -148,12 +148,8 @@ template<size_t span> struct Functor  {  void operator ()  (Parameter parameter)
 	uint nbCores = 8;
 	uint nbCores_per_partition = 1;
 	uint kmerSize = 31;
-    uint max_memory = 4000;
-    uint min_abundance = 2;
-    
-    uint current_core = 0;
-
     uint minim_size = 10;
+    uint max_memory = 4000;
     // ---------------snip------------------
 
 
@@ -161,7 +157,8 @@ template<size_t span> struct Functor  {  void operator ()  (Parameter parameter)
     IProperties* props = parameter.props;
 
     string prefix = basename(props->getStr("-file").c_str()); // same as phase1
-    
+    uint min_abundance = props->getInt("-abundance-min");
+   
     vector<size_t> nbItemsPerBankPerPart; // vector of length > 1: offsets for multibank counting
     u_int64_t mem = (max_memory*MBYTE)/nbCores;
     typedef typename Kmer<span>::Count  Count;
@@ -209,10 +206,13 @@ template<size_t span> struct Functor  {  void operator ()  (Parameter parameter)
                                            System::thread().newSynchronizer()));
     _progress->init ();
 
-    ICommand* cmd = new PartitionsByVectorCommand<span> (dump_processor, cacheSize, _progress, _fillTimeInfo,
-											   pInfo, pass, current_core, nbCores_per_partition, kmerSize, pool, nbItemsPerBankPerPart, _superKstorage);
+    for (uint current_partition = 0 ; current_partition < nb_partitions; current_partition ++ )
+    {
+        ICommand* cmd = new PartitionsByVectorCommand<span> (dump_processor, cacheSize, _progress, _fillTimeInfo,
+                pInfo, pass, current_partition, nbCores_per_partition, kmerSize, pool, nbItemsPerBankPerPart, _superKstorage);
 
-	cmd->execute();
+        cmd->execute();
+    }
 	
 	// free internal memory of pool here
 	pool.free_all();
