@@ -1,3 +1,15 @@
+phase 1: 
+
+from sequences to super-kmers (in the DSK format)
+
+phase 2:
+
+from super-kmers (in DSK format) to counts 
+
+
+note: currently requires the super-kmers to also contain additional metadata (number of partitions, superkmers per partition, etc), see end of phase1.
+
+
 short example:
 
     ./phase1 -file [file.fastq]
