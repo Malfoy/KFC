@@ -1,0 +1,5 @@
+short example:
+
+    ./phase1 -file [file.fastq]
+
+    ./phase2 -file [basename(file.fastq)] -abundance-min [min_abundance]
