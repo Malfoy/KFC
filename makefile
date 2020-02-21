@@ -38,7 +38,7 @@ ifeq ($(VERBOSE), 1)
 endif
 
 WARNS+= -Wall
-CFLAGS+=-std=c++14 -pipe -fopenmp ${WARNS}
+CFLAGS+=-std=c++14 -pipe -fopenmp -mavx2 ${WARNS}
 LDFLAGS+=-lpthread -fopenmp -lz
 
 INCS=-isystem thirdparty/gatb-lite/include/ -isystem thirdparty/robin-hood-hashing/src/include
@@ -49,7 +49,7 @@ OBJS = $(CPPS:.cpp=.o)
 DEPS = $(OBJS:%.o=%.d)
 KFC_BLUE_OBJ = SolidSampler.o BitSet.o BloomFilter.o Hash.o CascadingBloomFilter.o BitSet.o
 
-EXEC=kfc_blue kfc_red kmerCountEvaluator
+EXEC=kfc_blue kfc_red kmerCountEvaluator red_alert
 LIB=kfc_blue.a
 
 all: $(EXEC) $(LIB) tests
@@ -69,6 +69,11 @@ bin/kfc_blue: $(KFC_BLUE_OBJ) kfc_blue.o
 
 kfc_red: bin bin/kfc_red
 bin/kfc_red: kfc_red.o
+	@echo "[LD] $@"
+	+@$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
+
+red_alert: bin bin/red_alert
+bin/red_alert: red_alert.o
 	@echo "[LD] $@"
 	+@$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
