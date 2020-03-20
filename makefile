@@ -1,7 +1,7 @@
 CC=g++
 AR=gcc-ar
 
-DEBUG ?= 1
+DEBUG ?= 0
 ifeq ($(DEBUG), 1)
         CFLAGS+=-O0
         WARNS= -Wextra -Wpedantic -Wno-format -Wswitch-default -Wswitch-enum -Wfloat-equal -Wconversion -Wsign-conversion \
