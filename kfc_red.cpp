@@ -88,14 +88,17 @@ struct SKC {
 	__uint128_t sk;
 	uint8_t size;
 	uint8_t counts[15] = {0};
-	SKC(uint64_t kmer) {
+	uint8_t minimizer_idx;
+	SKC(uint64_t kmer, uint8_t mini_idx) {
 		sk        = kmer;
 		size      = 1;
 		counts[0] = 1;
+		minimizer_idx = mini_idx;
 	};
 };
 
 struct kmer_full {
+	uint8_t minimizer_idx;
 	uint64_t kmer_s;
 	uint64_t kmer_rc;
 };
@@ -453,6 +456,25 @@ int64_t kmer_in_super_kmer(const SKC& super_kmer, const kmer_full& kmer) {
 	return -1;
 }
 
+uint64_t mask = (1 << 62) - 1;
+/** Return true if the kmer is present in the superkmer.
+  * The technic used is based on the knoledge of the minimizer idx.
+  * The superkmer is aligned to the kmer using the minimizer as anchor.
+  * Then a comparison is done using a xor and the result is returned
+  * @return the position of the kmer in SKC, -1 if not found.
+  */
+int8_t kmer_in_super_kmer_short(const SKC& super_kmer,const kmer_full& kmer){
+	int8_t start_idx = super_kmer.minimizer_idx - kmer.minimizer_idx;
+	uint64_t sub_sk = (super_kmer.sk << (2 * start_idx)) & mask;
+
+	if (sub_sk == kmer.kmer_s or sub_sk == kmer.kmer_rc) {
+		return start_idx;
+	}
+
+	// If one of the two is zero, return the position
+	return -1;
+}
+
 vector<bool> kmers_in_super_kmer(vector<SKC>& super_kmers, const vector<kmer_full>& kmers) {
 	uint64_t size_bucket = (super_kmers.size());
 	uint64_t buffer_size = kmers.size();
@@ -497,36 +519,36 @@ int compact(SKC& super_kmer, kmer_full kmer) {
 	return -1;
 }
 
-void insert_kmers(vector<kmer_full>& kmers, vector<SKC>& skc) {
-	uint64_t size_sk(kmers.size());
-	uint64_t size_skc(skc.size());
-	for (uint64_t ik = 0; ik < size_sk; ++ik) {
-		kmer_full kmer = kmers[ik];
-		bool placed(false);
-		// // FOREACh SUPERKMER
-		for (uint64_t i = (0); i < size_skc and (not placed); i++) {
-			//IS IT HERE?
-			int64_t pos = (kmer_in_super_kmer(skc[i], kmer));
-			if (pos >= 0) {
-				skc[i].counts[pos]++;
-				placed = true;
-			}
-		}
-		//FOREACh SUPERKMER
-		for (uint64_t i = (0); i < size_skc and (not placed); i++) {
-			//CAN WE MERGE IT ?
-			int64_t pos = (compact(skc[i], kmer));
-			if (pos > 0) {
-				placed = true;
-			}
-		}
-		if (not placed) {
-			skc.push_back(kmer.kmer_s);
-			size_skc++;
-		}
-	}
-	kmers.clear();
-}
+// void insert_kmers(vector<kmer_full>& kmers, vector<SKC>& skc) {
+// 	uint64_t size_sk(kmers.size());
+// 	uint64_t size_skc(skc.size());
+// 	for (uint64_t ik = 0; ik < size_sk; ++ik) {
+// 		kmer_full kmer = kmers[ik];
+// 		bool placed(false);
+// 		// // FOREACh SUPERKMER
+// 		for (uint64_t i = (0); i < size_skc and (not placed); i++) {
+// 			//IS IT HERE?
+// 			int64_t pos = (kmer_in_super_kmer(skc[i], kmer));
+// 			if (pos >= 0) {
+// 				skc[i].counts[pos]++;
+// 				placed = true;
+// 			}
+// 		}
+// 		//FOREACh SUPERKMER
+// 		for (uint64_t i = (0); i < size_skc and (not placed); i++) {
+// 			//CAN WE MERGE IT ?
+// 			int64_t pos = (compact(skc[i], kmer));
+// 			if (pos > 0) {
+// 				placed = true;
+// 			}
+// 		}
+// 		if (not placed) {
+// 			skc.push_back(kmer.kmer_s);
+// 			size_skc++;
+// 		}
+// 	}
+// 	kmers.clear();
+// }
 
 void insert_kmers2(vector<kmer_full>& kmers, vector<SKC>& skc) {
 	uint64_t size_sk(kmers.size());
@@ -539,7 +561,7 @@ void insert_kmers2(vector<kmer_full>& kmers, vector<SKC>& skc) {
 		// // FOREACh SUPERKMER
 		for (uint64_t i = (0); i < size_skc and (not placed); i++) {
 			//IS IT HERE?
-			int64_t pos = (kmer_in_super_kmer(skc[i], {kmer}));
+			int64_t pos = (kmer_in_super_kmer_short(skc[i], {kmer}));
 			if (pos >= 0) {
 				skc[i].counts[pos]++;
 				placed = true;
@@ -554,7 +576,7 @@ void insert_kmers2(vector<kmer_full>& kmers, vector<SKC>& skc) {
 		}
 		//MAKE IT A NEW ONE
 		if (not placed) {
-			skc.push_back(kmer.kmer_s);
+			skc.push_back(SKC(kmer.kmer_s, kmer.minimizer_idx));
 			init = true;
 			size_skc++;
 		}
@@ -575,7 +597,7 @@ void insert_kmers4(vector<kmer_full>& kmers, vector<SKC>& skc) {
 			if (not placed[ik]) {
 				kmer_full kmer = kmers[ik];
 				//IS IT HERE?
-				int64_t pos = (kmer_in_super_kmer(localsk, kmer));
+				int64_t pos = (kmer_in_super_kmer_short(localsk, kmer));
 				if (pos >= 0) {
 					++skc[i].counts[pos];
 					placed[ik] = true;
@@ -602,7 +624,7 @@ void insert_kmers4(vector<kmer_full>& kmers, vector<SKC>& skc) {
 					}
 				} else {
 					//MAKE IT A NEW ONE
-					skc.push_back(kmer.kmer_s);
+					skc.push_back(SKC(kmer.kmer_s, kmer.minimizer_idx));
 					++size_skc;
 					if (++elementfound == size_sk) {
 						kmers.clear();
@@ -612,7 +634,7 @@ void insert_kmers4(vector<kmer_full>& kmers, vector<SKC>& skc) {
 				}
 			} else {
 				//MAKE IT A NEW ONE
-				skc.push_back(kmer.kmer_s);
+				skc.push_back(SKC(kmer.kmer_s, kmer.minimizer_idx));
 				++size_skc;
 				if (++elementfound == size_sk) {
 					kmers.clear();
@@ -627,28 +649,28 @@ void insert_kmers4(vector<kmer_full>& kmers, vector<SKC>& skc) {
 	kmers.clear();
 }
 
-void insert_kmers3(vector<kmer_full>& kmers, vector<SKC>& skc) {
-	uint64_t size_sk(kmers.size());
-	uint64_t size_skc(skc.size()); //ICI
-	bool fresh(false);
+// void insert_kmers3(vector<kmer_full>& kmers, vector<SKC>& skc) {
+// 	uint64_t size_sk(kmers.size());
+// 	uint64_t size_skc(skc.size()); //ICI
+// 	bool fresh(false);
 
-	auto vb = kmers_in_super_kmer(skc, kmers);
-	for (uint64_t ik = 0; ik < size_sk; ++ik) {
-		if (not vb[ik]) {
-			kmer_full kmer = kmers[ik];
-			int64_t pos    = -1;
-			if (size_skc != 0 and fresh) {
-				pos = (compact(skc[size_skc - 1], kmer));
-			}
-			if (pos < 0) {
-				fresh = true;
-				skc.push_back(kmer.kmer_s);
-				size_skc++;
-			}
-		}
-	}
-	kmers.clear();
-}
+// 	auto vb = kmers_in_super_kmer(skc, kmers);
+// 	for (uint64_t ik = 0; ik < size_sk; ++ik) {
+// 		if (not vb[ik]) {
+// 			kmer_full kmer = kmers[ik];
+// 			int64_t pos    = -1;
+// 			if (size_skc != 0 and fresh) {
+// 				pos = (compact(skc[size_skc - 1], kmer));
+// 			}
+// 			if (pos < 0) {
+// 				fresh = true;
+// 				skc.push_back(kmer.kmer_s);
+// 				size_skc++;
+// 			}
+// 		}
+// 	}
+// 	kmers.clear();
+// }
 
 void count_line(const string& line, vector<vector<SKC> >& buckets) {
 	if (line.size() < k) {
@@ -660,7 +682,7 @@ void count_line(const string& line, vector<vector<SKC> >& buckets) {
 	uint64_t position_min;
 	uint64_t minimizer = get_minimizer_pos(rcSeq, position_min);
 	uint64_t hash_mini = revhash(minimizer);
-	kmers.push_back({seq, rcSeq});
+	kmers.push_back({position_min, seq, rcSeq});
 	if (check) {
 		real_count[getCanonical(line.substr(0, k))]++;
 	}
@@ -697,7 +719,7 @@ void count_line(const string& line, vector<vector<SKC> >& buckets) {
 				position_min += i + 1;
 			}
 		}
-		kmers.push_back({seq, rcSeq});
+		kmers.push_back({position_min-i, seq, rcSeq});
 	}
 	uint64_t bucketindice = hash64shift(hash_mini) % bucket_number;
 	omp_set_lock(&MutexWall[bucketindice % 4096]);
