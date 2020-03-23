@@ -29,7 +29,7 @@ robin_hood::unordered_map<string, uint64_t> real_count;
 
 uint64_t k = (31);
 uint64_t minimizer_size(13);
-uint64_t subminimizer_size(minimizer_size - 3);
+uint64_t subminimizer_size(minimizer_size-1);
 uint64_t nb_kmer_read(0);
 uint64_t line_count(0);
 
@@ -466,8 +466,8 @@ uint64_t mask = (1 << 62) - 1;
   * Then a comparison is done using a xor and the result is returned
   * @return the position of the kmer in SKC, -1 if not found.
   */
-int8_t kmer_in_super_kmer_short(const SKC& super_kmer,const kmer_full& kmer){
-	int8_t start_idx = super_kmer.minimizer_idx - kmer.minimizer_idx;
+int64_t kmer_in_super_kmer_short(const SKC& super_kmer,const kmer_full& kmer){
+	int64_t start_idx = super_kmer.minimizer_idx - kmer.minimizer_idx;
 	uint64_t sub_sk = (super_kmer.sk << (2 * start_idx)) & mask;
 
 	if (sub_sk == kmer.kmer_s or sub_sk == kmer.kmer_rc) {
@@ -522,36 +522,6 @@ int compact(SKC& super_kmer, kmer_full kmer) {
 	return -1;
 }
 
-// void insert_kmers(vector<kmer_full>& kmers, vector<SKC>& skc) {
-// 	uint64_t size_sk(kmers.size());
-// 	uint64_t size_skc(skc.size());
-// 	for (uint64_t ik = 0; ik < size_sk; ++ik) {
-// 		kmer_full kmer = kmers[ik];
-// 		bool placed(false);
-// 		// // FOREACh SUPERKMER
-// 		for (uint64_t i = (0); i < size_skc and (not placed); i++) {
-// 			//IS IT HERE?
-// 			int64_t pos = (kmer_in_super_kmer(skc[i], kmer));
-// 			if (pos >= 0) {
-// 				skc[i].counts[pos]++;
-// 				placed = true;
-// 			}
-// 		}
-// 		//FOREACh SUPERKMER
-// 		for (uint64_t i = (0); i < size_skc and (not placed); i++) {
-// 			//CAN WE MERGE IT ?
-// 			int64_t pos = (compact(skc[i], kmer));
-// 			if (pos > 0) {
-// 				placed = true;
-// 			}
-// 		}
-// 		if (not placed) {
-// 			skc.push_back(kmer.kmer_s);
-// 			size_skc++;
-// 		}
-// 	}
-// 	kmers.clear();
-// }
 
 void insert_kmers2(vector<kmer_full>& kmers, vector<SKC>& skc) {
 	uint64_t size_sk(kmers.size());
@@ -564,7 +534,8 @@ void insert_kmers2(vector<kmer_full>& kmers, vector<SKC>& skc) {
 		// // FOREACh SUPERKMER
 		for (uint64_t i = (0); i < size_skc and (not placed); i++) {
 			//IS IT HERE?
-			int64_t pos = (kmer_in_super_kmer_short(skc[i], {kmer}));
+			// int64_t pos = (kmer_in_super_kmer_short(skc[i], {kmer}));
+			int64_t pos = (kmer_in_super_kmer(skc[i], {kmer}));
 			if (pos >= 0) {
 				skc[i].counts[pos]++;
 				placed = true;
@@ -587,7 +558,7 @@ void insert_kmers2(vector<kmer_full>& kmers, vector<SKC>& skc) {
 	kmers.clear();
 }
 
-void insert_kmers4(vector<kmer_full>& kmers, vector<SKC>& skc) {
+void insert_kmers(vector<kmer_full>& kmers, vector<SKC>& skc) {
 	uint64_t size_sk(kmers.size());
 	uint64_t size_skc(skc.size());
 	uint64_t elementfound(0);
@@ -600,7 +571,8 @@ void insert_kmers4(vector<kmer_full>& kmers, vector<SKC>& skc) {
 			if (not placed[ik]) {
 				kmer_full kmer = kmers[ik];
 				//IS IT HERE?
-				int64_t pos = (kmer_in_super_kmer_short(localsk, kmer));
+				// int64_t pos = (kmer_in_super_kmer_short(localsk, kmer));
+				int64_t pos = (kmer_in_super_kmer(localsk, kmer));
 				if (pos >= 0) {
 					++skc[i].counts[pos];
 					placed[ik] = true;
@@ -652,28 +624,7 @@ void insert_kmers4(vector<kmer_full>& kmers, vector<SKC>& skc) {
 	kmers.clear();
 }
 
-// void insert_kmers3(vector<kmer_full>& kmers, vector<SKC>& skc) {
-// 	uint64_t size_sk(kmers.size());
-// 	uint64_t size_skc(skc.size()); //ICI
-// 	bool fresh(false);
 
-// 	auto vb = kmers_in_super_kmer(skc, kmers);
-// 	for (uint64_t ik = 0; ik < size_sk; ++ik) {
-// 		if (not vb[ik]) {
-// 			kmer_full kmer = kmers[ik];
-// 			int64_t pos    = -1;
-// 			if (size_skc != 0 and fresh) {
-// 				pos = (compact(skc[size_skc - 1], kmer));
-// 			}
-// 			if (pos < 0) {
-// 				fresh = true;
-// 				skc.push_back(kmer.kmer_s);
-// 				size_skc++;
-// 			}
-// 		}
-// 	}
-// 	kmers.clear();
-// }
 
 void count_line(const string& line, vector<vector<SKC> >& buckets) {
 	if (line.size() < k) {
@@ -684,7 +635,7 @@ void count_line(const string& line, vector<vector<SKC> >& buckets) {
 	uint64_t min_seq = (str2num(line.substr(k - minimizer_size, minimizer_size))), min_rcseq(rcbc(min_seq, minimizer_size)), min_canon(min(min_seq, min_rcseq));
 	uint64_t position_min;
 	uint64_t minimizer = get_minimizer_pos(rcSeq, position_min);
-	uint64_t hash_mini = revhash(minimizer);
+	uint64_t hash_mini = hash64shift(minimizer);
 	kmers.push_back({position_min, seq, rcSeq});
 	if (check) {
 		real_count[getCanonical(line.substr(0, k))]++;
@@ -701,11 +652,11 @@ void count_line(const string& line, vector<vector<SKC> >& buckets) {
 		min_canon = (min(min_seq, min_rcseq));
 
 		//THE NEW mmer is a MINIMIZER
-		uint64_t new_hash = (revhash(min_canon));
+		uint64_t new_hash = (hash64shift(min_canon));
 		if (new_hash < hash_mini) {
-			uint64_t bucketindice = hash64shift(hash_mini) % bucket_number;
+			uint64_t bucketindice = revhash(hash_mini) % bucket_number;
 			omp_set_lock(&MutexWall[bucketindice % 4096]);
-			insert_kmers4(kmers, buckets[bucketindice]);
+			insert_kmers(kmers, buckets[bucketindice]);
 			omp_unset_lock(&MutexWall[bucketindice % 4096]);
 			minimizer    = (min_canon);
 			hash_mini    = new_hash;
@@ -713,20 +664,20 @@ void count_line(const string& line, vector<vector<SKC> >& buckets) {
 		} else {
 			//the previous MINIMIZER is outdated
 			if (i >= position_min) {
-				uint64_t bucketindice = hash64shift(hash_mini) % bucket_number;
+				uint64_t bucketindice = revhash(hash_mini) % bucket_number;
 				omp_set_lock(&MutexWall[bucketindice % 4096]);
-				insert_kmers4(kmers, buckets[bucketindice]);
+				insert_kmers(kmers, buckets[bucketindice]);
 				omp_unset_lock(&MutexWall[bucketindice % 4096]);
 				minimizer = get_minimizer_pos(rcSeq, position_min);
-				hash_mini = revhash(minimizer);
+				hash_mini = hash64shift(minimizer);
 				position_min += i + 1;
 			}
 		}
 		kmers.push_back({position_min-i, seq, rcSeq});
 	}
-	uint64_t bucketindice = hash64shift(hash_mini) % bucket_number;
+	uint64_t bucketindice = revhash(hash_mini) % bucket_number;
 	omp_set_lock(&MutexWall[bucketindice % 4096]);
-	insert_kmers4(kmers, buckets[bucketindice]);
+	insert_kmers(kmers, buckets[bucketindice]);
 	omp_unset_lock(&MutexWall[bucketindice % 4096]);
 }
 
