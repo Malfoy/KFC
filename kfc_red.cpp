@@ -28,7 +28,7 @@ bool check = false;
 robin_hood::unordered_map<string, uint64_t> real_count;
 
 uint64_t k = (31);
-uint64_t minimizer_size(13);
+uint64_t minimizer_size(4);
 uint64_t subminimizer_size(minimizer_size-1);
 uint64_t nb_kmer_read(0);
 uint64_t line_count(0);
@@ -284,7 +284,35 @@ uint64_t canonize(uint64_t x, uint64_t n) {
 	return min(x, rcbc(x, n));
 }
 
+
+void print_kmer(__uint128_t num,uint64_t n){
+	__uint128_t anc((__uint128_t)1<<(2*(n-1)));
+	for(uint64_t i(0);i<n and anc!=0;++i){
+		uint64_t nuc=num/anc;
+		num=num%anc;
+		if(nuc==2){
+			cout<<"T";
+		}
+		if(nuc==3){
+			cout<<"G";
+		}
+		if(nuc==1){
+			cout<<"C";
+		}
+		if(nuc==0){
+			cout<<"A";
+		}
+		if (nuc>=4){
+			cout<<nuc<<endl;
+			cout<<"WTF"<<endl;
+		}
+		anc>>=2;
+	}
+	cout<<endl;
+}
+
 uint64_t get_minimizer_pos(uint64_t seq, uint64_t& position) {
+	print_kmer(seq,31);
 	uint64_t mini, mmer;
 	mmer = seq % minimizer_number;
 	mini = mmer        = canonize(mmer, minimizer_size);
@@ -301,6 +329,10 @@ uint64_t get_minimizer_pos(uint64_t seq, uint64_t& position) {
 			hash_mini = hash;
 		}
 	}
+	cout<<"get min pos"<<endl;
+	print_kmer(mini,minimizer_size);
+
+	cout<<position<<endl;
 	// return revhash((uint64_t)mini)%minimizer_number;
 	return ((uint64_t)mini);
 }
@@ -447,6 +479,10 @@ void dump_stats(const vector<vector<SKC> >& buckets) {
 	cout<<"Largest_bucket:	"<<intToString(largest_bucket)<<endl;
 }
 
+
+
+
+
 int64_t kmer_in_super_kmer(const SKC& super_kmer, const kmer_full& kmer) {
 	__uint128_t superkmer = super_kmer.sk;
 	uint64_t skc_size     = super_kmer.size;
@@ -459,6 +495,41 @@ int64_t kmer_in_super_kmer(const SKC& super_kmer, const kmer_full& kmer) {
 	return -1;
 }
 
+uint64_t mask = ((uint64_t)1 << 62) - 1;
+/** Return true if the kmer is present in the superkmer.
+  * The technic used is based on the knoledge of the minimizer idx.
+  * The superkmer is aligned to the kmer using the minimizer as anchor.
+  * Then a comparison is done using a xor and the result is returned
+  * @return the position of the kmer in SKC, -1 if not found.
+  */
+int64_t kmer_in_super_kmer_short(const SKC& super_kmer,const kmer_full& kmer){
+	int64_t start_idx = (int64_t)super_kmer.minimizer_idx - (int64_t)kmer.minimizer_idx;
+	uint64_t sub_sk = (super_kmer.sk >> (2 * start_idx)) & mask;
+	cout<<"GO KMER IN SUPERKMER"<<endl;
+	if (sub_sk == kmer.kmer_s or sub_sk == kmer.kmer_rc) {
+		cout<<"SUCCESS!!!!!!!!!!!!!!!!"<<endl;
+
+		cout<<"idx_super_kmer"<<(int64_t)super_kmer.minimizer_idx<<endl;
+		cout<<"idx kmer"<<(int64_t)kmer.minimizer_idx<<endl;
+		cout<<"start_idx"<<start_idx<<endl;
+		print_kmer(kmer.kmer_s,31);
+		// print_kmer(kmer.kmer_s,31);
+		print_kmer(super_kmer.sk,33	);
+		cout<<endl;
+		return start_idx;
+	}
+	cout<<"FAIL!"<<endl;
+	cout<<"idx_super_kmer"<<(int64_t)super_kmer.minimizer_idx<<endl;
+	cout<<"idx kmer"<<(int64_t)kmer.minimizer_idx<<endl;
+	cout<<"start_idx"<<start_idx<<endl;
+	print_kmer(kmer.kmer_s,31);
+	// print_kmer(kmer.kmer_s,31);
+	print_kmer(super_kmer.sk,33	);
+		cout<<endl;
+	// print_kmer(kmer.kmer_s,31);
+	// If one of the two is zero, return the position
+	return -1;
+}
 
 vector<bool> kmers_in_super_kmer(vector<SKC>& super_kmers, const vector<kmer_full>& kmers) {
 	uint64_t size_bucket = (super_kmers.size());
@@ -480,29 +551,6 @@ vector<bool> kmers_in_super_kmer(vector<SKC>& super_kmers, const vector<kmer_ful
 	return res;
 }
 
-#include <bitset>
-
-uint64_t mask = (1 << 62) - 1;
-/** Return true if the kmer is present in the superkmer.
-  * The technic used is based on the knoledge of the minimizer idx.
-  * The superkmer is aligned to the kmer using the minimizer as anchor.
-  * Then a comparison is done using a xor and the result is returned
-  * @return the position of the kmer in SKC, -1 if not found.
-  */
-int64_t kmer_in_super_kmer_short(const SKC& super_kmer,const kmer_full& kmer){
-	int64_t start_idx = super_kmer.minimizer_idx - kmer.minimizer_idx;
-	uint64_t sub_sk = (super_kmer.sk >> (2 * start_idx)) & mask;
-
-	cout << std::bitset<64>(sub_sk) << endl << std::bitset<64>(kmer.kmer_s) << endl << endl;
-
-	if (sub_sk == kmer.kmer_s or sub_sk == kmer.kmer_rc) {
-		return start_idx;
-	}
-
-	// If one of the two is zero, return the position
-	return -1;
-}
-
 int compact(SKC& super_kmer, kmer_full kmer) {
 	if (super_kmer.size >= 13) {
 		return -1;
@@ -512,22 +560,19 @@ int compact(SKC& super_kmer, kmer_full kmer) {
 	end_sk &= (((uint64_t)1 << 60) - 1);
 	uint64_t beg_k = kmer.kmer_s >> 2;
 	if (end_sk == beg_k) {
-		// cout << std::bitset<128>(super_kmer.sk) << endl;
 		super_kmer.sk <<= 2;
 		super_kmer.sk += (((kmer.kmer_s % 4)));
 		super_kmer.counts[super_kmer.size++] = 1;
-		super_kmer.minimizer_idx += 1;
-		// cout << std::bitset<128>(super_kmer.sk) << endl;
+		super_kmer.minimizer_idx++;
 		return super_kmer.size;
 	}
-	beg_k = kmer.kmer_rc >> 2;
-	if (end_sk == beg_k) {
-		// super_kmer.sk <<= 2;//TODO IDONOTKNOW
-		super_kmer.sk += (((kmer.kmer_rc % 4)));
-		super_kmer.counts[super_kmer.size++] = 1;
-		super_kmer.minimizer_idx += 1;
-		return super_kmer.size;
-	}
+	// beg_k = kmer.kmer_rc >> 2;
+	// if (end_sk == beg_k) {
+	// 	// super_kmer.sk <<= 2;//TODO IDONOTKNOW
+	// 	super_kmer.sk += (((kmer.kmer_rc % 4)));
+	// 	super_kmer.counts[super_kmer.size++] = 1;
+	// 	return super_kmer.size;
+	// }
 	return -1;
 }
 
@@ -580,8 +625,8 @@ void insert_kmers(vector<kmer_full>& kmers, vector<SKC>& skc) {
 			if (not placed[ik]) {
 				kmer_full kmer = kmers[ik];
 				//IS IT HERE?
-				// int64_t pos = (kmer_in_super_kmer_short(localsk, kmer));
 				int64_t pos = (kmer_in_super_kmer_short(localsk, kmer));
+				// int64_t pos = (kmer_in_super_kmer(localsk, kmer));
 				if (pos >= 0) {
 					++skc[i].counts[pos];
 					placed[ik] = true;
@@ -643,7 +688,9 @@ void count_line(const string& line, vector<vector<SKC> >& buckets) {
 	uint64_t seq     = (str2num(line.substr(0, k))), rcSeq(rcb(seq));
 	uint64_t min_seq = (str2num(line.substr(k - minimizer_size, minimizer_size))), min_rcseq(rcbc(min_seq, minimizer_size)), min_canon(min(min_seq, min_rcseq));
 	uint64_t position_min;
-	uint64_t minimizer = get_minimizer_pos(rcSeq, position_min);
+	uint64_t position_minimizer_in_kmer;
+	uint64_t minimizer = get_minimizer_pos(seq, position_min);
+	position_minimizer_in_kmer=position_min;
 	uint64_t hash_mini = hash64shift(minimizer);
 	kmers.push_back({position_min, seq, rcSeq});
 	if (check) {
@@ -670,6 +717,8 @@ void count_line(const string& line, vector<vector<SKC> >& buckets) {
 			minimizer    = (min_canon);
 			hash_mini    = new_hash;
 			position_min = i + k - minimizer_size + 1;
+			position_minimizer_in_kmer=0;
+			cout<<"new min go 0"<<endl;
 		} else {
 			//the previous MINIMIZER is outdated
 			if (i >= position_min) {
@@ -677,12 +726,20 @@ void count_line(const string& line, vector<vector<SKC> >& buckets) {
 				omp_set_lock(&MutexWall[bucketindice % 4096]);
 				insert_kmers(kmers, buckets[bucketindice]);
 				omp_unset_lock(&MutexWall[bucketindice % 4096]);
-				minimizer = get_minimizer_pos(rcSeq, position_min);
+				minimizer = get_minimizer_pos(seq, position_min);
+				cout<<"new min get min pos"<<endl;
+				cout<<position_minimizer_in_kmer<<endl;
+				position_minimizer_in_kmer=position_min;
 				hash_mini = hash64shift(minimizer);
 				position_min += i + 1;
 			}
 		}
-		kmers.push_back({position_min-i, seq, rcSeq});
+		// if(position_min+kmers.size()>31){
+		// 	cout<<"WTF"<<endl;
+		// }
+		position_minimizer_in_kmer++;
+		cout<<"add"<<position_minimizer_in_kmer<<endl;
+		kmers.push_back({position_minimizer_in_kmer, seq, rcSeq});
 	}
 	uint64_t bucketindice = revhash(hash_mini) % bucket_number;
 	omp_set_lock(&MutexWall[bucketindice % 4096]);
