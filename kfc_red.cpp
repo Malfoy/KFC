@@ -28,8 +28,8 @@ bool check = false;
 robin_hood::unordered_map<string, uint64_t> real_count;
 
 uint64_t k = (31);
-uint64_t minimizer_size(15);
-uint64_t subminimizer_size(minimizer_size - 2);
+uint64_t minimizer_size(13);
+uint64_t subminimizer_size(minimizer_size - 3);
 uint64_t nb_kmer_read(0);
 uint64_t line_count(0);
 
@@ -285,13 +285,13 @@ uint64_t get_minimizer_pos(uint64_t seq, uint64_t& position) {
 	uint64_t mini, mmer;
 	mmer = seq % minimizer_number;
 	mini = mmer        = canonize(mmer, minimizer_size);
-	uint64_t hash_mini = revhash(mmer);
+	uint64_t hash_mini = hash64shift(mmer);
 	position           = 0;
 	for (uint64_t i(1); i <= k - minimizer_size; i++) {
 		seq >>= 2;
 		mmer          = seq % minimizer_number;
 		mmer          = canonize(mmer, minimizer_size);
-		uint64_t hash = (revhash(mmer));
+		uint64_t hash = (hash64shift(mmer));
 		if (hash_mini > hash) {
 			position  = i;
 			mini      = mmer;
@@ -418,10 +418,12 @@ void dump_stats(const vector<vector<SKC> >& buckets) {
 	uint64_t total_kmers(0);
 	uint64_t non_null_buckets(0);
 	uint64_t null_buckets(0);
+	uint64_t largest_bucket(0);
 
 	//FOREACH BUCKETS
 	for (uint64_t i(0); i < buckets.size(); ++i) {
 		if (buckets[i].size() != 0) {
+			largest_bucket=max(largest_bucket,(uint64_t)buckets[i].size());
 			non_null_buckets++;
 			total_super_kmers += buckets[i].size();
 			for (uint64_t j(0); j < buckets[i].size(); ++j) {
@@ -439,6 +441,7 @@ void dump_stats(const vector<vector<SKC> >& buckets) {
 	cout << "super_kmer per useful buckets:	" << intToString(total_super_kmers / non_null_buckets) << endl;
 	cout << "kmer per useful buckets:	" << intToString(total_kmers / non_null_buckets) << endl;
 	cout << "kmer per super_kmer:	" << intToString(total_kmers / total_super_kmers) << endl;
+	cout<<"Largest_bucket:	"<<intToString(largest_bucket)<<endl;
 }
 
 int64_t kmer_in_super_kmer(const SKC& super_kmer, const kmer_full& kmer) {
@@ -710,8 +713,11 @@ void read_fasta_file(const string& filename, vector<vector<SKC> >& buckets) {
 		omp_init_lock(&MutexWall[i]);
 	}
 	ifstream in(filename);
-
-#pragma omp parallel
+	uint8_t nb_core(4);
+	if(check){
+		nb_core=1;
+	}
+#pragma omp parallel num_threads(nb_core)
 	{
 		string line;
 		while (in.good()) {
