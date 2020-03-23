@@ -459,24 +459,6 @@ int64_t kmer_in_super_kmer(const SKC& super_kmer, const kmer_full& kmer) {
 	return -1;
 }
 
-uint64_t mask = (1 << 62) - 1;
-/** Return true if the kmer is present in the superkmer.
-  * The technic used is based on the knoledge of the minimizer idx.
-  * The superkmer is aligned to the kmer using the minimizer as anchor.
-  * Then a comparison is done using a xor and the result is returned
-  * @return the position of the kmer in SKC, -1 if not found.
-  */
-int64_t kmer_in_super_kmer_short(const SKC& super_kmer,const kmer_full& kmer){
-	int64_t start_idx = super_kmer.minimizer_idx - kmer.minimizer_idx;
-	uint64_t sub_sk = (super_kmer.sk << (2 * start_idx)) & mask;
-
-	if (sub_sk == kmer.kmer_s or sub_sk == kmer.kmer_rc) {
-		return start_idx;
-	}
-
-	// If one of the two is zero, return the position
-	return -1;
-}
 
 vector<bool> kmers_in_super_kmer(vector<SKC>& super_kmers, const vector<kmer_full>& kmers) {
 	uint64_t size_bucket = (super_kmers.size());
@@ -498,6 +480,29 @@ vector<bool> kmers_in_super_kmer(vector<SKC>& super_kmers, const vector<kmer_ful
 	return res;
 }
 
+#include <bitset>
+
+uint64_t mask = (1 << 62) - 1;
+/** Return true if the kmer is present in the superkmer.
+  * The technic used is based on the knoledge of the minimizer idx.
+  * The superkmer is aligned to the kmer using the minimizer as anchor.
+  * Then a comparison is done using a xor and the result is returned
+  * @return the position of the kmer in SKC, -1 if not found.
+  */
+int64_t kmer_in_super_kmer_short(const SKC& super_kmer,const kmer_full& kmer){
+	int64_t start_idx = super_kmer.minimizer_idx - kmer.minimizer_idx;
+	uint64_t sub_sk = (super_kmer.sk >> (2 * start_idx)) & mask;
+
+	cout << std::bitset<64>(sub_sk) << endl << std::bitset<64>(kmer.kmer_s) << endl << endl;
+
+	if (sub_sk == kmer.kmer_s or sub_sk == kmer.kmer_rc) {
+		return start_idx;
+	}
+
+	// If one of the two is zero, return the position
+	return -1;
+}
+
 int compact(SKC& super_kmer, kmer_full kmer) {
 	if (super_kmer.size >= 13) {
 		return -1;
@@ -507,9 +512,12 @@ int compact(SKC& super_kmer, kmer_full kmer) {
 	end_sk &= (((uint64_t)1 << 60) - 1);
 	uint64_t beg_k = kmer.kmer_s >> 2;
 	if (end_sk == beg_k) {
+		// cout << std::bitset<128>(super_kmer.sk) << endl;
 		super_kmer.sk <<= 2;
 		super_kmer.sk += (((kmer.kmer_s % 4)));
 		super_kmer.counts[super_kmer.size++] = 1;
+		super_kmer.minimizer_idx += 1;
+		// cout << std::bitset<128>(super_kmer.sk) << endl;
 		return super_kmer.size;
 	}
 	beg_k = kmer.kmer_rc >> 2;
@@ -517,6 +525,7 @@ int compact(SKC& super_kmer, kmer_full kmer) {
 		// super_kmer.sk <<= 2;//TODO IDONOTKNOW
 		super_kmer.sk += (((kmer.kmer_rc % 4)));
 		super_kmer.counts[super_kmer.size++] = 1;
+		super_kmer.minimizer_idx += 1;
 		return super_kmer.size;
 	}
 	return -1;
@@ -572,7 +581,7 @@ void insert_kmers(vector<kmer_full>& kmers, vector<SKC>& skc) {
 				kmer_full kmer = kmers[ik];
 				//IS IT HERE?
 				// int64_t pos = (kmer_in_super_kmer_short(localsk, kmer));
-				int64_t pos = (kmer_in_super_kmer(localsk, kmer));
+				int64_t pos = (kmer_in_super_kmer_short(localsk, kmer));
 				if (pos >= 0) {
 					++skc[i].counts[pos];
 					placed[ik] = true;
