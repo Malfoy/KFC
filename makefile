@@ -49,7 +49,7 @@ OBJS = $(CPPS:.cpp=.o)
 DEPS = $(OBJS:%.o=%.d)
 KFC_BLUE_OBJ = SolidSampler.o BitSet.o BloomFilter.o Hash.o CascadingBloomFilter.o BitSet.o
 
-EXEC=kfc_blue kfc_red kmerCountEvaluator red_alert
+EXEC=kfc_blue kfc_red kmerCountEvaluator SuperKmerCount
 LIB=kfc_blue.a
 
 all: $(EXEC) $(LIB) tests
@@ -72,8 +72,8 @@ bin/kfc_red: kfc_red.o
 	@echo "[LD] $@"
 	+@$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
-red_alert: bin bin/red_alert
-bin/red_alert: red_alert.o
+SuperKmerCount: bin bin/SuperKmerCount
+bin/SuperKmerCount: SuperKmerCount.o
 	@echo "[LD] $@"
 	+@$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
