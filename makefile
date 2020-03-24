@@ -69,7 +69,7 @@ bin/kfc_blue: $(KFC_BLUE_OBJ) kfc_blue.o
 	+@$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
 kfc_red: bin bin/kfc_red
-bin/kfc_red: kfc_red.o
+bin/kfc_red: $(KFC_RED_OBJ) kfc_red.o
 	@echo "[LD] $@"
 	+@$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 

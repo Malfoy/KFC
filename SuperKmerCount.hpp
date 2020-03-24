@@ -15,7 +15,7 @@ public:
 	* @param kmer The unsigned int 64 used to represent the binary kmer.
 	* @param mini_idx The minimizer position in the kmer.
 	*/
-	SKC(const uint64_t, const uint8_t);
+	SKC(const uint64_t kmer, const uint8_t mini_idx);
 	/** Look for the minimizer between the SKC and both of the fwd and rev kmer.
 	* Call the right compact function if needed.
 	*/

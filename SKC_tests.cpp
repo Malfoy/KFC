@@ -6,15 +6,6 @@
 using namespace std;
 
 
-uint64_t str2num(const string& str) {
-	uint64_t res(0);
-	for (uint64_t i(0); i < str.size(); i++) {
-		res <<= 2;
-		res += (str[i] / 2) % 4;
-	}
-	return res;
-}
-
 int main(int argc, char** argv) {
 	// Init skc
 	SKC skc(str2num("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC"), 1);

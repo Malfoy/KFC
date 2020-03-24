@@ -22,7 +22,7 @@ SKC::SKC(const uint64_t kmer, const uint8_t mini_idx) {
 	* @return True if the kmer is inserted false otherwise.
 	*/
 bool SKC::compact_right(const uint64_t kmer_val) {
-	cout << "Compact right" << endl;
+	// cout << "Compact right" << endl;
 	uint64_t end_sk = this->sk;
 	end_sk &= (((uint64_t)1 << (2*(k-1))) - 1);
 
@@ -51,7 +51,7 @@ bool SKC::compact_right(const uint64_t kmer_val) {
 	* @return True if the kmer is inserted false otherwise.
 	*/
 bool SKC::compact_left(const uint64_t kmer_val) {
-	cout << "Compact left" << endl;
+	// cout << "Compact left" << endl;
 	uint64_t begin_sk = this->sk >> (this->size * 2);
 	begin_sk &= (((uint64_t)1 << (2*(k-1))) - 1);
 
