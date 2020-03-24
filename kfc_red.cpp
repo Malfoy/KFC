@@ -477,7 +477,10 @@ void count_line(const string& line, vector<vector<SKC> >& buckets) {
 				position_minimizer_in_kmer++;
 			}
 		}
-
+		// if(position_minimizer_in_kmer>16){
+		// 	cout<<"wtf"<<endl;
+		// 	cin.get();
+		// }
 		// Normal add of the kmer into kmer list
 		kmers.push_back({static_cast<uint8_t>(position_minimizer_in_kmer), kmer_seq, kmer_rc_seq});
 	}

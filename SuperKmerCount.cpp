@@ -77,8 +77,22 @@ bool SKC::compact_left(const uint64_t kmer_val) {
 	* @return True if the kmer is present inside of the sk.
 	*/
 bool SKC::is_present(uint64_t kmer_val, uint64_t kmer_minimizer_idx) {
-	uint64_t start_idx  = this->minimizer_idx - kmer_minimizer_idx;
+
+	int64_t start_idx  = this->minimizer_idx - kmer_minimizer_idx;
+	if(start_idx<0 or (start_idx>=this->size)){return false;}
 	uint64_t aligned_sk = (this->sk >> (2 * start_idx)) & k_mask;
+	// if(str2num("AGCTAGCTAATCGATCGATCGATTAGCTAGC")==kmer_val){
+	// 	print_kmer(kmer_val,31);
+	// 	print_kmer(aligned_sk,31);
+		// cout<<kmer_minimizer_idx<<endl;
+
+		// if( aligned_sk == kmer_val){
+		// 	cout<<(int)start_idx<<endl;
+		// 	cout<<(int)kmer_minimizer_idx<<"	"<<(int)this->minimizer_idx<<endl;
+		// 	cout<<"YES"<<endl;
+		// }
+		// cin.get();
+	// }
 	return aligned_sk == kmer_val;
 }
 
@@ -102,14 +116,19 @@ bool SKC::add_kmer(const kmer_full& kmer) {
 	// Check the presence of the kmer into sk.
 	bool present = this->is_present(kmer_val, mini_k_idx);
 	if(present){
+		// cout<<"present"<<endl;
+		// cout<<this->minimizer_idx - mini_k_idx<<endl;
 		this->counts[this->minimizer_idx - mini_k_idx] ++;
 		init=true;// TODO SI TES CHAUD GO FALSE
 	}else{
 		// The kmer is not found in the skc, try to compact
+
 		if (not this->init and this->size<13) {
+			// cout<<"compact"<<endl;
 			return this->compact_right(kmer_val) or this->compact_left(kmer_val);
 			// return this->compact_left(kmer_val);
 		}else{
+			// cout<<"fail"<<endl;
 			return false;
 		}
 	}
