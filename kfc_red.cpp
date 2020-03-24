@@ -20,17 +20,17 @@
 #include <unordered_map>
 #include <vector>
 
-#include "pow2.hpp"
-#include "robin_hood.h"
 #include "Kmers.hpp"
 #include "SuperKmerCount.hpp"
+#include "pow2.hpp"
+#include "robin_hood.h"
 
 using namespace std;
 
 bool check = false;
 robin_hood::unordered_map<string, uint64_t> real_count;
 
-uint64_t subminimizer_size(minimizer_size-1);
+uint64_t subminimizer_size(minimizer_size - 1);
 uint64_t nb_kmer_read(0);
 uint64_t line_count(0);
 
@@ -82,7 +82,6 @@ uint64_t unrevhash(uint64_t x) {
 	x = ((x >> 32) ^ x);
 	return x;
 }
-
 
 inline uint64_t nuc2int(char c) {
 	return (c / 2) % 4;
@@ -196,7 +195,7 @@ void dump_stats(const vector<vector<SKC> >& buckets) {
 	//FOREACH BUCKETS
 	for (uint64_t i(0); i < buckets.size(); ++i) {
 		if (buckets[i].size() != 0) {
-			largest_bucket=max(largest_bucket,(uint64_t)buckets[i].size());
+			largest_bucket = max(largest_bucket, (uint64_t)buckets[i].size());
 			non_null_buckets++;
 			total_super_kmers += buckets[i].size();
 			for (uint64_t j(0); j < buckets[i].size(); ++j) {
@@ -214,12 +213,8 @@ void dump_stats(const vector<vector<SKC> >& buckets) {
 	cout << "super_kmer per useful buckets:	" << intToString(total_super_kmers / non_null_buckets) << endl;
 	cout << "kmer per useful buckets:	" << intToString(total_kmers / non_null_buckets) << endl;
 	cout << "kmer per super_kmer:	" << intToString(total_kmers / total_super_kmers) << endl;
-	cout<<"Largest_bucket:	"<<intToString(largest_bucket)<<endl;
+	cout << "Largest_bucket:	" << intToString(largest_bucket) << endl;
 }
-
-
-
-
 
 int64_t kmer_in_super_kmer(const SKC& super_kmer, const kmer_full& kmer) {
 	__uint128_t superkmer = super_kmer.sk;
@@ -240,9 +235,9 @@ uint64_t mask = ((uint64_t)1 << 62) - 1;
   * Then a comparison is done using a xor and the result is returned
   * @return the position of the kmer in SKC, -1 if not found.
   */
-int64_t kmer_in_super_kmer_short(const SKC& super_kmer,const kmer_full& kmer){
+int64_t kmer_in_super_kmer_short(const SKC& super_kmer, const kmer_full& kmer) {
 	int64_t start_idx = (int64_t)super_kmer.minimizer_idx - (int64_t)kmer.minimizer_idx;
-	uint64_t sub_sk = (super_kmer.sk >> (2 * start_idx)) & mask;
+	uint64_t sub_sk   = (super_kmer.sk >> (2 * start_idx)) & mask;
 	// cout<<"GO KMER IN SUPERKMER"<<endl;
 	if (sub_sk == kmer.kmer_s or sub_sk == kmer.kmer_rc) {
 		// cout<<"SUCCESS!!!!!!!!!!!!!!!!"<<endl;
@@ -263,7 +258,7 @@ int64_t kmer_in_super_kmer_short(const SKC& super_kmer,const kmer_full& kmer){
 	// print_kmer(kmer.kmer_s,31);
 	// print_kmer(kmer.kmer_s,31);
 	// print_kmer(super_kmer.sk,33	);
-		// cout<<endl;
+	// cout<<endl;
 	// print_kmer(kmer.kmer_s,31);
 	// If one of the two is zero, return the position
 	return -1;
@@ -311,7 +306,7 @@ int compact(SKC& super_kmer, kmer_full kmer) {
 	}
 	beg_k = kmer.kmer_rc >> 2;
 	if (end_sk == beg_k) {
-		super_kmer.sk <<= 2;//TODO IDONOTKNOW
+		super_kmer.sk <<= 2; //TODO IDONOTKNOW
 		super_kmer.sk += (((kmer.kmer_rc % 4)));
 		super_kmer.counts[super_kmer.size++] = 1;
 		return super_kmer.size;
@@ -321,7 +316,6 @@ int compact(SKC& super_kmer, kmer_full kmer) {
 	return -1;
 }
 
-
 void insert_kmers_into_bucket(vector<kmer_full>& kmers, vector<SKC>& bucket, uint64_t minimizer) {
 	uint64_t size_sk(kmers.size());
 	uint64_t size_skc(bucket.size());
@@ -329,20 +323,25 @@ void insert_kmers_into_bucket(vector<kmer_full>& kmers, vector<SKC>& bucket, uin
 	for (uint64_t ik = 0; ik < size_sk; ++ik) {
 		kmer_full kmer = kmers[ik];
 		bool placed(false);
-		// // FOREACh SUPERKMER
+		// // FOREACH SUPERKMER
 		for (uint64_t i = (0); i < size_skc and (not placed); i++) {
 			//Try to add the kmer into the superkmer counter
 			placed = bucket[i].add_kmer(kmer);
 		}
 		// Create a new bucket if not placed
 		if (not placed) {
+			// uint64_t fwd_kmer_minimizer = (kmer.kmer_s >> (2 * kmer.minimizer_idx)) & min_mask;
 			// Read in the same strand than its canonical MINIMIZER
 			if (minimizer == kmer.get_minimizer()) {
+				// cout<<"forward"<<endl;
+				// cout<<(int)kmer.minimizer_idx<<endl;
 				bucket.push_back(SKC(kmer.kmer_s, kmer.minimizer_idx));
-			}
-			// Reverse strand
-			else {
+			}else {
+				// Reverse strand
+				// cout<<"reverse"<<endl;
 				uint8_t start_idx = k - minimizer_size - kmer.minimizer_idx;
+				// cout<<(int)kmer.minimizer_idx<<endl;
+				// cout<<(int)start_idx<<endl;
 				bucket.push_back(SKC(kmer.kmer_rc, start_idx));
 			}
 			size_skc++;
@@ -418,25 +417,25 @@ void insert_kmers_into_bucket(vector<kmer_full>& kmers, vector<SKC>& bucket, uin
 // 	kmers.clear();
 // }
 
-
-
 void count_line(const string& line, vector<vector<SKC> >& buckets) {
 	if (line.size() < k) {
 		return;
 	}
 	vector<kmer_full> kmers;
 	// Init Sequences
-	uint64_t kmer_seq     = (str2num(line.substr(0, k))), kmer_rc_seq(rcb(kmer_seq));
-	uint64_t min_seq = (str2num(line.substr(k - minimizer_size, minimizer_size))), min_rcseq(rcbc(min_seq, minimizer_size)), min_canon(min(min_seq, min_rcseq));
+	uint64_t kmer_seq = (str2num(line.substr(0, k))), kmer_rc_seq(rcb(kmer_seq));
+	uint64_t min_seq  = (str2num(line.substr(k - minimizer_size, minimizer_size))), min_rcseq(rcbc(min_seq, minimizer_size)), min_canon(min(min_seq, min_rcseq));
 	// Init MINIMIZER
 	uint64_t position_min;
 	uint64_t position_minimizer_in_kmer;
-	uint64_t minimizer = get_minimizer(kmer_seq, position_min);
-	position_minimizer_in_kmer=position_min;
+	uint64_t minimizer         = get_minimizer(kmer_seq, position_min);
+	position_minimizer_in_kmer = position_min;
 
 	uint64_t hash_mini = hash64shift(minimizer);
 	kmers.push_back({static_cast<uint8_t>(position_minimizer_in_kmer), kmer_seq, kmer_rc_seq});
-	
+	if (check) {
+		real_count[getCanonical(line.substr(0, k))]++;
+	}
 	uint64_t line_size = line.size();
 	for (uint64_t i = 0; i + k < line_size; ++i) {
 		if (check) {
@@ -457,28 +456,29 @@ void count_line(const string& line, vector<vector<SKC> >& buckets) {
 			insert_kmers_into_bucket(kmers, buckets[bucketindice], minimizer);
 			omp_unset_lock(&MutexWall[bucketindice % 4096]);
 
-			minimizer    = (min_canon);
-			hash_mini    = new_hash;
-			position_min = i + k - minimizer_size + 1;
-			position_minimizer_in_kmer=0;
+			minimizer                  = (min_canon);
+			hash_mini                  = new_hash;
+			position_min               = i + k - minimizer_size + 1;
+			position_minimizer_in_kmer = 0;
 		} else {
 			//the previous MINIMIZER is outdated
-			if (i >= position_min) {
+			if (position_minimizer_in_kmer>=k-minimizer_size) {
 				uint64_t bucketindice = revhash(hash_mini) % bucket_number;
 				omp_set_lock(&MutexWall[bucketindice % 4096]);
 				insert_kmers_into_bucket(kmers, buckets[bucketindice], minimizer);
 				omp_unset_lock(&MutexWall[bucketindice % 4096]);
 				// Search for the new MINIMIZER in the whole kmer
 				minimizer = get_minimizer(kmer_seq, position_min);
-				
-				position_minimizer_in_kmer=position_min;
-				hash_mini = hash64shift(minimizer);
+
+				position_minimizer_in_kmer = position_min;
+				hash_mini                  = hash64shift(minimizer);
 				position_min += i + 1;
+			}else{
+				position_minimizer_in_kmer++;
 			}
 		}
-	
+
 		// Normal add of the kmer into kmer list
-		position_minimizer_in_kmer++;
 		kmers.push_back({static_cast<uint8_t>(position_minimizer_in_kmer), kmer_seq, kmer_rc_seq});
 	}
 
@@ -494,8 +494,8 @@ void read_fasta_file(const string& filename, vector<vector<SKC> >& buckets) {
 	}
 	ifstream in(filename);
 	uint8_t nb_core(4);
-	if(check){
-		nb_core=1;
+	if (check) {
+		nb_core = 1;
 	}
 #pragma omp parallel num_threads(nb_core)
 	{
@@ -529,6 +529,7 @@ int main(int argc, char** argv) {
 
 	if (mode > 1) {
 		check = true;
+		cout<<"LETS CHECK THE RESULTS"<<endl;
 	}
 	vector<vector<SKC> > buckets(bucket_number.value());
 	read_fasta_file(argv[1], buckets);

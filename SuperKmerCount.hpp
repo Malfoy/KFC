@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstdint>
+#include "Kmers.hpp"
 
 #ifndef SKC_H
 #define SKC_H
@@ -8,8 +9,9 @@ class SKC {
 public:
 	__uint128_t sk;
 	uint8_t size;
-	uint8_t counts[16] = {0};
+	uint8_t counts[13] = {0};
 	uint8_t minimizer_idx;
+	bool init;
 
 	/** Construct a superkmer from one kmer and the minimizer position.
 	* @param kmer The unsigned int 64 used to represent the binary kmer.
