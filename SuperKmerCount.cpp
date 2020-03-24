@@ -1,23 +1,11 @@
 #include <iostream>
-#include <cstdint>
 #include "Kmers.hpp"
+#include "SuperKmerCount.hpp"
 
 using namespace std;
 
 
-class SKC {
-public:
-	__uint128_t sk;
-	uint8_t size;
-	uint8_t counts[16] = {0};
-	uint8_t minimizer_idx;
 
-	SKC(const uint64_t, const uint8_t);
-	bool compact_right(const uint64_t);
-	bool compact_left(const uint64_t);
-	bool is_present(uint64_t, uint64_t);
-	bool add_kmer(const kmer_full& kmer);
-};
 
 /** Construct a superkmer from one kmer and the minimizer position.
 	* @param kmer The unsigned int 64 used to represent the binary kmer.
@@ -171,7 +159,7 @@ ostream & operator << (ostream& out, const SKC& skc)
 }
 
 
-// TODO: Move all this into other files -------------------------------------
+// TODO: Uncomment only for test purpose -------------------------------------
 
 uint64_t str2num(const string& str) {
 	uint64_t res(0);
