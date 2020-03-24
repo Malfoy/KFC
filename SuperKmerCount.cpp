@@ -1,54 +1,8 @@
 #include <iostream>
+#include <cstdint>
+#include "Kmers.hpp"
 
 using namespace std;
-
-
-// TODO: Move all this into other files -------------------------------------
-// Need global refactoring
-// ANTOINE: Don't skip this step §§
-// Suggestions: Create a file minimizer.cpp/hpp to keep all the variables and functions linked to the minimizers. Same for kmer.cpp/hpp
-
-#include <cstdint>
-
-uint64_t k = 31;
-uint64_t k_mask = (((uint64_t)1) << (2*k)) - 1;
-uint64_t minimizer_size(7);
-uint64_t min_mask = (((uint64_t)1) << (2*minimizer_size)) - 1;
-
-struct kmer_full {
-	uint8_t minimizer_idx;
-	uint64_t kmer_s;
-	uint64_t kmer_rc;
-};
-
-void print_kmer(__uint128_t num,uint64_t n){
-	__uint128_t anc((__uint128_t)1<<(2*(n-1)));
-	for(uint64_t i(0);i<n and anc!=0;++i){
-		uint64_t nuc=num/anc;
-		num=num%anc;
-		if(nuc==2){
-			cout<<"T";
-		}
-		if(nuc==3){
-			cout<<"G";
-		}
-		if(nuc==1){
-			cout<<"C";
-		}
-		if(nuc==0){
-			cout<<"A";
-		}
-		if (nuc>=4){
-			cout<<nuc<<endl;
-			cout<<"WTF"<<endl;
-		}
-		anc>>=2;
-	}
-	cout<<endl;
-}
-
-// /TODO --------------------------------------------------------------------
-
 
 
 class SKC {
@@ -173,6 +127,7 @@ bool SKC::add_kmer(const kmer_full& kmer) {
 
 // --- Pretty printing functions ---
 void _out_kmer(ostream& out, __uint128_t kmer, uint64_t size) {
+	kmer &= (((__uint128_t)1) << (2*size)) - 1;
 	__uint128_t anc((__uint128_t)1<<(2*(size-1)));
 	for(uint64_t i(0);i<size and anc!=0;++i){
 		uint64_t nuc=kmer/anc;
@@ -205,9 +160,9 @@ ostream & operator << (ostream& out, const SKC& skc)
 	out << endl;
 	// Print the minimizer
 	uint64_t left_spaces = k + skc.size - minimizer_size - skc.minimizer_idx - 1;
-	// for (uint64_t i=0 ; i<left_spaces ; i++)
-	// 	out << ' ';
-	// _out_kmer(out, skc.sk >> (2 * skc.minimizer_idx), minimizer_size);
+	for (uint64_t i=0 ; i<left_spaces ; i++)
+		out << ' ';
+	_out_kmer(out, skc.sk >> (2 * skc.minimizer_idx), minimizer_size);
 	out << " (mini idx " << (uint64_t)skc.minimizer_idx << ")" << endl;
 	// Print the counters (same direction than superkmer)
 	for (uint64_t i=skc.size ; i>0 ; i--)
