@@ -1,4 +1,4 @@
-
+#include <iostream>
 #include <cstdint>
 
 #ifndef SKC_H
@@ -20,6 +20,8 @@ public:
 	* Call the right compact function if needed.
 	*/
 	bool add_kmer(const kmer_full& kmer);
+
+	friend std::ostream & operator << (std::ostream& out, const SKC& skc);
 
 
 private:
