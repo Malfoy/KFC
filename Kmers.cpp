@@ -193,26 +193,31 @@ uint64_t hash64shift(uint64_t key) {
 Pow2<uint64_t> minimizer_number(2 * minimizer_size);
 /** Get the minimizer from a sequence and modify the position parameter.
 	*/
-uint64_t get_minimizer(uint64_t seq, uint64_t& position) {
+uint64_t get_minimizer(uint64_t seq, uint64_t& min_position) {
 	// print_kmer(seq,31);
 
 	// Init with the first possible minimizer
 	uint64_t mini, mmer;
-	mmer = seq % minimizer_number;
-	mini = mmer        = canonize(mmer, minimizer_size);
+	uint64_t fwd_mini = seq % minimizer_number;
+	mini = mmer = canonize(fwd_mini, minimizer_size);
 
 	uint64_t hash_mini = hash64shift(mmer);
-	position           = 0;
+	min_position = 0;
 	// Search in all possible position (from 1) the minimizer
-	for (uint64_t i(1); i <= k - minimizer_size; i++) {
+	uint64_t i(1), i_rc(k-minimizer_size);
+	for (; i <= k - minimizer_size; i++, i_rc--) {
 		seq >>= 2;
-		mmer = seq % minimizer_number;
-		mmer          = canonize(mmer, minimizer_size);
+		fwd_mini = seq % minimizer_number;
+		mmer = canonize(fwd_mini, minimizer_size);
+		bool current_reversed = mmer != fwd_mini;
 		uint64_t hash = (hash64shift(mmer));
 		if (hash_mini > hash) {
-			position  = i;
-			mini      = mmer;
+			min_position = i;
+			mini = mmer;
 			hash_mini = hash;
+		}
+		else if (current_reversed and (hash_mini == hash) and i_rc < current_reversed) {
+			min_position = i;
 		}
 	}
 	return ((uint64_t)mini);
