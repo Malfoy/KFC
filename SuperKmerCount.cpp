@@ -20,7 +20,6 @@ SKC::SKC(const uint64_t kmer, const uint8_t mini_idx) {
 	* @return True if the kmer is inserted false otherwise.
 	*/
 bool SKC::compact_right(const uint64_t kmer_val) {
-	// cout << "Compact right" << endl;
 	uint64_t end_sk = this->sk;
 	end_sk &= (((uint64_t)1 << (2 * (k - 1))) - 1);
 
@@ -49,7 +48,6 @@ bool SKC::compact_right(const uint64_t kmer_val) {
 	* @return True if the kmer is inserted false otherwise.
 	*/
 bool SKC::compact_left(const uint64_t kmer_val) {
-	// cout << "Compact left" << endl;
 	uint64_t begin_sk = this->sk >> (this->size * 2);
 	begin_sk &= (((uint64_t)1 << (2 * (k - 1))) - 1);
 
@@ -62,6 +60,7 @@ bool SKC::compact_left(const uint64_t kmer_val) {
 		this->size += 1;
 		// this->minimizer_idx += 1;
 
+		// FIX: The counters are not in the right order
 		this->counts[this->size - 1] = 1;
 
 		return true;
@@ -77,22 +76,9 @@ bool SKC::compact_left(const uint64_t kmer_val) {
 	* @return True if the kmer is present inside of the sk.
 	*/
 bool SKC::is_present(uint64_t kmer_val, uint64_t kmer_minimizer_idx) {
-
 	int64_t start_idx  = this->minimizer_idx - kmer_minimizer_idx;
 	if(start_idx<0 or (start_idx>=this->size)){return false;}
 	uint64_t aligned_sk = (this->sk >> (2 * start_idx)) & k_mask;
-	// if(str2num("AGCTAGCTAATCGATCGATCGATTAGCTAGC")==kmer_val){
-	// 	print_kmer(kmer_val,31);
-	// 	print_kmer(aligned_sk,31);
-		// cout<<kmer_minimizer_idx<<endl;
-
-		// if( aligned_sk == kmer_val){
-		// 	cout<<(int)start_idx<<endl;
-		// 	cout<<(int)kmer_minimizer_idx<<"	"<<(int)this->minimizer_idx<<endl;
-		// 	cout<<"YES"<<endl;
-		// }
-		// cin.get();
-	// }
 	return aligned_sk == kmer_val;
 }
 
@@ -102,7 +88,7 @@ bool SKC::is_present(uint64_t kmer_val, uint64_t kmer_minimizer_idx) {
 bool SKC::add_kmer(const kmer_full& kmer) {
 	// Get the orientation of the kmer minimizer
 	uint64_t minimizer          = (this->sk >> (2 * this->minimizer_idx)) & min_mask;
-	uint64_t fwd_kmer_minimizer = (kmer.kmer_s >> (2 * kmer.minimizer_idx)) & min_mask;
+	uint64_t fwd_kmer_minimizer = kmer.get_minimizer();
 	bool same_strand            = minimizer == fwd_kmer_minimizer;
 
 	// Save the kmer values for the same strand than the sk.
@@ -116,10 +102,8 @@ bool SKC::add_kmer(const kmer_full& kmer) {
 	// Check the presence of the kmer into sk.
 	bool present = this->is_present(kmer_val, mini_k_idx);
 	if(present){
-		// cout<<"present"<<endl;
-		// cout<<this->minimizer_idx - mini_k_idx<<endl;
 		this->counts[this->minimizer_idx - mini_k_idx] ++;
-		init=true;// TODO SI TES CHAUD GO FALSE
+		this->init=true;// TODO SI TES CHAUD GO FALSE
 	}else{
 		// The kmer is not found in the skc, try to compact
 

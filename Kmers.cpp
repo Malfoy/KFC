@@ -227,6 +227,6 @@ kmer_full::kmer_full(uint8_t minimizer_idx, uint64_t value, uint64_t reverse_com
 	this->kmer_rc = reverse_comp_value;
 }
 
-uint64_t kmer_full::get_minimizer() {
+uint64_t kmer_full::get_minimizer() const {
 	return (this->kmer_s >> (2*this->minimizer_idx)) & min_mask;
 }

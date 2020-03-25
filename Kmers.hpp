@@ -43,7 +43,7 @@ public:
 	/** Return the minimizer regarding the minimizer_idx property
 		* Warning: The minimizer can be non canonical !
 		*/
-	uint64_t get_minimizer();
+	uint64_t get_minimizer() const;
 };
 
 #endif
