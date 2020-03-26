@@ -13,6 +13,7 @@ SKC::SKC(const uint64_t kmer, const uint8_t mini_idx) {
 	this->counts[0]     = 1;
 	this->minimizer_idx = mini_idx;
 	this->init = false;
+	this->weight=1;
 };
 
 /** Used to compact a new nucleotide from a kmer on the right of the superkmer.
@@ -36,7 +37,7 @@ bool SKC::compact_right(const uint64_t kmer_val) {
 		// counters <<= 8;
 		// *((__uint128_t*)this->counts) = counters;
 		this->counts[this->size-1]               = 1;
-
+		this->weight++;
 		return true;
 	}
 
@@ -62,7 +63,7 @@ bool SKC::compact_left(const uint64_t kmer_val) {
 
 		// FIX: The counters are not in the right order
 		this->counts[this->size - 1] = 1;
-
+		this->weight++;
 		return true;
 	}
 
@@ -76,6 +77,7 @@ bool SKC::compact_left(const uint64_t kmer_val) {
 	* @return True if the kmer is present inside of the sk.
 	*/
 bool SKC::is_present(uint64_t kmer_val, uint64_t kmer_minimizer_idx) {
+	// cout<<kmer_minimizer_idx<<endl;
 	int64_t start_idx  = this->minimizer_idx - kmer_minimizer_idx;
 	if(start_idx<0 or (start_idx>=this->size)){return false;}
 	uint64_t aligned_sk = (this->sk >> (2 * start_idx)) & k_mask;
@@ -104,11 +106,12 @@ bool SKC::add_kmer(const kmer_full& kmer) {
 	if(present){
 		this->counts[this->minimizer_idx - mini_k_idx] ++;
 		this->init=true;// TODO SI TES CHAUD GO FALSE
+		this->weight++;
 		return true;
 	}else{
 		// The kmer is not found in the skc, try to compact
 
-		if (not this->init and this->size<13) {
+		if (not this->init and this->size<16) {
 			// cout<<"compact"<<endl;
 			return this->compact_right(kmer_val) or this->compact_left(kmer_val);
 			// return this->compact_left(kmer_val);
@@ -117,8 +120,6 @@ bool SKC::add_kmer(const kmer_full& kmer) {
 			return false;
 		}
 	}
-
-
 	// If present increment the counter
 
 	return false;

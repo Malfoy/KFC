@@ -160,24 +160,36 @@ string intToString(uint64_t n) {
 //START HIGH LEVEL FUNCTIONS
 
 void dump_count(const SKC& skc) {
+	cout<<(int)skc.weight<<"."<<(int)skc.size<<"	";
 	string skmer(kmer2str(skc.sk, skc.size + 30));
 	for (uint64_t i(0); i < skc.size; ++i) {
-		cout << getCanonical(skmer.substr(i, k)) << " " << (uint64_t)skc.counts[skc.size - 1 - i] << endl;
+		// cout << getCanonical(skmer.substr(i, k)) << " " << (uint64_t)skc.counts[skc.size - 1 - i] << endl;
 		if (check) {
-			if (real_count[getCanonical(skmer.substr(i, k))] != (uint64_t)skc.counts[skc.size - 1 - i]) {
-				cout << i << " " << skc.size - 1 - i << endl;
-				cerr << "fail " << (skmer.substr(i, k)) << " " << revComp(skmer.substr(i, k)) << " real: " << real_count[getCanonical(skmer.substr(i, k))] << " output:"
-				     << (uint64_t)skc.counts[skc.size - 1 - i] << endl;
-				cin.get();
-			}
+			// if (real_count[getCanonical(skmer.substr(i, k))] != (uint64_t)skc.counts[skc.size - 1 - i]) {
+			// 	cout << i << " " << skc.size - 1 - i << endl;
+			// 	cerr << "fail " << (skmer.substr(i, k)) << " " << revComp(skmer.substr(i, k)) << " real: " << real_count[getCanonical(skmer.substr(i, k))] << " output:"
+			// 	     << (uint64_t)skc.counts[skc.size - 1 - i] << endl;
+			// 	cin.get();
+			// }
 		}
 	}
 }
 
 void dump_counting(const vector<vector<SKC> >& buckets) {
-	for (uint64_t i(0); i < buckets.size(); ++i) {
-		for (uint64_t ii(0); ii < buckets[i].size(); ++ii) {
-			dump_count(buckets[i][ii]);
+	auto copy(buckets);
+	sort(copy.begin(),copy.end(),[ ]( const vector<SKC>& lhs, const vector<SKC>& rhs )
+{
+   return lhs.size()> rhs.size();
+});
+	for (uint64_t i(0); i < copy.size(); ++i) {
+		if(copy[i].size()!=0){
+			cout<<endl<<"go buckets"<<endl;
+		}
+		for (uint64_t ii(0); ii < copy[i].size(); ++ii) {
+			dump_count(copy[i][ii]);
+		}
+		if(copy[i].size()!=0){
+			cin.get();
 		}
 	}
 	if (check) {
@@ -250,7 +262,7 @@ int compact(SKC& super_kmer, kmer_full kmer) {
 }
 
 void insert_kmers_into_bucket_last_chance(vector<kmer_full>& kmers, vector<SKC>& bucket, uint64_t minimizer, vector<bool> placed = vector<bool>(0, false)) {
-	
+	// cout<<"go insert kmers"<<endl;
 	uint64_t size_sk(kmers.size());
 	uint64_t size_skc(bucket.size());
 	if (placed.size() != size_sk)
@@ -287,17 +299,26 @@ void insert_kmers_into_bucket(vector<kmer_full>& kmers, vector<SKC>& bucket, uin
 	vector<bool> placed(size_sk, false);
 	uint64_t inserted = 0;
 
+	//FOREACH SUPERKMER
 	for (uint64_t i = 0; i < size_skc; i++) {
 		SKC& skc = bucket[i];
-		
+
 		//FOREACH KMER
 		for (uint64_t ik = 0; ik < size_sk; ++ik) {
 			kmer_full& kmer = kmers[ik];
 
 			if (not placed[ik]) {
 				placed[ik] = skc.add_kmer(kmer);
-				if (placed[ik])
+				if (placed[ik]){
 					inserted += 1;
+
+				}
+
+			}
+		}
+		if(i>0){
+			if(bucket[i].weight>=1.5*bucket[i-1].weight){
+				swap(bucket[i],bucket[i-1]);
 			}
 		}
 	}
@@ -376,10 +397,6 @@ void count_line(const string& line, vector<vector<SKC> >& buckets) {
 				position_minimizer_in_kmer++;
 			}
 		}
-		// if(position_minimizer_in_kmer>16){
-		// 	cout<<"wtf"<<endl;
-		// 	cin.get();
-		// }
 		// Normal add of the kmer into kmer list
 		kmers.push_back({static_cast<uint8_t>(position_minimizer_in_kmer), kmer_seq, kmer_rc_seq});
 	}
@@ -399,7 +416,7 @@ void read_fasta_file(const string& filename, vector<vector<SKC> >& buckets) {
 	if (check) {
 		nb_core = 1;
 	}
-// #pragma omp parallel num_threads(nb_core)
+#pragma omp parallel num_threads(nb_core)
 	{
 		string line;
 		while (in.good()) {
