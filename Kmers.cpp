@@ -8,7 +8,7 @@ using namespace std;
 
 uint64_t k = 31;
 uint64_t k_mask = (((uint64_t)1) << (2*k)) - 1;
-uint64_t minimizer_size = 15;
+uint64_t minimizer_size = 17;
 uint64_t min_mask = (((uint64_t)1) << (2*minimizer_size)) - 1;
 
 
