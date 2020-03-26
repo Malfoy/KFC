@@ -84,6 +84,19 @@ bool SKC::is_present(uint64_t kmer_val, uint64_t kmer_minimizer_idx) {
 	return aligned_sk == kmer_val;
 }
 
+bool SKC::is_present_brutforce(kmer_full kmer, uint8_t & mini_k_idx) {
+	for (mini_k_idx=0 ; mini_k_idx<=k-minimizer_size ; mini_k_idx++) {
+		if (this->is_present(kmer.kmer_s, mini_k_idx))
+			return true;
+		if (this->is_present(kmer.kmer_rc, k-minimizer_size-mini_k_idx)){ 
+			mini_k_idx = k-minimizer_size-mini_k_idx;
+			return true;
+		}
+	}
+
+	return false;
+}
+
 /** Look for the minimizer between the SKC and both of the fwd and rev kmer.
 	* Call the right compact function if needed.
 	*/
@@ -95,14 +108,19 @@ bool SKC::add_kmer(const kmer_full& kmer) {
 
 	// Save the kmer values for the same strand than the sk.
 	uint64_t kmer_val  = kmer.kmer_s;
-	uint8_t mini_k_idx = kmer.minimizer_idx;
+	uint8_t mini_k_idx = kmer.get_minimizer_idx();
 	if (not same_strand) {
 		kmer_val   = kmer.kmer_rc;
-		mini_k_idx = k - kmer.minimizer_idx - minimizer_size;
+		mini_k_idx = k - mini_k_idx - minimizer_size;
 	}
 
 	// Check the presence of the kmer into sk.
 	bool present = this->is_present(kmer_val, mini_k_idx);
+	//Check for multiple minimizer kmers
+	if ((not present) and kmer.contains_multi_minimizer()) {
+		present = this->is_present_brutforce(kmer, mini_k_idx);
+	}
+
 	if(present){
 		this->counts[this->minimizer_idx - mini_k_idx] ++;
 		this->init=true;// TODO SI TES CHAUD GO FALSE

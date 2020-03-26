@@ -11,6 +11,29 @@ uint64_t k_mask = (((uint64_t)1) << (2*k)) - 1;
 uint64_t minimizer_size = 17;
 uint64_t min_mask = (((uint64_t)1) << (2*minimizer_size)) - 1;
 
+// ----- Kmer class -----
+
+uint8_t kmer_full::get_minimizer_idx() const {
+	if (this->minimizer_idx < 0) {
+		return (uint8_t)(-this->minimizer_idx - 1);
+	} else {
+		return (uint8_t)this->minimizer_idx;
+	}
+}
+
+kmer_full::kmer_full(int8_t minimizer_idx, uint64_t value, uint64_t reverse_comp_value) {
+	this->minimizer_idx = minimizer_idx;
+	this->kmer_s = value;
+	this->kmer_rc = reverse_comp_value;
+}
+
+uint64_t kmer_full::get_minimizer() const {
+	return (this->kmer_s >> (2*this->get_minimizer_idx())) & min_mask;
+}
+
+bool kmer_full::contains_multi_minimizer() const {
+	return this->minimizer_idx < 0;
+}
 
 // ----- Useful binary kmer functions -----
 
@@ -193,21 +216,20 @@ uint64_t hash64shift(uint64_t key) {
 Pow2<uint64_t> minimizer_number(2 * minimizer_size);
 /** Get the minimizer from a sequence and modify the position parameter.
 	*/
-uint64_t get_minimizer(uint64_t seq, uint64_t& min_position) {
+uint64_t get_minimizer(uint64_t seq, int8_t& min_position) {
 	// print_kmer(seq,31);
 
 	// Init with the first possible minimizer
 	uint64_t mini, mmer;
 	uint64_t fwd_mini = seq % minimizer_number;
 	mini = mmer = canonize(fwd_mini, minimizer_size);
-	bool canonical_kmer = seq == canonize(seq, k);
+	bool multiple_mini = false;
 
 	uint64_t hash_mini = hash64shift(mmer);
 	min_position = 0;
 	// cout << hash_mini << " " << min_position << endl;
 	// Search in all possible position (from 1) the minimizer
-	uint64_t i(1), i_rc(k-minimizer_size);
-	for (; i <= k - minimizer_size; i++, i_rc--) {
+	for (uint64_t i=1; i <= k - minimizer_size; i++) {
 		seq >>= 2;
 		fwd_mini = seq % minimizer_number;
 		mmer = canonize(fwd_mini, minimizer_size);
@@ -218,26 +240,12 @@ uint64_t get_minimizer(uint64_t seq, uint64_t& min_position) {
 			// cout << hash_mini << " " << min_position << endl;
 			mini = mmer;
 			hash_mini = hash;
-		}
-		// Same hash than previously
-		else if ((not canonical_kmer) and (hash_mini == hash)) {
-			// cout << "pouet 2" << endl;
-			min_position = i;
-			// cout << hash_mini << " " << min_position << endl;
+			multiple_mini = false;
+		} else if ((hash_mini == hash) and (not multiple_mini)) {
+			multiple_mini = true;
+			min_position = - min_position - 1;
 		}
 	}
-	return ((uint64_t)mini);
+	return ((int64_t)mini);
 }
 
-
-// ----- Kmer class -----
-
-kmer_full::kmer_full(uint8_t minimizer_idx, uint64_t value, uint64_t reverse_comp_value) {
-	this->minimizer_idx = minimizer_idx;
-	this->kmer_s = value;
-	this->kmer_rc = reverse_comp_value;
-}
-
-uint64_t kmer_full::get_minimizer() const {
-	return (this->kmer_s >> (2*this->minimizer_idx)) & min_mask;
-}

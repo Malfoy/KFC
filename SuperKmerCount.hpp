@@ -31,6 +31,7 @@ private:
 	bool compact_right(const uint64_t);
 	bool compact_left(const uint64_t);
 	bool is_present(uint64_t, uint64_t);
+	bool is_present_brutforce(kmer_full kmer, uint8_t & mini_k_idx);
 };
 
 #endif
