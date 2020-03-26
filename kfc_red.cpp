@@ -369,7 +369,10 @@ void count_line(const string& line, vector<vector<SKC> >& buckets) {
 
 		//THE NEW mmer is a MINIMIZER
 		uint64_t new_hash = (hash64shift(min_canon));
-		if (new_hash < hash_mini) {
+		if (
+				(new_hash < hash_mini) or
+				((new_hash == hash_mini) and (kmer_rc_seq < kmer_seq))
+			) {
 			uint64_t bucketindice = revhash(hash_mini) % bucket_number;
 			omp_set_lock(&MutexWall[bucketindice % 4096]);
 			insert_kmers_into_bucket(kmers, buckets[bucketindice], minimizer);

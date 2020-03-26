@@ -200,24 +200,30 @@ uint64_t get_minimizer(uint64_t seq, uint64_t& min_position) {
 	uint64_t mini, mmer;
 	uint64_t fwd_mini = seq % minimizer_number;
 	mini = mmer = canonize(fwd_mini, minimizer_size);
+	bool canonical_kmer = seq == canonize(seq, k);
 
 	uint64_t hash_mini = hash64shift(mmer);
 	min_position = 0;
+	// cout << hash_mini << " " << min_position << endl;
 	// Search in all possible position (from 1) the minimizer
 	uint64_t i(1), i_rc(k-minimizer_size);
 	for (; i <= k - minimizer_size; i++, i_rc--) {
 		seq >>= 2;
 		fwd_mini = seq % minimizer_number;
 		mmer = canonize(fwd_mini, minimizer_size);
-		bool current_reversed = mmer != fwd_mini;
 		uint64_t hash = (hash64shift(mmer));
 		if (hash_mini > hash) {
 			min_position = i;
+			// cout << "pouet 1" << endl;
+			// cout << hash_mini << " " << min_position << endl;
 			mini = mmer;
 			hash_mini = hash;
 		}
-		else if (current_reversed and (hash_mini == hash) and i_rc < current_reversed) {
+		// Same hash than previously
+		else if ((not canonical_kmer) and (hash_mini == hash)) {
+			// cout << "pouet 2" << endl;
 			min_position = i;
+			// cout << hash_mini << " " << min_position << endl;
 		}
 	}
 	return ((uint64_t)mini);

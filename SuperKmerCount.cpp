@@ -88,13 +88,10 @@ bool SKC::is_present(uint64_t kmer_val, uint64_t kmer_minimizer_idx) {
 	* Call the right compact function if needed.
 	*/
 bool SKC::add_kmer(const kmer_full& kmer) {
-	// cout << "Add kmer" << endl;
 	// Get the orientation of the kmer minimizer
 	uint64_t minimizer          = (this->sk >> (2 * this->minimizer_idx)) & min_mask;
 	uint64_t fwd_kmer_minimizer = kmer.get_minimizer();
 	bool same_strand            = minimizer == fwd_kmer_minimizer;
-
-	// cout << (same_strand ? "same strand" : "reverse strand") << endl;
 
 	// Save the kmer values for the same strand than the sk.
 	uint64_t kmer_val  = kmer.kmer_s;
@@ -110,6 +107,7 @@ bool SKC::add_kmer(const kmer_full& kmer) {
 		this->counts[this->minimizer_idx - mini_k_idx] ++;
 		this->init=true;// TODO SI TES CHAUD GO FALSE
 		this->weight++;
+		return true;
 	}else{
 		// The kmer is not found in the skc, try to compact
 
@@ -124,7 +122,7 @@ bool SKC::add_kmer(const kmer_full& kmer) {
 	}
 	// If present increment the counter
 
-	return true;
+	return false;
 }
 
 // --- Pretty printing functions ---
