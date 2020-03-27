@@ -30,7 +30,7 @@ using namespace std;
 bool check = false;
 robin_hood::unordered_map<string, uint64_t> real_count;
 
-uint64_t subminimizer_size(minimizer_size - 4);
+uint64_t subminimizer_size(minimizer_size - 5);
 uint64_t nb_kmer_read(0);
 uint64_t line_count(0);
 
@@ -222,8 +222,8 @@ void dump_stats(const vector<vector<SKC> >& buckets) {
 	cout << "Useful buckets:	" << intToString(non_null_buckets) << endl;
 	cout << "#Superkmer:	" << intToString(total_super_kmers) << endl;
 	cout << "#kmer:	" << intToString(total_kmers) << endl;
-	cout << "super_kmer per useful buckets:	" << intToString(total_super_kmers / non_null_buckets) << endl;
-	cout << "kmer per useful buckets:	" << intToString(total_kmers / non_null_buckets) << endl;
+	cout << "super_kmer per useful buckets*1000:	" << intToString(total_super_kmers*1000 / non_null_buckets) << endl;
+	cout << "kmer per useful buckets*1000:	" << intToString(total_kmers*1000 / non_null_buckets) << endl;
 	cout << "kmer per super_kmer*1000:	" << intToString(total_kmers*1000 / total_super_kmers) << endl;
 	cout << "Largest_bucket:	" << intToString(largest_bucket) << endl;
 }
@@ -384,7 +384,7 @@ void count_line(const string& line, vector<vector<SKC> >& buckets) {
 			hash_mini = new_hash;
 			position_minimizer_in_kmer = relative_min_position = 0;
 			multiple_min = false;
-		} 
+		}
 		// duplicated MINIMIZER
 		else if (new_hash == hash_mini) {
 			multiple_min = true;
@@ -429,7 +429,7 @@ void read_fasta_file(const string& filename, vector<vector<SKC> >& buckets) {
 		omp_init_lock(&MutexWall[i]);
 	}
 	ifstream in(filename);
-	uint8_t nb_core(4);
+	uint8_t nb_core(8);
 	if (check) {
 		nb_core = 1;
 	}
