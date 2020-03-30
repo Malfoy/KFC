@@ -23,6 +23,8 @@ public:
 	* Call the right compact function if needed.
 	*/
 	bool add_kmer(const kmer_full& kmer);
+	uint64_t get_minimizer() const;
+	void close_compaction();
 
 	friend std::ostream & operator << (std::ostream& out, const SKC& skc);
 

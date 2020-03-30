@@ -163,7 +163,7 @@ void dump_count(const SKC& skc) {
 	// cout<<(int)skc.weight<<"."<<(int)skc.size<<"	";
 	string skmer(kmer2str(skc.sk, skc.size + 30));
 	for (uint64_t i(0); i < skc.size; ++i) {
-		cout << getCanonical(skmer.substr(i, k)) << " " << (uint64_t)skc.counts[skc.size - 1 - i] << endl;
+		// cout << getCanonical(skmer.substr(i, k)) << " " << (uint64_t)skc.counts[skc.size - 1 - i] << endl;
 		if (check) {
 			if (real_count[getCanonical(skmer.substr(i, k))] != (uint64_t)skc.counts[skc.size - 1 - i]) {
 				cout << i << " " << skc.size - 1 - i << endl;
@@ -261,24 +261,25 @@ int compact(SKC& super_kmer, kmer_full kmer) {
 	return -1;
 }
 
-void insert_kmers_into_bucket_last_chance(vector<kmer_full>& kmers, vector<SKC>& bucket, uint64_t minimizer, bool placed[],uint64_t begin) {
+void insert_kmers_into_bucket_last_chance(vector<kmer_full>& kmers, vector<SKC>& bucket, uint64_t minimizer, bool placed[],uint64_t bucket_offset) {
 	// cout<<"go insert kmers"<<endl;
 	uint64_t size_sk(kmers.size());
 	uint64_t size_skc(bucket.size());
-	// if (placed.size() != size_sk)
-	// 	placed = vector<bool>(size_sk, false);
 
 	//FOREACH KMER
 	for (uint64_t ik = 0; ik < size_sk; ++ik) {
 		if(not placed[ik]){
 			kmer_full& kmer = kmers[ik];
 			// // FOREACH SUPERKMER
-			for (uint64_t i = (begin); i < size_skc and (not placed[ik]); i++) {
+			for (uint64_t i = (bucket_offset); i < size_skc and (not placed[ik]); i++) {
 				//Try to add the kmer into the superkmer counter
 				placed[ik] = bucket[i].add_kmer(kmer);
 			}
 			// Create a new bucket if not placed
 			if (not placed[ik]) {
+				// FReeze the previous superker.
+				if (size_skc > 0)
+					bucket[size_skc-1].close_compaction();
 				// Read in the same strand than its canonical MINIMIZER
 				if (minimizer == kmer.get_minimizer()) {
 					bucket.push_back(SKC(kmer.kmer_s, kmer.get_minimizer_idx()));
@@ -305,6 +306,8 @@ void insert_kmers_into_bucket(vector<kmer_full>& kmers, vector<SKC>& bucket, uin
 	//FOREACH SUPERKMER
 	for (uint64_t i = 0; i < size_skc; i++) {
 		SKC& skc = bucket[i];
+		// TODO: verify minimizer
+		// uint64_t sk_mini = skc.get_minimizer();
 
 		//FOREACH KMER
 		for (uint64_t ik = 0; ik < size_sk; ++ik) {
@@ -328,10 +331,7 @@ void insert_kmers_into_bucket(vector<kmer_full>& kmers, vector<SKC>& bucket, uin
 		kmers.clear();
 		return;
 	}
-	//WHY
-	// vector<SKC> new_skc = vector<SKC>();
-	// insert_kmers_into_bucket_last_chance(kmers, new_skc, minimizer, placed);
-	// bucket.insert(bucket.end(), new_skc.begin(), new_skc.end());
+
 	insert_kmers_into_bucket_last_chance(kmers, bucket, minimizer, placed, size_skc);
 }
 

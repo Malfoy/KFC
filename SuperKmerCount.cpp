@@ -16,6 +16,10 @@ SKC::SKC(const uint64_t kmer, const uint8_t mini_idx) {
 	this->weight=1;
 };
 
+void SKC::close_compaction() {
+	this->init = true;
+}
+
 /** Used to compact a new nucleotide from a kmer on the right of the superkmer.
 	* @param kmer The binary representation of the kmer to compact on the right. Must be on the same strand than the superkmer.
 	* @return True if the kmer is inserted false otherwise.
@@ -70,6 +74,11 @@ bool SKC::compact_left(const uint64_t kmer_val) {
 	return false;
 }
 
+uint64_t SKC::get_minimizer() const {
+	__uint128_t mini = this->sk >> (2 * this->minimizer_idx);
+	return static_cast<uint64_t>(mini & k_mask);
+}
+
 /** Look for the presence of the kmer inside of the superkmer.
 	* The function supposes that the minimizer in the kmer is in the same strand than in sk.
 	* @param kmer_val The binary value for the kmer.
@@ -121,6 +130,13 @@ bool SKC::add_kmer(const kmer_full& kmer) {
 		present = this->is_present_brutforce(kmer, mini_k_idx);
 	}
 
+	// if (kmer.kmer_s == 4128274138154682647U) {
+	// 	cout << kmer2str(kmer.kmer_s, k) << endl;
+	// 	cout << *this << endl;
+	// 	cout << "present " << present << endl;
+	// }
+
+
 	if(present){
 		this->counts[this->minimizer_idx - mini_k_idx] ++;
 		this->init=true;// TODO SI TES CHAUD GO FALSE
@@ -138,7 +154,9 @@ bool SKC::add_kmer(const kmer_full& kmer) {
 			return false;
 		}
 	}
-	// If present increment the counter
+
+	if (kmer.kmer_s == 4128274138154682647U)
+			cout << *this << endl;
 
 	return false;
 }
