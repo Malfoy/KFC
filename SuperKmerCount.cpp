@@ -110,6 +110,9 @@ bool SKC::is_present_brutforce(kmer_full kmer, uint8_t & mini_k_idx) {
 	* Call the right compact function if needed.
 	*/
 bool SKC::add_kmer(const kmer_full& kmer) {
+	// 659019165104881940U
+	// cout << str2num("ATCATCCCAGTCGAACTCACAAACAACACCA") << endl;
+	// cin.get();
 	// Get the orientation of the kmer minimizer
 	uint64_t minimizer          = (this->sk >> (2 * this->minimizer_idx)) & min_mask;
 	uint64_t fwd_kmer_minimizer = kmer.get_minimizer();
@@ -130,8 +133,10 @@ bool SKC::add_kmer(const kmer_full& kmer) {
 		present = this->is_present_brutforce(kmer, mini_k_idx);
 	}
 
-	// if (kmer.kmer_s == 4128274138154682647U) {
+	// if (kmer.kmer_rc == 659019165104881940U || kmer.kmer_s == 659019165104881940U) {
+	// 	cout << endl;
 	// 	cout << kmer2str(kmer.kmer_s, k) << endl;
+	// 	cout << kmer2str(kmer.kmer_rc, k) << endl;
 	// 	cout << *this << endl;
 	// 	cout << "present " << present << endl;
 	// }

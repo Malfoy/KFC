@@ -292,6 +292,8 @@ void insert_kmers_into_bucket_last_chance(vector<kmer_full>& kmers, vector<SKC>&
 			}
 		}
 	}
+
+	bucket[size_skc-1].close_compaction();
 	kmers.clear();
 }
 
@@ -433,7 +435,7 @@ void read_fasta_file(const string& filename, vector<vector<SKC> >& buckets) {
 	if (check) {
 		nb_core = 1;
 	}
-#pragma omp parallel num_threads(nb_core)
+// #pragma omp parallel num_threads(nb_core)
 	{
 		string line;
 		while (in.good()) {
