@@ -31,6 +31,12 @@ uint64_t kmer_full::get_minimizer() const {
 	return (this->kmer_s >> (2*this->get_minimizer_idx())) & min_mask;
 }
 
+bool kmer_full::is_minimizer_fwd() const {
+	uint64_t mini = this->get_minimizer();
+	uint64_t canon_mini = canonize(mini, minimizer_size);
+	return mini == canon_mini;
+}
+
 bool kmer_full::contains_multi_minimizer() const {
 	return this->minimizer_idx < 0;
 }

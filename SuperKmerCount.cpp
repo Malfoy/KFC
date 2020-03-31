@@ -160,8 +160,6 @@ bool SKC::add_kmer(const kmer_full& kmer) {
 		}
 	}
 
-	if (kmer.kmer_s == 4128274138154682647U)
-			cout << *this << endl;
 
 	return false;
 }

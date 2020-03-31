@@ -21,6 +21,7 @@ uint64_t str2num(const std::string& str);
 uint64_t rcb(const uint64_t& in);
 __uint128_t rcb(const __uint128_t& in);
 uint64_t rcbc(uint64_t in, uint64_t n);
+uint64_t canonize(uint64_t x, uint64_t n);
 
 // Hash functions (TODO: move them)
 __m128i mm_bitshift_right(__m128i x, unsigned count);
@@ -47,6 +48,7 @@ public:
 		*/
 	uint8_t get_minimizer_idx() const;
 	uint64_t get_minimizer() const;
+	bool is_minimizer_fwd() const;
 	bool contains_multi_minimizer() const;
 };
 
