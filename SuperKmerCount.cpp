@@ -1,6 +1,10 @@
 #include "SuperKmerCount.hpp"
 #include "Kmers.hpp"
 
+uint64_t nb_superkmer(1);
+uint64_t nb_kmer_read(0);
+
+
 using namespace std;
 
 /** Construct a superkmer from one kmer and the minimizer position.
@@ -12,12 +16,10 @@ SKC::SKC(const uint64_t kmer, const uint8_t mini_idx) {
 	this->size          = 1;
 	this->counts[0]     = 1;
 	this->minimizer_idx = mini_idx;
-	this->init = false;
 	this->weight=1;
 };
 
 void SKC::close_compaction() {
-	this->init = true;
 }
 
 /** Used to compact a new nucleotide from a kmer on the right of the superkmer.
@@ -93,11 +95,13 @@ bool SKC::is_present(uint64_t kmer_val, uint64_t kmer_minimizer_idx) {
 	return aligned_sk == kmer_val;
 }
 
+
+
 bool SKC::is_present_brutforce(kmer_full kmer, uint8_t & mini_k_idx) {
 	for (mini_k_idx=0 ; mini_k_idx<=k-minimizer_size ; mini_k_idx++) {
 		if (this->is_present(kmer.kmer_s, mini_k_idx))
 			return true;
-		if (this->is_present(kmer.kmer_rc, k-minimizer_size-mini_k_idx)){ 
+		if (this->is_present(kmer.kmer_rc, k-minimizer_size-mini_k_idx)){
 			mini_k_idx = k-minimizer_size-mini_k_idx;
 			return true;
 		}
@@ -110,9 +114,6 @@ bool SKC::is_present_brutforce(kmer_full kmer, uint8_t & mini_k_idx) {
 	* Call the right compact function if needed.
 	*/
 bool SKC::add_kmer(const kmer_full& kmer) {
-	// 659019165104881940U
-	// cout << str2num("ATCATCCCAGTCGAACTCACAAACAACACCA") << endl;
-	// cin.get();
 	// Get the orientation of the kmer minimizer
 	uint64_t minimizer          = (this->sk >> (2 * this->minimizer_idx)) & min_mask;
 	uint64_t fwd_kmer_minimizer = kmer.get_minimizer();
@@ -133,38 +134,27 @@ bool SKC::add_kmer(const kmer_full& kmer) {
 		present = this->is_present_brutforce(kmer, mini_k_idx);
 	}
 
-	// if (kmer.kmer_rc == 659019165104881940U || kmer.kmer_s == 659019165104881940U) {
-	// 	cout << endl;
-	// 	cout << kmer2str(kmer.kmer_s, k) << endl;
-	// 	cout << kmer2str(kmer.kmer_rc, k) << endl;
-	// 	cout << *this << endl;
-	// 	cout << "present " << present << endl;
-	// }
-
-
 	if(present){
 		this->counts[this->minimizer_idx - mini_k_idx] ++;
-		this->init=true;// TODO SI TES CHAUD GO FALSE
 		this->weight++;
+		if(this->weight==100){
+			nb_superkmer++;
+			// nb_kmer_read+=15;
+		}
 		return true;
 	}else{
 		// The kmer is not found in the skc, try to compact
 
-		if (not this->init and this->size<16) {
-			// cout<<"compact"<<endl;
+		if (this->size<12) {
 			return this->compact_right(kmer_val) or this->compact_left(kmer_val);
-			// return this->compact_left(kmer_val);
 		}else{
-			// cout<<"fail"<<endl;
 			return false;
 		}
 	}
-
-	if (kmer.kmer_s == 4128274138154682647U)
-			cout << *this << endl;
-
 	return false;
 }
+
+
 
 // --- Pretty printing functions ---
 void _out_kmer(ostream& out, __uint128_t kmer, uint64_t size) {
