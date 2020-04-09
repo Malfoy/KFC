@@ -33,8 +33,9 @@ using namespace std;
 
 bool check = false;
 robin_hood::unordered_map<string, uint64_t> real_count;
+typedef robin_hood::unordered_flat_map<uint64_t,vector<SKC>> map;
 
-uint64_t subminimizer_size(minimizer_size - 5);
+uint64_t subminimizer_size(8);
 
 uint64_t line_count(0);
 bool aggressive_mode(false);
@@ -196,17 +197,16 @@ void sort_buckets(vector<vector<SKC> >& buckets) {
 
 
 
-void dump_counting(vector<vector<SKC> >& buckets) {
+void dump_counting(map buckets[]) {
 	// 	sort(buckets.begin(),buckets.end(),[ ]( const vector<SKC>& lhs, const vector<SKC>& rhs )
 	// {
 	//    return lhs.size()> rhs.size();
 	// });
-	for (uint64_t i(0); i < buckets.size(); ++i) {
-		if (buckets[i].size() != 0) {
-			// cout<<endl<<"go buckets"<<endl;
-		}
-		for (uint64_t ii(0); ii < buckets[i].size(); ++ii) {
-			dump_count(buckets[i][ii]);
+	for (uint64_t i(0); i < bucket_number.value(); ++i) {
+		for (auto e:buckets[i]) {
+			for (uint64_t ii(0); ii < e.second.size(); ++ii) {
+				dump_count(e.second[ii]);
+			}
 		}
 	}
 	if (check) {
@@ -216,7 +216,7 @@ void dump_counting(vector<vector<SKC> >& buckets) {
 
 
 
-void dump_stats(const vector<vector<SKC> >& buckets) {
+void dump_stats(map buckets[]) {
 	uint64_t total_super_kmers(0);
 	uint64_t total_kmers(0);
 	uint64_t non_null_buckets(0);
@@ -224,14 +224,15 @@ void dump_stats(const vector<vector<SKC> >& buckets) {
 	uint64_t largest_bucket(0);
 
 	//FOREACH BUCKETS
-	for (uint64_t i(0); i < buckets.size(); ++i) {
+	for (uint64_t i(0); i < bucket_number.value(); ++i) {
 		if (buckets[i].size() != 0) {
-			// cerr<<buckets[i].size()<<"	";
-			largest_bucket = max(largest_bucket, (uint64_t)buckets[i].size());
-			non_null_buckets++;
-			total_super_kmers += buckets[i].size();
-			for (uint64_t j(0); j < buckets[i].size(); ++j) {
-				total_kmers += buckets[i][j].size;
+			for (auto e:buckets[i]) {
+				largest_bucket = max(largest_bucket, (uint64_t)e.second.size());
+				non_null_buckets++;
+				total_super_kmers += e.second.size();
+				for (uint64_t j(0); j < e.second.size(); ++j) {
+					total_kmers += e.second[j].size;
+				}
 			}
 		} else {
 			null_buckets++;
@@ -333,7 +334,7 @@ void insert_kmers_into_bucket(vector<kmer_full>& kmers, vector<SKC>& bucket, uin
 
 
 
-void count_line(const string& line, vector<vector<SKC> >& buckets) {
+void count_line(const string& line, map buckets[]) {
 	if (line.size() < k) {
 		return;
 	}
@@ -374,7 +375,7 @@ void count_line(const string& line, vector<vector<SKC> >& buckets) {
 		if (new_hash < hash_mini) {
 			uint64_t bucketindice = revhash(hash_mini) % bucket_number;
 			omp_set_lock(&MutexWall[bucketindice % 4096]);
-			insert_kmers_into_bucket(kmers, buckets[bucketindice], minimizer);
+			insert_kmers_into_bucket(kmers, buckets[bucketindice][minimizer], minimizer);
 			omp_unset_lock(&MutexWall[bucketindice % 4096]);
 
 			minimizer                  = (min_canon);
@@ -392,7 +393,7 @@ void count_line(const string& line, vector<vector<SKC> >& buckets) {
 		else if (position_minimizer_in_kmer >= k - minimizer_size) {
 			uint64_t bucketindice = revhash(hash_mini) % bucket_number;
 			omp_set_lock(&MutexWall[bucketindice % 4096]);
-			insert_kmers_into_bucket(kmers, buckets[bucketindice], minimizer);
+			insert_kmers_into_bucket(kmers, buckets[bucketindice][minimizer], minimizer);
 			omp_unset_lock(&MutexWall[bucketindice % 4096]);
 			// Search for the new MINIMIZER in the whole kmer
 			minimizer    = get_minimizer(kmer_seq, relative_min_position);
@@ -417,13 +418,13 @@ void count_line(const string& line, vector<vector<SKC> >& buckets) {
 
 	uint64_t bucketindice = revhash(hash_mini) % bucket_number;
 	omp_set_lock(&MutexWall[bucketindice % 4096]);
-	insert_kmers_into_bucket(kmers, buckets[bucketindice], minimizer);
+	insert_kmers_into_bucket(kmers, buckets[bucketindice][minimizer], minimizer);
 	omp_unset_lock(&MutexWall[bucketindice % 4096]);
 }
 
 
 
-void read_fasta_file(const string& filename, vector<vector<SKC> >& buckets) {
+void read_fasta_file(const string& filename, map buckets[]) {
 	for (uint64_t i(0); i < 4096; ++i) {
 		omp_init_lock(&MutexWall[i]);
 	}
@@ -482,9 +483,11 @@ int main(int argc, char** argv) {
 		cout << "LETS CHECK THE RESULTS" << endl;
 	}
 
-	vector<vector<SKC> > buckets(bucket_number.value());
+	map buckets[bucket_number.value()];
 	cout << "\n\n\nI count " << argv[1] << endl;
 	cout << "Minimizer size:	" << minimizer_size << endl;
+	cout << "Number of bucket:	" << bucket_number.value() << endl;
+
 	read_fasta_file(argv[1], buckets);
 	cout << endl;
 	if (mode % 2 == 0) {
