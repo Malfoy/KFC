@@ -37,11 +37,6 @@ bool SKC::compact_right(const uint64_t kmer_val) {
 		this->sk += kmer_val % 4;
 		this->size += 1;
 		this->minimizer_idx += 1;
-
-		// Shift and modify the counters
-		// __uint128_t counters = *((__uint128_t*)this->counts);
-		// counters <<= 8;
-		// *((__uint128_t*)this->counts) = counters;
 		this->counts[this->size-1]               = 1;
 		this->weight++;
 		return true;
@@ -65,9 +60,6 @@ bool SKC::compact_left(const uint64_t kmer_val) {
 		this->sk += ((__uint128_t)(kmer_val >> (2 * (k - 1)))) << (2 * (k + this->size - 1));
 		//           Select 2 left bits         Shift to the beginning of the sk
 		this->size += 1;
-		// this->minimizer_idx += 1;
-
-		// FIX: The counters are not in the right order
 		this->counts[this->size - 1] = 1;
 		this->weight++;
 		return true;
@@ -88,7 +80,6 @@ uint64_t SKC::get_minimizer() const {
 	* @return True if the kmer is present inside of the sk.
 	*/
 bool SKC::is_present(uint64_t kmer_val, uint64_t kmer_minimizer_idx) {
-	// cout<<kmer_minimizer_idx<<endl;
 	int64_t start_idx  = this->minimizer_idx - kmer_minimizer_idx;
 	if(start_idx<0 or (start_idx>=this->size)){return false;}
 	uint64_t aligned_sk = (this->sk >> (2 * start_idx)) & k_mask;
@@ -101,10 +92,10 @@ bool SKC::is_present_brutforce(kmer_full kmer, uint8_t & mini_k_idx) {
 	for (mini_k_idx=0 ; mini_k_idx<=k-minimizer_size ; mini_k_idx++) {
 		if (this->is_present(kmer.kmer_s, mini_k_idx))
 			return true;
-		if (this->is_present(kmer.kmer_rc, k-minimizer_size-mini_k_idx)){
-			mini_k_idx = k-minimizer_size-mini_k_idx;
-			return true;
-		}
+		// if (this->is_present(kmer.kmer_rc, k-minimizer_size-mini_k_idx)){
+		// 	mini_k_idx = k-minimizer_size-mini_k_idx;
+		// 	return true;
+		// }
 	}
 
 	return false;
@@ -114,18 +105,19 @@ bool SKC::is_present_brutforce(kmer_full kmer, uint8_t & mini_k_idx) {
 	* Call the right compact function if needed.
 	*/
 bool SKC::add_kmer(const kmer_full& kmer) {
+
 	// Get the orientation of the kmer minimizer
-	uint64_t minimizer          = (this->sk >> (2 * this->minimizer_idx)) & min_mask;
-	uint64_t fwd_kmer_minimizer = kmer.get_minimizer();
-	bool same_strand            = minimizer == fwd_kmer_minimizer;
+	// uint64_t minimizer          = (this->sk >> (2 * this->minimizer_idx)) & min_mask;
+	// uint64_t fwd_kmer_minimizer = kmer.get_minimizer();
+	// bool same_strand            = minimizer == fwd_kmer_minimizer;
 
 	// Save the kmer values for the same strand than the sk.
 	uint64_t kmer_val  = kmer.kmer_s;
 	uint8_t mini_k_idx = kmer.get_minimizer_idx();
-	if (not same_strand) {
-		kmer_val   = kmer.kmer_rc;
-		mini_k_idx = k - mini_k_idx - minimizer_size;
-	}
+	// if (not same_strand) {
+	// 	kmer_val   = kmer.kmer_rc;
+	// 	mini_k_idx = k - mini_k_idx - minimizer_size;
+	// }
 
 	// Check the presence of the kmer into sk.
 	bool present = this->is_present(kmer_val, mini_k_idx);
@@ -137,16 +129,16 @@ bool SKC::add_kmer(const kmer_full& kmer) {
 	if(present){
 		this->counts[this->minimizer_idx - mini_k_idx] ++;
 		this->weight++;
-		if(this->weight==100){
-			nb_superkmer++;
-			// nb_kmer_read+=15;
-		}
+		// if(this->weight==100){
+		// 	nb_superkmer++;
+		// 	// nb_kmer_read+=15;
+		// }
 		return true;
 	}else{
 		// The kmer is not found in the skc, try to compact
 
 		if (this->size<12) {
-			return this->compact_right(kmer_val) or this->compact_left(kmer_val);
+			return this->compact_right(kmer_val);
 		}else{
 			return false;
 		}
@@ -181,7 +173,6 @@ void _out_kmer(ostream& out, __uint128_t kmer, uint64_t size) {
 		}
 		anc >>= 2;
 	}
-	// cout<<endl;
 }
 
 ostream& operator<<(ostream& out, const SKC& skc) {

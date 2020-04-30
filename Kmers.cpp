@@ -21,10 +21,9 @@ uint8_t kmer_full::get_minimizer_idx() const {
 	}
 }
 
-kmer_full::kmer_full(int8_t minimizer_idx, uint64_t value, uint64_t reverse_comp_value) {
+kmer_full::kmer_full(int8_t minimizer_idx, uint64_t value) {
 	this->minimizer_idx = minimizer_idx;
 	this->kmer_s = value;
-	this->kmer_rc = reverse_comp_value;
 }
 
 uint64_t kmer_full::get_minimizer() const {
@@ -216,18 +215,16 @@ uint64_t hash64shift(uint64_t key) {
 Pow2<uint64_t> minimizer_number(2 * minimizer_size);
 /** Get the minimizer from a sequence and modify the position parameter.
 	*/
-uint64_t get_minimizer(uint64_t seq, int8_t& min_position) {
-	// print_kmer(seq,31);
-
+int64_t get_minimizer(uint64_t seq, int8_t& min_position) {
 	// Init with the first possible minimizer
-	uint64_t mini, mmer;
-	uint64_t fwd_mini = seq % minimizer_number;
+	int64_t mini, mmer;
+	int64_t fwd_mini = seq % minimizer_number;
 	mini = mmer = canonize(fwd_mini, minimizer_size);
 	bool multiple_mini = false;
+	bool reversed=(mini==fwd_mini);
 
 	uint64_t hash_mini = hash64shift(mmer);
 	min_position = 0;
-	// cout << hash_mini << " " << min_position << endl;
 	// Search in all possible position (from 1) the minimizer
 	for (uint64_t i=1; i <= k - minimizer_size; i++) {
 		seq >>= 2;
@@ -236,9 +233,8 @@ uint64_t get_minimizer(uint64_t seq, int8_t& min_position) {
 		uint64_t hash = (hash64shift(mmer));
 		if (hash_mini > hash) {
 			min_position = i;
-			// cout << "pouet 1" << endl;
-			// cout << hash_mini << " " << min_position << endl;
 			mini = mmer;
+			reversed=(mini!=fwd_mini);
 			hash_mini = hash;
 			multiple_mini = false;
 		} else if ((hash_mini == hash) and (not multiple_mini)) {
@@ -246,5 +242,6 @@ uint64_t get_minimizer(uint64_t seq, int8_t& min_position) {
 			min_position = - min_position - 1;
 		}
 	}
+	if(reversed){mini*=-1;}
 	return ((int64_t)mini);
 }

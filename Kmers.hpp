@@ -29,7 +29,7 @@ uint64_t hash64shift(uint64_t key);
 
 /** Return the canonical minimizer for a uint64 sequence.
 	*/
-uint64_t get_minimizer(uint64_t seq, int8_t& position);
+int64_t get_minimizer(uint64_t seq, int8_t& position);
 
 // ----- Kmer class -----
 
@@ -39,9 +39,7 @@ private:
 public:
 	// Negative if multiple minimizers
 	uint64_t kmer_s;
-	uint64_t kmer_rc;
-
-	kmer_full(int8_t minimizer_idx, uint64_t value, uint64_t reverse_comp_value);
+	kmer_full(int8_t minimizer_idx, uint64_t value);
 	/** Return the minimizer regarding the minimizer_idx property
 		* Warning: The minimizer can be non canonical !
 		*/
