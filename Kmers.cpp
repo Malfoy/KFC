@@ -14,7 +14,7 @@ uint64_t minimizer_size = 21;
 uint64_t min_mask = (((uint64_t)1) << (2*minimizer_size)) - 1;
 uint64_t counting_errors=0;
 bool check=false;
- tsl::sparse_map<string, uint64_t> real_count;
+robin_hood::unordered_flat_map<string, uint64_t> real_count;
 
 
 

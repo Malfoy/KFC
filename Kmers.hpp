@@ -2,7 +2,8 @@
 #include <tmmintrin.h>
 #include <cstdint>
 #include <string>
-#include "sparse_map.h"
+#include "robin_hood.h"
+
 
 
 
@@ -12,8 +13,8 @@ using namespace std;
 
 #ifndef KMERS_H
 #define KMERS_H
-extern tsl::sparse_map<string, uint64_t> real_count;
-extern uint64_t counting_errors;;
+extern robin_hood::unordered_flat_map<string, uint64_t> real_count;
+extern uint64_t counting_errors;
 extern uint64_t k;
 extern uint64_t k_mask;
 extern uint64_t minimizer_size;
