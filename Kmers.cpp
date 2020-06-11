@@ -12,6 +12,9 @@ uint64_t k = 31;
 uint64_t k_mask = (((uint64_t)1) << (2*k)) - 1;
 uint64_t minimizer_size = 21;
 uint64_t min_mask = (((uint64_t)1) << (2*minimizer_size)) - 1;
+uint64_t counting_errors=0;
+bool check=false;
+ tsl::sparse_map<string, uint64_t> real_count;
 
 
 
@@ -68,6 +71,7 @@ string kmer2str(uint64_t num, uint k = 31) {
 	}
 	return res;
 }
+
 
 
 // SUFFIX IS AT RIGHT!!!!!!DO NOT CHANGE THIS
@@ -278,4 +282,36 @@ int64_t get_minimizer(uint64_t seq, int8_t& min_position) {
 		mini*=-1;
 	}
 	return ((int64_t)mini);
+}
+
+
+
+
+
+char revCompChar(char c) {
+	switch (c) {
+		case 'A':
+			return 'T';
+		case 'C':
+			return 'G';
+		case 'G':
+			return 'C';
+	}
+	return 'A';
+}
+
+
+
+string revComp(const string& s) {
+	string rc(s.size(), 0);
+	for (int i((int)s.length() - 1); i >= 0; i--) {
+		rc[s.size() - 1 - i] = revCompChar(s[i]);
+	}
+	return rc;
+}
+
+
+
+string getCanonical(const string& str) {
+	return (min(str, revComp(str)));
 }

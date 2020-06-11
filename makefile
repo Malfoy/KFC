@@ -1,4 +1,3 @@
-
 CC=g++
 AR=gcc-ar
 
@@ -49,7 +48,7 @@ CPPS = $(wildcard *.cpp)
 OBJS = $(CPPS:.cpp=.o)
 DEPS = $(OBJS:%.o=%.d)
 KFC_BLUE_OBJ = SolidSampler.o BitSet.o BloomFilter.o Hash.o CascadingBloomFilter.o BitSet.o
-KFC_RED_OBJ = 
+KFC_RED_OBJ =
 
 EXEC=kfc_blue kfc_red kmerCountEvaluator SuperKmerCount
 LIB=kfc_blue.a

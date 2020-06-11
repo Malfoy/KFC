@@ -22,29 +22,31 @@
 #include <unordered_map>
 #include <vector>
 #include "Kmers.cpp"
-#include "Kmers.hpp"
 #include "SuperKmerCount.cpp"
-#include "SuperKmerCount.hpp"
+#include "buckets.cpp"
 #include "pow2.hpp"
 #include "robin_hood.h"
+#include "sparse_map.h"
+
 
 
 
 using namespace std;
 
 
-
-bool check = false;
-uint64_t counting_errors(0);
-robin_hood::unordered_map<string, uint64_t> real_count;
-typedef robin_hood::unordered_flat_map<uint64_t,vector<SKC>> map;
-uint64_t subminimizer_size(8);
+//TODO CHANGE UINT32 to uint32_t
+//TODO VALUE SHOULD BE A INT
+// typedef  tsl::sparse_map<uint32_t,uint32_t> map;
+typedef  robin_hood::unordered_flat_map<uint32_t,uint32_t> map;
+const uint64_t subminimizer_size(5);//min 5 with 21
 uint64_t line_count(0);
 bool aggressive_mode(false);
 vector<omp_lock_t> MutexWall(4096);
-Pow2<uint64_t> bucket_number(2 * subminimizer_size);
+const Pow2<uint64_t> bucket_number(2 * subminimizer_size);
 Pow2<uint64_t> offsetUpdateAnchor(2 * k);
 Pow2<uint64_t> offsetUpdateAnchorMin(2 * minimizer_size);
+map buckets_index[1<<(2*subminimizer_size)];
+vector<Bucket> bucket_menus[1<<(2*subminimizer_size)];
 
 
 
@@ -152,33 +154,6 @@ inline void updateRCM(uint64_t& min, char nuc) {
 
 
 
-char revCompChar(char c) {
-	switch (c) {
-		case 'A':
-			return 'T';
-		case 'C':
-			return 'G';
-		case 'G':
-			return 'C';
-	}
-	return 'A';
-}
-
-
-
-string revComp(const string& s) {
-	string rc(s.size(), 0);
-	for (int i((int)s.length() - 1); i >= 0; i--) {
-		rc[s.size() - 1 - i] = revCompChar(s[i]);
-	}
-	return rc;
-}
-
-
-
-string getCanonical(const string& str) {
-	return (min(str, revComp(str)));
-}
 
 
 
@@ -234,11 +209,15 @@ void dump_count_bucket(const vector<SKC>& v,uint64_t mini){
 
 
 
-void dump_counting(map buckets[]) {
-	#pragma omp parallel for
+void dump_counting() {
+	// #pragma omp parallel for
 	for (uint64_t i=0; i < bucket_number.value(); ++i) {
-		for (auto e:buckets[i]) {
-			dump_count_bucket(e.second,e.first);
+		string toprint;
+		for (auto e:buckets_index[i]) {
+			uint64_t minimizer(e.first);
+			minimizer*=bucket_number.value();
+			minimizer+=i;
+			bucket_menus[i][e.second].print_kmers(toprint,kmer2str(minimizer,minimizer_size));
 		}
 	}
 	if(check){
@@ -255,7 +234,7 @@ void dump_counting(map buckets[]) {
 
 
 
-void dump_stats(map buckets[]) {
+void dump_stats() {
 	uint64_t total_super_kmers(0);
 	uint64_t total_kmers(0);
 	uint64_t non_null_buckets(0);
@@ -264,14 +243,12 @@ void dump_stats(map buckets[]) {
 
 	//FOREACH BUCKETS
 	for (uint64_t i(0); i < bucket_number.value(); ++i) {
-		if (buckets[i].size() != 0) {
-			for (auto e:buckets[i]) {
-				largest_bucket = max(largest_bucket, (uint64_t)e.second.size());
+		if (buckets_index[i].size() != 0) {
+			for (auto e:buckets_index[i]) {
+				largest_bucket = max(largest_bucket, (uint64_t)bucket_menus[i][e.second].size());
 				non_null_buckets++;
-				total_super_kmers += e.second.size();
-				for (uint64_t j(0); j < e.second.size(); ++j) {
-					total_kmers += e.second[j].size;
-				}
+				total_super_kmers +=bucket_menus[i][e.second].size();
+				total_kmers += bucket_menus[i][e.second].number_kmer();
 			}
 		} else {
 			null_buckets++;
@@ -291,62 +268,9 @@ void dump_stats(map buckets[]) {
 
 
 
-void insert_kmers_into_bucket_last_chance(vector<kmer_full>& kmers, vector<SKC>& bucket, uint64_t minimizer, bool placed[], uint64_t bucket_offset) {
-	uint64_t size_sk(kmers.size());
-	uint64_t size_skc(bucket.size());
-
-	//FOREACH KMER
-	for (uint64_t ik = 0; ik < size_sk; ++ik) {
-		if (not placed[ik]) {
-			kmer_full& kmer = kmers[ik];
-			// // FOREACH SUPERKMER
-			for (uint64_t i = (bucket_offset); i < size_skc and (not placed[ik]); i++) {
-				//Try to add the kmer into the superkmer counter
-				placed[ik] = bucket[i].add_kmer(kmer);
-			}
-			// Create a new bucket if not placed
-			if (not placed[ik]) {
-				// Read in the same strand than its canonical MINIMIZER
-				bucket.push_back(SKC(kmer.get_compacted(), kmer.get_minimizer_idx()));
-				++size_skc;
-			}
-		}
-	}
-	kmers.clear();
-}
 
 
-
-void insert_kmers_into_bucket(vector<kmer_full>& kmers, vector<SKC>& bucket, uint64_t minimizer) {
-	uint64_t size_sk(kmers.size());
-	uint64_t size_skc(bucket.size());
-	bool placed[size_sk] = {false};
-	uint64_t inserted    = 0;
-	//FOREACH SUPERKMER
-	for (uint64_t i = 0; i < size_skc; i++) {
-		SKC& skc = bucket[i];
-		//FOREACH KMER
-		for (uint64_t ik = 0; ik < size_sk; ++ik) {
-			if (not placed[ik]) {
-				kmer_full& kmer = kmers[ik];
-				placed[ik]      = skc.add_kmer(kmer);//TODO SHOULD THIS ADDKMER TRY TO COMPACT or just to add ?
-				if (placed[ik]) {
-					++inserted;
-				}
-			}
-		}
-	}
-
-	if (inserted == size_sk) {
-		kmers.clear();
-		return;
-	}
-	insert_kmers_into_bucket_last_chance(kmers, bucket, minimizer, placed, size_skc);
-}
-
-
-
-void count_line(const string& line, map buckets[]) {
+void count_line(const string& line) {
 	if (line.size() < k) {
 		return;
 	}
@@ -391,10 +315,18 @@ void count_line(const string& line, map buckets[]) {
 		//THE NEW mmer is a MINIMIZER
 		uint64_t new_hash = (hash64shift(min_canon));
 		if (new_hash < hash_mini) {
-			uint64_t bucketindice = revhash(hash_mini) % bucket_number;
-			if(minimizer<0){reverse(kmers.begin(),kmers.end());}
+			if(minimizer<0){
+				reverse(kmers.begin(),kmers.end());
+				minimizer*=-1;
+			}
+			uint64_t bucketindice = minimizer % bucket_number;
+			uint64_t fingerprint=minimizer/ bucket_number;
 			omp_set_lock(&MutexWall[bucketindice % 4096]);
-			insert_kmers_into_bucket(kmers, buckets[bucketindice][abs(minimizer)], abs(minimizer));
+			if(buckets_index[bucketindice].count(fingerprint)==0){
+				bucket_menus[bucketindice].push_back(Bucket());
+				buckets_index[bucketindice][fingerprint]=bucket_menus[bucketindice].size()-1;
+			}
+			bucket_menus[bucketindice][buckets_index[bucketindice][fingerprint]].add_kmers(kmers);
 			omp_unset_lock(&MutexWall[bucketindice % 4096]);
 			minimizer                  = (min_canon);
 			if(min_canon!=min_seq){minimizer*=-1;}
@@ -410,10 +342,18 @@ void count_line(const string& line, map buckets[]) {
 		}
 		//the previous MINIMIZER is outdated
 		else if (position_minimizer_in_kmer >= k - minimizer_size) {
-			uint64_t bucketindice = revhash(hash_mini) % bucket_number;
-			if(minimizer<0){reverse(kmers.begin(),kmers.end());}
+			if(minimizer<0){
+				reverse(kmers.begin(),kmers.end());
+				minimizer*=-1;
+			}
+			uint64_t bucketindice = minimizer % bucket_number;
+			uint64_t fingerprint=minimizer/ bucket_number;
 			omp_set_lock(&MutexWall[bucketindice % 4096]);
-			insert_kmers_into_bucket(kmers, buckets[bucketindice][abs(minimizer)], abs(minimizer));
+			if(buckets_index[bucketindice].count(fingerprint)==0){
+				bucket_menus[bucketindice].push_back(Bucket());
+				buckets_index[bucketindice][fingerprint]=bucket_menus[bucketindice].size()-1;
+			}
+			bucket_menus[bucketindice][buckets_index[bucketindice][fingerprint]].add_kmers(kmers);
 			omp_unset_lock(&MutexWall[bucketindice % 4096]);
 			// Search for the new MINIMIZER in the whole kmer
 			minimizer    = get_minimizer(kmer_seq, relative_min_position);
@@ -433,7 +373,6 @@ void count_line(const string& line, map buckets[]) {
 				relative_min_position++;
 			}
 		}
-
 		// Normal add of the kmer into kmer list
 		if(minimizer<0){
 			kmers.push_back({31-relative_min_position-minimizer_size, kmer_rc_seq});
@@ -441,19 +380,24 @@ void count_line(const string& line, map buckets[]) {
 			kmers.push_back({relative_min_position, kmer_seq});
 		}
 	}
-
-	uint64_t bucketindice = revhash(hash_mini) % bucket_number;
 	if(minimizer<0){
 		reverse(kmers.begin(),kmers.end());
+		minimizer*=-1;
 	}
+	uint64_t bucketindice = minimizer % bucket_number;
+	uint64_t fingerprint=minimizer/ bucket_number;
 	omp_set_lock(&MutexWall[bucketindice % 4096]);
-	insert_kmers_into_bucket(kmers, buckets[bucketindice][abs(minimizer)], abs(minimizer));
+	if(buckets_index[bucketindice].count(fingerprint)==0){
+		bucket_menus[bucketindice].push_back(Bucket());
+		buckets_index[bucketindice][fingerprint]=bucket_menus[bucketindice].size()-1;
+	}
+	bucket_menus[bucketindice][buckets_index[bucketindice][fingerprint]].add_kmers(kmers);
 	omp_unset_lock(&MutexWall[bucketindice % 4096]);
 }
 
 
 
-void read_fasta_file(const string& filename, map buckets[]) {
+void read_fasta_file(const string& filename) {
 	zstr::ifstream in(filename);
 	uint8_t nb_core(8);
 	if (check) {
@@ -467,7 +411,7 @@ void read_fasta_file(const string& filename, map buckets[]) {
 			{
 				line = getLineFasta(&in);
 			}
-			count_line(line, buckets);
+			count_line(line);
 			line_count++;
 		}
 	}
@@ -483,7 +427,7 @@ int main(int argc, char** argv) {
 		cout << "2 DEBUG MODE COUNT AND CHECK WITH HASHTABLE" << endl;
 		exit(0);
 	}
-	int mode(0);
+	int mode(1);
 	if (argc > 2) {
 		mode = stoi(argv[2]);
 	}
@@ -493,18 +437,18 @@ int main(int argc, char** argv) {
 		cout << "LETS CHECK THE RESULTS" << endl;
 	}
 
-	map buckets[bucket_number.value()];
+
 	cout << "\n\n\nI count " << argv[1] << endl;
 	cout << "Minimizer size:	" << minimizer_size << endl;
 	cout << "Number of bucket:	" << bucket_number.value() << endl;
 	for (uint64_t i(0); i < 4096; ++i) {
 		omp_init_lock(&MutexWall[i]);
 	}
-	read_fasta_file(argv[1], buckets);
+	read_fasta_file(argv[1]);
 	cout << endl;
 	if (mode % 2 == 0) {
-		dump_counting(buckets);
+		dump_counting();
 	}
-	dump_stats(buckets);
+	dump_stats();
 	exit(0);
 }

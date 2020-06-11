@@ -12,7 +12,7 @@
 class SKC {
 public:
 	uint64_t sk;
-	uint8_t counts[12] = {0};
+	uint8_t counts[6] = {0};
 	uint8_t size;
 	uint8_t minimizer_idx;
 	/** Construct a superkmer from one kmer and the minimizer position.
@@ -25,16 +25,31 @@ public:
 	bool add_kmer(const kmer_full& kmer);
 	bool operator< (const  SKC& str);
 	friend std::ostream & operator << (std::ostream& out, const SKC& skc);
-
-private:
+	bool suffix_is_prefix(const kmer_full&);
+	void print_count(const string& out,const string minimizer) const;
+	bool  operator < (const  SKC& str) const {
+		uint64_t s1((get_suffix()));
+		uint64_t s2((str.get_suffix()));
+		if(minimizer_idx>=str.minimizer_idx){
+			s1>>=(2*(minimizer_idx-str.minimizer_idx));
+		}else{
+			s2>>=(2*(str.minimizer_idx-minimizer_idx));
+		}
+		if(s1==s2){
+			return minimizer_idx < str.minimizer_idx;
+		}
+		return  s1<s2;
+	}
 	bool compact_right(const uint64_t);
 	bool compact_left(const uint64_t);
 	bool is_present(uint64_t, uint64_t);
 	bool is_present_brutforce(kmer_full kmer, uint8_t & mini_k_idx);
-	bool compact_right(const kmer_full kmf);
+	bool compact_right(const kmer_full& kmf);
 	bool is_present(kmer_full kmf);
-	 uint64_t get_prefix()  const;
-	 uint64_t get_suffix() const;
+	uint64_t get_prefix()  const;
+	uint64_t get_suffix() const;
 };
+
+
 
 #endif

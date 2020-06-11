@@ -40,12 +40,6 @@ SKC::SKC(const uint64_t kmer, const uint8_t mini_idx) {
 
 
 
-bool  SKC::operator< (const  SKC& str){
-	return  (reversebits(get_suffix()) < reversebits(str.get_suffix()));
-}
-
-
-
 /** Used to compact a new nucleotide from a kmer on the right of the superkmer.
 	* @param kmer The binary representation of the kmer to compact on the right. Must be on the same strand than the superkmer.
 	* @return True if the kmer is inserted false otherwise.
@@ -67,7 +61,10 @@ bool SKC::compact_right(const uint64_t kmer_val) {
 
 
 
-bool SKC::compact_right(const kmer_full kmf) {
+bool SKC::compact_right(const kmer_full& kmf) {
+	if (size>(32-minimizer_size) or size==6 ) {
+		return false;
+	}
 	uint64_t prefix(get_prefix());
 	uint64_t suffix(get_suffix());
 	if((kmf.suffix>>2)==suffix){
@@ -142,10 +139,6 @@ bool SKC::is_present_brutforce(kmer_full kmer, uint8_t & mini_k_idx) {
 	for (mini_k_idx=0 ; mini_k_idx<=k-minimizer_size ; mini_k_idx++) {
 		if (this->is_present(kmer.kmer_s, mini_k_idx))
 			return true;
-		// if (this->is_present(kmer.kmer_rc, k-minimizer_size-mini_k_idx)){
-		// 	mini_k_idx = k-minimizer_size-mini_k_idx;
-		// 	return true;
-		// }
 	}
 	return false;
 }
@@ -157,17 +150,9 @@ bool SKC::is_present_brutforce(kmer_full kmer, uint8_t & mini_k_idx) {
 
 
 bool SKC::add_kmer(const kmer_full& kmer) {
-	bool present = this->is_present(kmer);
-	if(present){
+	if(this->is_present(kmer)){
 		this->counts[kmer.minimizer_idx - (this->minimizer_idx-size+1)] ++;
 		return true;
-	}else{
-		// The kmer is not found in the skc, try to compact
-		if (this->size<32-minimizer_size) {
-			return this->compact_right(kmer);
-		}else{
-			return false;
-		}
 	}
 	return false;
 }
@@ -217,4 +202,43 @@ ostream& operator<<(ostream& out, const SKC& skc) {
 	for (uint64_t i = skc.size; i > 0; i--)
 		out << static_cast<uint64_t>(skc.counts[i - 1]) << "\t";
 	return out;
+}
+
+
+
+void  SKC::print_count(const string& out,const string minimizer) const {
+
+	string skm=kmer2str(sk,30+size-minimizer_size);
+	string prefix=skm.substr(0,skm.size()-minimizer_idx);
+	string suffix=skm.substr(prefix.size());
+	string result;
+	skm=prefix+minimizer+suffix;
+	//FOREACH KMER WITHIN THE SUPERKMER
+	for (uint64_t i(0); i < size; ++i) {
+		result+=skm.substr(i,31)+'	'+to_string(counts[i])+'\n';
+		if(check){
+			if(real_count[getCanonical(skm.substr(i,31))]!=counts[i]){
+				cout<<skm.substr(i,31)<<" "<<to_string(counts[i]);
+				cout<<"	instead of ";
+				cout<<real_count[getCanonical(skm.substr(i,31))]<<endl;
+				counting_errors++;
+			}else{
+				real_count[getCanonical(skm.substr(i,31))]=0;
+			}
+		}
+	}
+}
+
+
+
+bool  SKC::suffix_is_prefix(const kmer_full& kmf){
+	uint64_t suffix_kmer(kmf.suffix);
+	uint64_t suffix_superkmer(this->get_suffix());
+	if(minimizer_idx>=kmf.minimizer_idx){
+		suffix_superkmer>>=(2*(minimizer_idx-kmf.minimizer_idx));
+	}else{
+		return false;
+		suffix_kmer>>=(2*(kmf.minimizer_idx-minimizer_idx));
+	}
+	return (suffix_superkmer==suffix_kmer);
 }

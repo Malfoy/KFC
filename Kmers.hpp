@@ -2,18 +2,25 @@
 #include <tmmintrin.h>
 #include <cstdint>
 #include <string>
+#include "sparse_map.h"
+
+
+
+using namespace std;
 
 
 
 #ifndef KMERS_H
 #define KMERS_H
-
-
-
+extern tsl::sparse_map<string, uint64_t> real_count;
+extern uint64_t counting_errors;;
 extern uint64_t k;
 extern uint64_t k_mask;
 extern uint64_t minimizer_size;
 extern uint64_t min_mask;
+
+
+
 
 
 
@@ -35,6 +42,8 @@ uint64_t hash64shift(uint64_t key);
 // Return the canonical minimizer for a uint64 sequence.
 int64_t get_minimizer(uint64_t seq, int8_t& position);
 uint64_t reversebits(uint64_t b);
+string getCanonical(const string& str);
+
 
 
 
