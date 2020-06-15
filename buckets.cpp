@@ -11,7 +11,7 @@ void  Bucket::add_kmers( vector<kmer_full>& kmers){
 	if(not add_kmers_sorted(kmers)){
 		add_kmers_buffer(kmers);
 	}
-	if(skml.size()-sorted_size>10){
+	if(skml.size()-sorted_size>1000000){
 		insert_buffer();
 	}
 	kmers.clear();

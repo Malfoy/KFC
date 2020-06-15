@@ -30,28 +30,41 @@
 
 
 
-
 using namespace std;
 
 
-//TODO CHANGE UINT32 to uint32_t
-//TODO VALUE SHOULD BE A INT
 // typedef  tsl::sparse_map<uint32_t,uint32_t> map;
 typedef  robin_hood::unordered_flat_map<uint32_t,uint32_t> map;
+
 const uint64_t subminimizer_size(5);//min 5 with 21
 uint64_t line_count(0);
 bool aggressive_mode(false);
 vector<omp_lock_t> MutexWall(4096);
 const Pow2<uint64_t> bucket_number(2 * subminimizer_size);
 Pow2<uint64_t> offsetUpdateAnchor(2 * k);
-Pow2<uint64_t> offsetUpdateAnchorMin(2 * minimizer_size);
+const Pow2<uint64_t> offsetUpdateAnchorMin(2 * minimizer_size);
 map buckets_index[1<<(2*subminimizer_size)];
+uint16_t abundance_mini[1<<(2*minimizer_size)];
 vector<Bucket> bucket_menus[1<<(2*subminimizer_size)];
+uint64_t nb_core(8);
 
 
 
 //START LOW LEVEL FUNCTIONS
+uint64_t hash64shift(uint64_t key) {
+	// uint64_t ab=abundance_mini[key];
+	uint64_t ab=0;
+	// ab<<=32;
 
+	key = (~key) + (key << 21); // key = (key << 21) - key - 1;
+	key = key ^ (key >> 24);
+	key = (key + (key << 3)) + (key << 8); // key * 265
+	key = key ^ (key >> 14);
+	key = (key + (key << 2)) + (key << 4); // key * 21
+	key = key ^ (key >> 28);
+	key = key + (key << 31);
+	return ab+(uint32_t)key;
+}
 
 
 string getLineFasta(zstr::ifstream* in) {
@@ -269,6 +282,65 @@ void dump_stats() {
 
 
 
+bool count_abundance(const string& line) {
+	if (line.size() < k) {
+		return false;
+	}
+	// Init Sequences
+	uint64_t min_seq  = (str2num(line.substr(0, minimizer_size))), min_rcseq(rcbc(min_seq, minimizer_size)), min_canon(min(min_seq, min_rcseq));
+	// #pragma omp critical(abundance_mini)
+	// {
+		abundance_mini[min_canon]++;
+		if(abundance_mini[min_canon]>65000){
+			return true;
+		}
+		// cout<<min_canon<<" "<<abundance_mini[min_canon]<<endl;
+	// }
+
+	uint64_t line_size = line.size();
+	for (uint64_t i = 0; i + minimizer_size < line_size; ++i) {
+		// UpdateMINIMIZER candidate with the new letter
+		updateM(min_seq, line[i + minimizer_size]);
+		updateRCM(min_rcseq, line[i + minimizer_size]);
+		min_canon = (min(min_seq, min_rcseq));
+		// #pragma omp critical(abundance_mini)
+		// {
+			abundance_mini[min_canon]++;
+			if(abundance_mini[min_canon]>65000){
+				return true;
+			}
+			// cout<<min_canon<<" "<<abundance_mini[min_canon]<<endl;
+		// }
+	}
+	return false;
+}
+
+
+
+
+void read_fasta_file_ab(const string& filename) {
+	zstr::ifstream in(filename);
+	if (check) {
+		nb_core = 1;
+	}
+	#pragma omp parallel num_threads(nb_core)
+	{
+		string line;
+		while (in.good()) {
+			#pragma omp critical(input)
+			{
+				line = getLineFasta(&in);
+			}
+			if(count_abundance(line)){
+				break;
+			}
+			line_count++;
+		}
+	}
+}
+
+
+
 
 void count_line(const string& line) {
 	if (line.size() < k) {
@@ -399,7 +471,6 @@ void count_line(const string& line) {
 
 void read_fasta_file(const string& filename) {
 	zstr::ifstream in(filename);
-	uint8_t nb_core(8);
 	if (check) {
 		nb_core = 1;
 	}
@@ -444,7 +515,17 @@ int main(int argc, char** argv) {
 	for (uint64_t i(0); i < 4096; ++i) {
 		omp_init_lock(&MutexWall[i]);
 	}
+	auto start = std::chrono::system_clock::now();
+	// read_fasta_file_ab(argv[1]);
+	auto end = std::chrono::system_clock::now();
+	chrono::duration<double> elapsed_seconds = end - start;
+
+    cout << "Minimize weight computed elapsed time: " << elapsed_seconds.count() << "s\n";
+	start = std::chrono::system_clock::now();
 	read_fasta_file(argv[1]);
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end - start;
+	cout << "Kmer counted elapsed time: " << elapsed_seconds.count() << "s\n";
 	cout << endl;
 	if (mode % 2 == 0) {
 		dump_counting();

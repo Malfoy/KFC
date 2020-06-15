@@ -17,7 +17,7 @@ extern robin_hood::unordered_flat_map<string, uint64_t> real_count;
 extern uint64_t counting_errors;
 extern uint64_t k;
 extern uint64_t k_mask;
-extern uint64_t minimizer_size;
+extern const  uint64_t minimizer_size;
 extern uint64_t min_mask;
 
 

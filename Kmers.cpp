@@ -10,7 +10,7 @@ using namespace std;
 
 uint64_t k = 31;
 uint64_t k_mask = (((uint64_t)1) << (2*k)) - 1;
-uint64_t minimizer_size = 21;
+const uint64_t minimizer_size = 15;
 uint64_t min_mask = (((uint64_t)1) << (2*minimizer_size)) - 1;
 uint64_t counting_errors=0;
 bool check=false;
@@ -228,16 +228,7 @@ __m128i mm_bitshift_right(__m128i x, unsigned count) {
 
 
 
-uint64_t hash64shift(uint64_t key) {
-	key = (~key) + (key << 21); // key = (key << 21) - key - 1;
-	key = key ^ (key >> 24);
-	key = (key + (key << 3)) + (key << 8); // key * 265
-	key = key ^ (key >> 14);
-	key = (key + (key << 2)) + (key << 4); // key * 21
-	key = key ^ (key >> 28);
-	key = key + (key << 31);
-	return key;
-}
+
 
 
 uint64_t reversebits(uint64_t b){
