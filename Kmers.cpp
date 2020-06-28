@@ -9,12 +9,27 @@ using namespace std;
 
 
 uint64_t k = 31;
-uint64_t k_mask = (((uint64_t)1) << (2*k)) - 1;
 const uint64_t minimizer_size = 15;
-uint64_t min_mask = (((uint64_t)1) << (2*minimizer_size)) - 1;
+const uint64_t super_minimizer_size(minimizer_size+4);
 uint64_t counting_errors=0;
 bool check=false;
 robin_hood::unordered_flat_map<string, uint64_t> real_count;
+
+
+string intToString(uint64_t n) {
+	if (n < 1000) {
+		return to_string(n);
+	}
+	string end(to_string(n % 1000));
+	if (end.size() == 3) {
+		return intToString(n / 1000) + "," + end;
+	}
+	if (end.size() == 2) {
+		return intToString(n / 1000) + ",0" + end;
+	}
+	return intToString(n / 1000) + ",00" + end;
+}
+
 
 
 
@@ -238,7 +253,7 @@ uint64_t reversebits(uint64_t b){
 
 
 
-Pow2<uint64_t> minimizer_number(2 * minimizer_size);
+Pow2<uint64_t> minimizer_number(2 * super_minimizer_size);
 
 
 
@@ -247,18 +262,20 @@ int64_t get_minimizer(uint64_t seq, int8_t& min_position) {
 	// Init with the first possible minimizer
 	int64_t mini, mmer;
 	int64_t fwd_mini = seq % minimizer_number;
-	mini = mmer = canonize(fwd_mini, minimizer_size);
+	mini = mmer = canonize(fwd_mini, super_minimizer_size);
 	bool multiple_mini = false;
 	bool reversed=(mini!=fwd_mini);
 	uint64_t hash_mini = hash64shift(mmer);
 	min_position = 0;
 	// Search in all possible position (from 1) the minimizer
-	for (uint64_t i=1; i <= k - minimizer_size; i++) {
+	for (uint64_t i=1; i <= k - super_minimizer_size; i++) {
 		seq >>= 2;
 		fwd_mini = seq % minimizer_number;
-		mmer = canonize(fwd_mini, minimizer_size);
+		mmer = canonize(fwd_mini, super_minimizer_size);
 		uint64_t hash = (hash64shift(mmer));
+		// cout<<hash<<" "<<hash_mini<<endl;
 		if (hash_mini > hash) {
+			// cout<<"new pos mini	"<<i<<endl;
 			min_position = i;
 			mini = mmer;
 			reversed=(mini!=fwd_mini);

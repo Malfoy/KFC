@@ -44,36 +44,48 @@ SKC::SKC(const uint64_t kmer, const uint8_t mini_idx) {
 	* @param kmer The binary representation of the kmer to compact on the right. Must be on the same strand than the superkmer.
 	* @return True if the kmer is inserted false otherwise.
 	*/
-bool SKC::compact_right(const uint64_t kmer_val) {
-	uint64_t end_sk = this->sk;
-	end_sk &= (((uint64_t)1 << (2 * (k - 1))) - 1);
-	uint64_t begin_kmer = kmer_val >> 2;
-	if (end_sk == begin_kmer) {
-		this->sk <<= 2;
-		this->sk += kmer_val % 4;
-		this->size ++;
-		this->minimizer_idx ++;
-		this->counts[this->size-1]               = 1;
-		return true;
-	}
-	return false;
-}
+// bool SKC::compact_right(const uint64_t kmer_val) {
+//
+// 	uint64_t end_sk = this->sk;
+// 	end_sk &= (((uint64_t)1 << (2 * (k - 1))) - 1);
+// 	uint64_t begin_kmer = kmer_val >> 2;
+// 	if (end_sk == begin_kmer) {
+// 		this->sk <<= 2;
+// 		this->sk += kmer_val % 4;
+// 		this->size ++;
+// 		this->minimizer_idx ++;
+// 		this->counts[this->size-1]               = 1;
+// 		return true;
+// 	}
+// 	return false;
+// }
 
 
 
 bool SKC::compact_right(const kmer_full& kmf) {
-	if (size>(32-minimizer_size) or size==6 ) {
+	// return false;
+	// cout<<"cr"<<endl;
+	// cout<<"AVANT	"<<kmer2str(sk,31)<<endl;
+	// cout<<kmer2str(kmf.kmer_s,31)<<endl;
+	if (size>(32-minimizer_size) or size==12 ) {
 		return false;
 	}
 	uint64_t prefix(get_prefix());
 	uint64_t suffix(get_suffix());
 	if((kmf.suffix>>2)==suffix){
-		if(kmf.prefix==(prefix%((uint64_t)1<<(2*(31-minimizer_size-kmf.minimizer_idx))))) {
+		// cout<<"suffix"<<endl;
+		// cout<<kmer2str(suffix,31)<<endl;
+		// cout<<kmer2str(kmf.suffix>>2,31)<<endl;
+		if(kmf.prefix==(prefix%((uint64_t)1<<(2*(k-minimizer_size-minimizer_idx-1))))) {
+			// cout<<"prefix"<<endl;
+			// cout<<kmer2str(prefix%((uint64_t)1<<(2*(31-minimizer_size-minimizer_idx-1))),31)<<endl;
+			// cout<<kmer2str(kmf.prefix,31)<<endl;
 			sk<<=2;
 			sk += (kmf.suffix % 4);
 			size++;
 			minimizer_idx++;
 			this->counts[this->size-1]               = 1;
+			// cout<<"APRES	"<<kmer2str(sk,31)<<endl;
 			return true;
 		}else{
 		}
@@ -113,18 +125,30 @@ bool SKC::compact_left(const uint64_t kmer_val) {
 	*/
 bool SKC::is_present(uint64_t kmer_val, uint64_t kmer_minimizer_idx) {
 	int64_t start_idx  = (int64_t)this->minimizer_idx - (int64_t)kmer_minimizer_idx;
-	if(start_idx<0 or (start_idx>=this->size)){return false;}
+	if(start_idx<0 or (start_idx>=this->size)){
+		return false;
+	}
+	// cout<<"good IDX"<<endl;
 	uint64_t aligned_sk = (this->sk >> (2 * start_idx)) & k_mask;
 	return aligned_sk == kmer_val;
 }
 
 
 
-bool SKC::is_present(kmer_full kmf) {
+const bool SKC::is_present(kmer_full kmf) {
+	// cout<<"kmer query		"<<kmer2str(kmf.kmer_s,31)<<endl;
+	// cout<<"kmer ref		"<<kmer2str(sk,31)<<endl;
+	// cout<<"minimizer IDX	"<<(int)minimizer_idx<<" "<<(int)kmf.minimizer_idx<<endl;
 	if(minimizer_idx>=kmf.minimizer_idx){
+		// cout<<1<<endl;
 		if((int)kmf.minimizer_idx>=(int)minimizer_idx+1-size){
-			if(kmf.prefix==get_prefix()%(1<<(2*(31-minimizer_size-kmf.minimizer_idx)))) {
+			// cout<<2<<endl;
+			// cout<<31-minimizer_size-kmf.minimizer_idx<<endl;
+			// cout<<"LES PREFIX	"<<kmer2str(kmf.prefix,31)<<" "<<kmer2str(get_prefix()%((uint64_t)1<<(2*(31-minimizer_size-kmf.minimizer_idx))),31)<<endl;
+			if(kmf.prefix==get_prefix()%((uint64_t)1<<(2*(k-minimizer_size-kmf.minimizer_idx)))) {
+				// cout<<3<<endl;
 				if(kmf.suffix==get_suffix()>>(2*(minimizer_idx -kmf.minimizer_idx))) {
+					// cout<<4<<endl;
 					return true;
 				}
 			}
@@ -151,7 +175,9 @@ bool SKC::is_present_brutforce(kmer_full kmer, uint8_t & mini_k_idx) {
 
 bool SKC::add_kmer(const kmer_full& kmer) {
 	if(this->is_present(kmer)){
-		this->counts[kmer.minimizer_idx - (this->minimizer_idx-size+1)] ++;
+		this->counts[kmer.minimizer_idx - (this->minimizer_idx-size+1)]++;
+		// cout<<(int)this->counts[kmer.minimizer_idx - (this->minimizer_idx-size+1)]<<" "<<kmer.minimizer_idx - (this->minimizer_idx-size+1)<<endl;
+		// cout<<kmer2str(kmer.kmer_s,31)<<endl;
 		return true;
 	}
 	return false;
@@ -207,23 +233,31 @@ ostream& operator<<(ostream& out, const SKC& skc) {
 
 
 void  SKC::print_count(const string& out,const string minimizer) const {
-
+	// cout<<"printcount"<<endl;
 	string skm=kmer2str(sk,30+size-minimizer_size);
 	string prefix=skm.substr(0,skm.size()-minimizer_idx);
 	string suffix=skm.substr(prefix.size());
 	string result;
 	skm=prefix+minimizer+suffix;
+
 	//FOREACH KMER WITHIN THE SUPERKMER
 	for (uint64_t i(0); i < size; ++i) {
-		result+=skm.substr(i,31)+'	'+to_string(counts[i])+'\n';
+		result+=skm.substr(i,k)+'	'+to_string(counts[i])+'\n';
 		if(check){
-			if(real_count[getCanonical(skm.substr(i,31))]!=counts[i]){
-				cout<<skm.substr(i,31)<<" "<<to_string(counts[i]);
+			if(real_count[getCanonical(skm.substr(i,k))]!=(int)counts[i]){
+					cout<<"skm:	"<<skm<<endl;
+					cout<<"prefix:	"<<prefix<<endl;
+					cout<<"minimizer:	"<<minimizer<<endl;
+					cout<<"suffix:	"<<suffix<<endl;
+				cout<<(int)counts[i]<<" "<<i<<" "<<(int)size<<endl;
+				cout<<skm.substr(i,k)<<" "<<to_string(counts[i]);
 				cout<<"	instead of ";
-				cout<<real_count[getCanonical(skm.substr(i,31))]<<endl;
+				cout<<real_count[getCanonical(skm.substr(i,k))]<<endl;
 				counting_errors++;
+				// cout<<"I SUMMON EXODIA"<<endl;
+				// cin.get();
 			}else{
-				real_count[getCanonical(skm.substr(i,31))]=0;
+				real_count[getCanonical(skm.substr(i,k))]=0;
 			}
 		}
 	}

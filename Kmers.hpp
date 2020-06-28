@@ -18,6 +18,7 @@ extern uint64_t counting_errors;
 extern uint64_t k;
 extern uint64_t k_mask;
 extern const  uint64_t minimizer_size;
+extern const  uint64_t super_minimizer_size;
 extern uint64_t min_mask;
 
 
@@ -27,7 +28,7 @@ extern uint64_t min_mask;
 
 // ----- Usefull binary kmer functions -----
 
-
+string intToString(uint64_t n);
 
 void print_kmer(__uint128_t num,uint64_t n);
 std::string kmer2str(__uint128_t num, uint k);
