@@ -14,8 +14,8 @@ public:
 	uint64_t sk;//8B
 	uint8_t size;//1B
 	uint8_t minimizer_idx;//1B
-	uint8_t counts[12] = {0};//22B
-	//TOTAL 24
+	uint8_t counts[6] = {0};//22B
+	//TOTAL 16
 
 	/** Construct a superkmer from one kmer and the minimizer position.
 	* @param kmer The unsigned int 64 used to represent the binary kmer.

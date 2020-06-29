@@ -34,8 +34,8 @@
 using namespace std;
 
 
-// DenseMenu menu(minimizer_size);
-SparseMenu menu(minimizer_size);
+DenseMenu menu(minimizer_size);
+// SparseMenu menu(minimizer_size);
 uint64_t line_count(0);
 Pow2<uint64_t> offsetUpdateAnchor(2 * k);
 const Pow2<uint64_t> offsetUpdateAnchorMin(2 * super_minimizer_size);
@@ -50,7 +50,6 @@ uint64_t hash64shift(uint64_t key) {
 	// uint64_t ab=abundance_mini[key];
 	// uint64_t ab=0;
 	// ab<<=32;
-
 	key = (~key) + (key << 21); // key = (key << 21) - key - 1;
 	key = key ^ (key >> 24);
 	key = (key + (key << 3)) + (key << 8); // key * 265
@@ -206,170 +205,10 @@ void clean(string& str){
 
 
 
-
-
-
-//START HIGH LEVEL FUNCTIONS
-
-
-
-// void dump_count_bucket(const vector<SKC>& v,uint64_t mini){
-// 	string out,skm,prefix,suffix,minimizer(kmer2str(mini,minimizer_size));
-// 	// FOREACH SUPERKMER
-// 	for(uint isk(0);isk<v.size();++isk){
-// 		SKC skc(v[isk]);
-// 		skm=kmer2str(skc.sk,30+skc.size-minimizer_size);
-// 		prefix=skm.substr(0,skm.size()-skc.minimizer_idx);
-// 		suffix=skm.substr(prefix.size());
-// 		skm=prefix+minimizer+suffix;
-// 		//FOREACH KMER WITHIN THE SUPERKMER
-// 		for (uint64_t i(0); i < skc.size; ++i) {
-// 			out+=skm.substr(i,31)+' '+to_string(skc.counts[i])+'\n';
-// 			if(check){
-// 				if(real_count[getCanonical(skm.substr(i,31))]!=skc.counts[i]){
-// 					cout<<skm.substr(i,31)<<" "<<to_string(skc.counts[i]);
-// 					cout<<"	instead of ";
-// 					cout<<real_count[getCanonical(skm.substr(i,31))]<<endl;
-// 					counting_errors++;
-// 				}else{
-// 					real_count[getCanonical(skm.substr(i,31))]=0;
-// 				}
-// 			}
-// 		}
-// 	}
-// 	#pragma omp critical (outcerr)
-// 	{
-// 		// cerr<<out;
-// 	}
-// }
-
-
-
-// void dump_counting() {
-// 	// #pragma omp parallel for
-// 	for (uint64_t i=0; i < bucket_number.value(); ++i) {
-// 		string toprint;
-// 		for (auto e:buckets_index[i]) {
-// 			uint64_t minimizer(e.first);
-// 			minimizer*=bucket_number.value();
-// 			minimizer+=i;
-// 			bucket_menus[i][e.second].print_kmers(toprint,kmer2str(minimizer,minimizer_size));
-// 		}
-// 	}
-// 	if(check){
-// 		for (auto e:real_count) {
-// 			if(e.second!=0){
-// 				cout<<"I forgot	"<<e.first<<" "<<e.second<<endl;
-// 				counting_errors++;
-// 			}
-// 		}
-// 		cout << "The results were checked" << endl;
-// 		cout<< counting_errors<<"	errors"<<endl;
-// 	}
-// }
-
-//
-//
-// void dump_stats() {
-// 	uint64_t total_super_kmers(0);
-// 	uint64_t total_kmers(0);
-// 	uint64_t non_null_buckets(0);
-// 	uint64_t null_buckets(0);
-// 	uint64_t largest_bucket(0);
-//
-// 	//FOREACH BUCKETS
-// 	for (uint64_t i(0); i < bucket_number.value(); ++i) {
-// 		if (buckets_index[i].size() != 0) {
-// 			for (auto e:buckets_index[i]) {
-// 				largest_bucket = max(largest_bucket, (uint64_t)bucket_menus[i][e.second].size());
-// 				non_null_buckets++;
-// 				total_super_kmers +=bucket_menus[i][e.second].size();
-// 				total_kmers += bucket_menus[i][e.second].number_kmer();
-// 			}
-// 		} else {
-// 			null_buckets++;
-// 		}
-// 	}
-// 	cout << endl;
-// 	cout << "Empty buckets:	" << intToString(null_buckets) << endl;
-// 	cout << "Useful buckets:	" << intToString(non_null_buckets) << endl;
-// 	cout << "#Superkmer:	" << intToString(total_super_kmers) << endl;
-// 	cout << "#Superkmer2:	" << intToString(nb_superkmer) << endl;
-// 	cout << "#kmer:	" << intToString(total_kmers) << endl;
-// 	cout << "super_kmer per useful buckets*1000:	" << intToString(total_super_kmers * 1000 / non_null_buckets) << endl;
-// 	cout << "kmer per useful buckets*1000:	" << intToString(total_kmers * 1000 / non_null_buckets) << endl;
-// 	cout << "kmer per super_kmer*1000:	" << intToString(total_kmers * 1000 / total_super_kmers) << endl;
-// 	cout << "Largest_bucket:	" << intToString(largest_bucket) << endl;
-// }
-
-
-
-//
-// bool count_abundance(const string& line) {
-// 	if (line.size() < k) {
-// 		return false;
-// 	}
-// 	// Init Sequences
-// 	uint64_t min_seq  = (str2num(line.substr(0, minimizer_size))), min_rcseq(rcbc(min_seq, minimizer_size)), min_canon(min(min_seq, min_rcseq));
-// 	// #pragma omp critical(abundance_mini)
-// 	// {
-// 		abundance_mini[min_canon]++;
-// 		if(abundance_mini[min_canon]>65000){
-// 			return true;
-// 		}
-// 		// cout<<min_canon<<" "<<abundance_mini[min_canon]<<endl;
-// 	// }
-//
-// 	uint64_t line_size = line.size();
-// 	for (uint64_t i = 0; i + minimizer_size < line_size; ++i) {
-// 		// UpdateMINIMIZER candidate with the new letter
-// 		updateM(min_seq, line[i + minimizer_size]);
-// 		updateRCM(min_rcseq, line[i + minimizer_size]);
-// 		min_canon = (min(min_seq, min_rcseq));
-// 		// #pragma omp critical(abundance_mini)
-// 		// {
-// 			abundance_mini[min_canon]++;
-// 			if(abundance_mini[min_canon]>65000){
-// 				return true;
-// 			}
-// 			// cout<<min_canon<<" "<<abundance_mini[min_canon]<<endl;
-// 		// }
-// 	}
-// 	return false;
-// }
-
-
-
-//
-// void read_fasta_file_ab(const string& filename) {
-// 	zstr::ifstream in(filename);
-// 	if (check) {
-// 		nb_core = 1;
-// 	}
-// 	#pragma omp parallel num_threads(nb_core)
-// 	{
-// 		string line;
-// 		while (in.good()) {
-// 			#pragma omp critical(input)
-// 			{
-// 				line = getLineFasta(&in);
-// 			}
-// 			if(count_abundance(line)){
-// 				break;
-// 			}
-// 			line_count++;
-// 		}
-// 	}
-// }
-//
-
-
-
 void count_line(string& line) {
 	if (line.size() < k) {
 		return;
 	}
-
 	clean(line);
 	vector<kmer_full> kmers;
 	// Init Sequences
@@ -391,7 +230,10 @@ void count_line(string& line) {
 	if(minimizer<0){
 		kmers.push_back({k-relative_min_position-super_minimizer_size+4, kmer_rc_seq});
 	}else{
-		kmers.push_back({relative_min_position+4, kmer_seq});
+		if(kmer_seq!=0){//PUT COMPLEXITY THESHOLD
+			kmers.push_back({relative_min_position+4, kmer_seq});
+		}
+
 	}
 	if (check) {
 		real_count[getCanonical(line.substr(0, k))]++;
@@ -414,16 +256,7 @@ void count_line(string& line) {
 				reverse(kmers.begin(),kmers.end());
 				minimizer*=-1;
 			}
-			// uint64_t bucketindice = minimizer % bucket_number;
-			// uint64_t fingerprint=minimizer/ bucket_number;
-			// omp_set_lock(&MutexWall[bucketindice % 4096]);
-			// if(buckets_index[bucketindice].count(fingerprint)==0){
-			// 	bucket_menus[bucketindice].push_back(Bucket());
-			// 	buckets_index[bucketindice][fingerprint]=bucket_menus[bucketindice].size()-1;
-			// }
-			// bucket_menus[bucketindice][buckets_index[bucketindice][fingerprint]].add_kmers(kmers);
 			menu.add_kmers(kmers,minimizer/256);
-			// omp_unset_lock(&MutexWall[bucketindice % 4096]);
 			minimizer                  = (min_canon);
 			if(min_canon!=min_seq){minimizer*=-1;}
 			hash_mini                  = new_hash;
@@ -442,16 +275,7 @@ void count_line(string& line) {
 				reverse(kmers.begin(),kmers.end());
 				minimizer*=-1;
 			}
-			// uint64_t bucketindice = minimizer % bucket_number;
-			// uint64_t fingerprint=minimizer/ bucket_number;
-			// omp_set_lock(&MutexWall[bucketindice % 4096]);
-			// if(buckets_index[bucketindice].count(fingerprint)==0){
-			// 	bucket_menus[bucketindice].push_back(Bucket());
-			// 	buckets_index[bucketindice][fingerprint]=bucket_menus[bucketindice].size()-1;
-			// }
-			// bucket_menus[bucketindice][buckets_index[bucketindice][fingerprint]].add_kmers(kmers);
 			menu.add_kmers(kmers,minimizer/256);
-			// omp_unset_lock(&MutexWall[bucketindice % 4096]);
 			// Search for the new MINIMIZER in the whole kmer
 			minimizer    = get_minimizer(kmer_seq, relative_min_position);
 			multiple_min = relative_min_position < 0;
@@ -474,7 +298,9 @@ void count_line(string& line) {
 		if(minimizer<0){
 			kmers.push_back({k-relative_min_position-super_minimizer_size+4, kmer_rc_seq});
 		}else{
-			kmers.push_back({relative_min_position+4, kmer_seq});
+			if(kmer_seq!=0){//PUT COMPLEXITY THESHOLD
+				kmers.push_back({relative_min_position+4, kmer_seq});
+			}
 		}
 		if (check) {
 			real_count[getCanonical(line.substr(i + 1, k))]++;
@@ -484,16 +310,7 @@ void count_line(string& line) {
 		reverse(kmers.begin(),kmers.end());
 		minimizer*=-1;
 	}
-	// uint64_t bucketindice = minimizer % bucket_number;
-	// uint64_t fingerprint=minimizer/ bucket_number;
-	// omp_set_lock(&MutexWall[bucketindice % 4096]);
-	// if(buckets_index[bucketindice].count(fingerprint)==0){
-	// 	bucket_menus[bucketindice].push_back(Bucket());
-	// 	buckets_index[bucketindice][fingerprint]=bucket_menus[bucketindice].size()-1;
-	// }
-	// bucket_menus[bucketindice][buckets_index[bucketindice][fingerprint]].add_kmers(kmers);
 	menu.add_kmers(kmers,minimizer/256);
-	// omp_unset_lock(&MutexWall[bucketindice % 4096]);
 }
 
 
@@ -525,7 +342,7 @@ void read_fasta_file(const string& filename) {
 					buffer.pop_back();
 				}else{
 					line = getLineFasta(&in);
-					if(line.size()>100000){
+					if(line.size()>100000000000){
 						// buffer.push_back(line.substr(0,line.size()/2));
 						// line=line.substr(line.size()/2-k+1);
 						buffer.push_back(line.substr(0,line.size()/4));
@@ -541,12 +358,6 @@ void read_fasta_file(const string& filename) {
 		}
 	}
 }
-
-
-
-
-
-
 
 
 

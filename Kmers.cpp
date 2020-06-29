@@ -9,11 +9,12 @@ using namespace std;
 
 
 uint64_t k = 31;
-const uint64_t minimizer_size = 15;
+const uint64_t minimizer_size = 13;
 const uint64_t super_minimizer_size(minimizer_size+4);
 uint64_t counting_errors=0;
 bool check=false;
 robin_hood::unordered_flat_map<string, uint64_t> real_count;
+
 
 
 string intToString(uint64_t n) {
@@ -29,7 +30,6 @@ string intToString(uint64_t n) {
 	}
 	return intToString(n / 1000) + ",00" + end;
 }
-
 
 
 
@@ -132,9 +132,6 @@ void print_kmer(__uint128_t num,uint64_t n){
 	}
 	cout<<endl;
 }
-
-
-
 
 
 
@@ -243,13 +240,9 @@ __m128i mm_bitshift_right(__m128i x, unsigned count) {
 
 
 
-
-
-
 uint64_t reversebits(uint64_t b){
 	return (((b * 0x80200802ULL) & 0x0884422110ULL) * 0x0101010101ULL >> 32);
 }
-
 
 
 
@@ -291,8 +284,6 @@ int64_t get_minimizer(uint64_t seq, int8_t& min_position) {
 	}
 	return ((int64_t)mini);
 }
-
-
 
 
 

@@ -15,7 +15,7 @@ ifeq ($(DEBUG), 1)
         -Werror=volatile-register-var -Wsuggest-final-types
         DEBUG_SYMS=1
 else
-        CFLAGS+=-Os -fno-fat-lto-objects -flto=jobserver -march=native -mtune=native -mcmodel=large
+        CFLAGS+=-O3 -fno-fat-lto-objects -flto=jobserver -march=native -mtune=native -mcmodel=large
         LDFLAGS+=-fuse-linker-plugin
         WARNS=-Wfatal-errors
 endif
