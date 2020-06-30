@@ -24,10 +24,11 @@
 #include "SuperKmerCount.cpp"
 #include "buckets.cpp"
 #include "DenseMenu.hpp"
-#include "SparseMenu.hpp"
+#include "DenseMenuYo.hpp"
+// #include "SparseMenu.hpp"
 #include "pow2.hpp"
 #include "robin_hood.h"
-#include "sparse_map.h"
+// #include "sparse_map.h"
 
 
 
@@ -35,7 +36,7 @@ using namespace std;
 
 
 
-DenseMenu menu(minimizer_size);
+DenseMenuYo menu(minimizer_size);
 // SparseMenu menu(minimizer_size);
 uint64_t line_count(0);
 Pow2<kint> offsetUpdateAnchor(2 * k);
