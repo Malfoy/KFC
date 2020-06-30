@@ -3,7 +3,6 @@
 
 
 
-uint64_t nb_superkmer(1);
 uint64_t nb_kmer_read(0);
 
 
@@ -16,7 +15,7 @@ using namespace std;
 	* @param kmer The unsigned int 64 used to represent the binary kmer.
 	* @param mini_idx The minimizer position in the kmer.
 	*/
-SKC::SKC(const uint64_t kmer, const uint8_t mini_idx) {
+SKC::SKC(const kint kmer, const uint8_t mini_idx) {
 	this->sk            = kmer;
 	this->size          = 1;
 	this->counts[0]     = 1;
@@ -26,27 +25,27 @@ SKC::SKC(const uint64_t kmer, const uint8_t mini_idx) {
 
 
 //THE PREFIX IS AT RIGHT!
- uint64_t SKC::get_prefix()  const {
+ kint SKC::get_prefix()  const {
 	return sk>>(2*minimizer_idx);
 }
 
 
 
 //THE SUFFIX IS AT LEFT!
- uint64_t SKC::get_suffix() const  {
-	return sk%((uint64_t)1<<(2*minimizer_idx));
+ kint SKC::get_suffix() const  {
+	return sk%((kint)1<<(2*minimizer_idx));
 }
 
 
 
 bool SKC::compact_right(const kmer_full& kmf) {
-	if (size>(32-minimizer_size) or size==6 ) {
+	if (size==14) {
 		return false;
 	}
-	uint64_t prefix(get_prefix());
-	uint64_t suffix(get_suffix());
+	kint prefix(get_prefix());
+	kint suffix(get_suffix());
 	if((kmf.suffix>>2)==suffix){
-		if(kmf.prefix==(prefix%((uint64_t)1<<(2*(k-minimizer_size-minimizer_idx-1))))) {
+		if(kmf.prefix==(prefix%((kint)1<<(2*(k-minimizer_size-minimizer_idx-1))))) {
 			sk<<=2;
 			sk += (kmf.suffix % 4);
 			size++;
@@ -67,10 +66,10 @@ bool SKC::compact_right(const kmer_full& kmf) {
 	* @return True if the kmer is inserted false otherwise.
 	*/
 	//NOT USED
-bool SKC::compact_left(const uint64_t kmer_val) {
-	uint64_t begin_sk = this->sk >> (this->size * 2);
-	begin_sk &= (((uint64_t)1 << (2 * (k - 1))) - 1);
-	uint64_t end_kmer = kmer_val & (((uint64_t)1 << (2 * (k - 1))) - 1);
+bool SKC::compact_left(const kint kmer_val) {
+	kint begin_sk = this->sk >> (this->size * 2);
+	begin_sk &= (((kint)1 << (2 * (k - 1))) - 1);
+	kint end_kmer = kmer_val & (((kint)1 << (2 * (k - 1))) - 1);
 	if (begin_sk == end_kmer) {
 		this->sk += ((__uint128_t)(kmer_val >> (2 * (k - 1)))) << (2 * (k + this->size - 1));
 		//           Select 2 left bits         Shift to the beginning of the sk
@@ -89,12 +88,12 @@ bool SKC::compact_left(const uint64_t kmer_val) {
 	* @param minimizer_idx The index of the minimizer in the kmer_val
 	* @return True if the kmer is present inside of the sk.
 	*/
-bool SKC::is_present(uint64_t kmer_val, uint64_t kmer_minimizer_idx) {
+bool SKC::is_present(kint kmer_val, uint64_t kmer_minimizer_idx) {
 	int64_t start_idx  = (int64_t)this->minimizer_idx - (int64_t)kmer_minimizer_idx;
 	if(start_idx<0 or (start_idx>=this->size)){
 		return false;
 	}
-	uint64_t aligned_sk = (this->sk >> (2 * start_idx)) & k_mask;
+	kint aligned_sk = (this->sk >> (2 * start_idx)) & k_mask;
 	return aligned_sk == kmer_val;
 }
 
@@ -103,7 +102,7 @@ bool SKC::is_present(uint64_t kmer_val, uint64_t kmer_minimizer_idx) {
 const bool SKC::is_present(kmer_full kmf) {
 	if(minimizer_idx>=kmf.minimizer_idx){
 		if((int)kmf.minimizer_idx>=(int)minimizer_idx+1-size){
-			if(kmf.prefix==get_prefix()%((uint64_t)1<<(2*(k-minimizer_size-kmf.minimizer_idx)))) {
+			if(kmf.prefix==get_prefix()%((kint)1<<(2*(k-minimizer_size-kmf.minimizer_idx)))) {
 				if(kmf.suffix==get_suffix()>>(2*(minimizer_idx -kmf.minimizer_idx))) {
 					return true;
 				}
@@ -130,6 +129,9 @@ bool SKC::add_kmer(const kmer_full& kmer) {
 		this->counts[kmer.minimizer_idx - (this->minimizer_idx-size+1)]++;
 		return true;
 	}
+	// if(this-> compact_right(kmer)){
+	// 	return true;
+	// }
 	return false;
 }
 
@@ -183,15 +185,16 @@ ostream& operator<<(ostream& out, const SKC& skc) {
 
 
 void  SKC::print_count(const string& out,const string minimizer) const {
-	string skm=kmer2str(sk,30+size-minimizer_size);
+	// cout<<"go superkmer"<<endl;
+	string skm=kmer2str(sk,k-1+size-minimizer_size);
 	string prefix=skm.substr(0,skm.size()-minimizer_idx);
 	string suffix=skm.substr(prefix.size());
-	string result;
+	// string result;
 	skm=prefix+minimizer+suffix;
 
 	//FOREACH KMER WITHIN THE SUPERKMER
 	for (uint64_t i(0); i < size; ++i) {
-		result+=skm.substr(i,k)+'	'+to_string(counts[i])+'\n';
+		// result+=skm.substr(i,k)+'	'+to_string(counts[i])+'\n';
 		if(check){
 			if(real_count[getCanonical(skm.substr(i,k))]!=(int)counts[i]){
 					cout<<"skm:	"<<skm<<endl;
@@ -205,6 +208,7 @@ void  SKC::print_count(const string& out,const string minimizer) const {
 				counting_errors++;
 			}else{
 				real_count[getCanonical(skm.substr(i,k))]=0;
+				// cout<<skm.substr(i,k)<<" "<<to_string(counts[i])<<" OKK"<<endl;;
 			}
 		}
 	}
@@ -213,8 +217,8 @@ void  SKC::print_count(const string& out,const string minimizer) const {
 
 
 bool  SKC::suffix_is_prefix(const kmer_full& kmf){
-	uint64_t suffix_kmer(kmf.suffix);
-	uint64_t suffix_superkmer(this->get_suffix());
+	kint suffix_kmer(kmf.suffix);
+	kint suffix_superkmer(this->get_suffix());
 	if(minimizer_idx>=kmf.minimizer_idx){
 		suffix_superkmer>>=(2*(minimizer_idx-kmf.minimizer_idx));
 	}else{

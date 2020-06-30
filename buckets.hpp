@@ -16,7 +16,7 @@ public:
 	uint32_t sorted_size;
 
 	void insert_buffer();
-	void add_kmers( vector<kmer_full>& kmers);
+	void add_kmers(vector<kmer_full>& kmers);
 	void add_kmers_buffer( vector<kmer_full>& kmer);
 	bool add_kmers_sorted( vector<kmer_full>& kmer);
 	void print_kmers(string& result,const  string& mini)const ;

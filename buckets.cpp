@@ -69,6 +69,8 @@ void  Bucket::add_kmers_buffer( vector<kmer_full>& kmers){
 					}
 				}
 				if(not isinserted){
+					// cout<<"pUSH:"<<endl;
+					// print_kmer(kmer.get_compacted(),k);
 					skml.push_back(SKC(kmer.get_compacted(), (int)kmer.get_minimizer_idx()));
 				}
 			}
@@ -85,26 +87,19 @@ bool compSKM(const SKC& s1, const SKC& s2){
 
 
 bool  Bucket::add_kmers_sorted( vector<kmer_full>& kmers){
-	// cout<<"aks"<<endl;
 	if(sorted_size==0){
 		return false;
 	}
 	uint64_t inserted(0);
 	//FOREACH KMER
-	// for (uint64_t ik = 0; ik < 1; ++ik) {
 		kmer_full kmer = kmers[0];
-		// if(kmer.minimizer_idx==69){continue;}
 		SKC mockskm( kmer.kmer_s, kmer.minimizer_idx);
-		// cout<<"gl"<<endl;
 		uint64_t low=lower_bound (skml.begin(), skml.begin()+sorted_size,mockskm,[ ]( const SKC& lhs, const SKC& rhs ){return lhs < rhs;}) - skml.begin();
-		// cout<<"l:	"<<low<<endl;
-		// int64_t low=0;
 		//FOREACH SUPERKMER
 		while (low<(uint64_t)sorted_size) {
-			// cout<<"t:	"<<low<<endl;
-			// if(not skml[low].suffix_is_prefix(kmer)){
-			// 	break;
-			// }
+			if(not skml[low].suffix_is_prefix(kmer)){
+				break;
+			}
 			//FOREACH KMER
 			for (uint64_t iikk = 0; iikk < kmers.size(); ++iikk) {
 				if(kmers[iikk].minimizer_idx==69){continue;}
@@ -118,25 +113,6 @@ bool  Bucket::add_kmers_sorted( vector<kmer_full>& kmers){
 			}
 			low++;
 		}
-		// cout<<"end"<<endl;
-		//FOREACH KMER
-		// for (uint64_t iikk = ik; iikk < kmers.size(); ++iikk) {
-		// 	kmer_full& kmerl = kmers[iikk];
-		// 	// if(kmerl.minimizer_idx==69){continue;}
-		// 	int llow=low;
-		// 	while (llow<(int)sorted_size and skml[llow].suffix_is_prefix(kmerl)) {
-		// 		if (skml[llow].add_kmer(kmerl)) {
-		// 			kmerl.minimizer_idx=69;
-		// 			inserted++;
-		// 			if(inserted==kmers.size()){
-		// 				return true;
-		// 			}
-		// 			break;
-		// 		}
-		// 		llow++;
-		// 	}
-		// }
-	// }
 	return false;
 }
 

@@ -8,8 +8,8 @@ using namespace std;
 
 
 
-uint64_t k = 31;
-const uint64_t minimizer_size = 13;
+uint64_t k = 63;
+const uint64_t minimizer_size = 12;
 const uint64_t super_minimizer_size(minimizer_size+4);
 uint64_t counting_errors=0;
 bool check=false;
@@ -44,7 +44,8 @@ uint8_t kmer_full::get_minimizer_idx() const {
 
 
 
-kmer_full::kmer_full(int8_t minimizer_idx, uint64_t value) {
+kmer_full::kmer_full(int8_t minimizer_idx, kint value) {
+	// cout<<"go"<<endl;
 	this->minimizer_idx = minimizer_idx;
 	this->kmer_s = value;
 	this->prefix=(value);
@@ -52,14 +53,17 @@ kmer_full::kmer_full(int8_t minimizer_idx, uint64_t value) {
 	this->prefix>>=shift;
 	this->suffix=(value);
 	shift=(minimizer_idx)*2;
-	this->suffix%=((uint64_t)1<<shift);
+	this->suffix%=((kint)1<<shift);
+	// print_kmer(value,k);
+	// print_kmer(prefix,k);
+	// print_kmer(suffix,k);
 }
 
 
 
-string kmer2str(uint64_t num, uint k = 31) {
+string kmer2str(kint num, uint k) {
 	string res;
-	Pow2<uint64_t> anc(2 * (k - 1));
+	Pow2<kint> anc(2 * (k - 1));
 	for (uint64_t i(0); i < k; ++i) {
 		uint64_t nuc = num / anc;
 		num             = num % anc;
@@ -77,8 +81,8 @@ string kmer2str(uint64_t num, uint k = 31) {
 		}
 		if (nuc >= 4) {
 			cout << "WTF kmer2str" << endl;
-			cout<<kmer2str(num,31)<<endl;
-			cout<<anc.value()<<endl;
+			cout<<kmer2str(num,k)<<endl;
+			// cout<<(uint6)anc.value()<<endl;
 			cout<<nuc<<endl;
 			return "";
 		}
@@ -90,8 +94,8 @@ string kmer2str(uint64_t num, uint k = 31) {
 
 
 // SUFFIX IS AT RIGHT!!!!!!DO NOT CHANGE THIS
-uint64_t kmer_full::get_compacted(){
-	uint64_t result;
+kint kmer_full::get_compacted(){
+	kint result;
 	result=prefix;
 	result<<=(minimizer_idx*2);
 	result+=suffix;
@@ -135,8 +139,8 @@ void print_kmer(__uint128_t num,uint64_t n){
 
 
 
-uint64_t str2num(const string& str) {
-	uint64_t res(0);
+kint str2num(const string& str) {
+	kint res(0);
 	for (uint64_t i(0); i < str.size(); i++) {
 		res <<= 2;
 		res += (str[i] / 2) % 4;
@@ -251,7 +255,7 @@ Pow2<uint64_t> minimizer_number(2 * super_minimizer_size);
 
 
 /** Get the minimizer from a sequence and modify the position parameter.*/
-int64_t get_minimizer(uint64_t seq, int8_t& min_position) {
+int64_t get_minimizer(kint seq, int8_t& min_position) {
 	// Init with the first possible minimizer
 	int64_t mini, mmer;
 	int64_t fwd_mini = seq % minimizer_number;

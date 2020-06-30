@@ -34,10 +34,11 @@
 using namespace std;
 
 
+
 DenseMenu menu(minimizer_size);
 // SparseMenu menu(minimizer_size);
 uint64_t line_count(0);
-Pow2<uint64_t> offsetUpdateAnchor(2 * k);
+Pow2<kint> offsetUpdateAnchor(2 * k);
 const Pow2<uint64_t> offsetUpdateAnchorMin(2 * super_minimizer_size);
 // uint16_t abundance_mini[1<<(2*minimizer_size)];
 // vector<Bucket> bucket_menus[1<<(2*subminimizer_size)];
@@ -75,27 +76,6 @@ string getLineFasta(zstr::ifstream* in) {
 
 
 
-string getLineFasta2(zstr::ifstream* in,vector<string>& buffer) {
-	if(not buffer.empty()){
-		return buffer[buffer.size()-1];
-	}
-	string line, result;
-	getline(*in, line);
-	char c = static_cast<char>(in->peek());
-	while (c != '>' and c != EOF) {
-		getline(*in, line);
-		result += line;
-		c = static_cast<char>(in->peek());
-	}
-	if(result.size()>100){
-		cout<<"break"<<endl;
-		cout<<result<<endl;
-		buffer.push_back(result.substr(0,result.size()/2));
-		result=result.substr(result.size()/2-k+1);
-		cout<<result<<endl;
-	}
-	return result;
-}
 
 
 
@@ -147,7 +127,7 @@ inline uint64_t nuc2intrc(char c) {
 
 
 
-inline void updateK(uint64_t& min, char nuc) {
+inline void updateK(kint& min, char nuc) {
 	min <<= 2;
 	min += nuc2int(nuc);
 	min %= offsetUpdateAnchor;
@@ -157,7 +137,7 @@ inline void updateK(uint64_t& min, char nuc) {
 
 inline void add_nuc_superkmer(SKC& min, char nuc) {
 	min.sk <<= 2;
-	min.sk += nuc2int(nuc);
+	min.sk += (kint)nuc2int(nuc);
 	min.counts[min.size++] = 0;
 }
 
@@ -171,16 +151,16 @@ inline void updateM(uint64_t& min, char nuc) {
 
 
 
-inline void updateRCK(uint64_t& min, char nuc) {
+inline void updateRCK(kint& min, char nuc) {
 	min >>= 2;
-	min += (nuc2intrc(nuc) << (2 * k - 2));
+	min += ((kint)nuc2intrc(nuc) << (2 * k - 2));
 }
 
 
 
 inline void updateRCM(uint64_t& min, char nuc) {
 	min >>= 2;
-	min += (nuc2intrc(nuc) << (2 * super_minimizer_size - 2));
+	min += ((kint)nuc2intrc(nuc) << (2 * super_minimizer_size - 2));
 }
 
 
@@ -212,7 +192,10 @@ void count_line(string& line) {
 	clean(line);
 	vector<kmer_full> kmers;
 	// Init Sequences
-	uint64_t kmer_seq = (str2num(line.substr(0, k))), kmer_rc_seq(rcb(kmer_seq));
+	kint kmer_seq = (str2num(line.substr(0, k))), kmer_rc_seq(rcb(kmer_seq));
+	// cout<<"init"<<endl;
+	// print_kmer(kmer_seq,k);
+	// print_kmer(kmer_rc_seq,k);
 	uint64_t min_seq  = (str2num(line.substr(k - super_minimizer_size, super_minimizer_size))), min_rcseq(rcbc(min_seq, super_minimizer_size)), min_canon(min(min_seq, min_rcseq));
 	// Init MINIMIZER
 	int8_t relative_min_position;
@@ -233,8 +216,8 @@ void count_line(string& line) {
 		if(kmer_seq!=0){//PUT COMPLEXITY THESHOLD
 			kmers.push_back({relative_min_position+4, kmer_seq});
 		}
-
 	}
+
 	if (check) {
 		real_count[getCanonical(line.substr(0, k))]++;
 	}
@@ -245,6 +228,9 @@ void count_line(string& line) {
 		// Update KMER and MINIMIZER candidate with the new letter
 		updateK(kmer_seq, line[i + k]);
 		updateRCK(kmer_rc_seq, line[i + k]);
+		// cout<<"i:	"<<i<<endl;
+		// print_kmer(kmer_seq,k);
+		// print_kmer(kmer_rc_seq,k);
 		updateM(min_seq, line[i + k]);
 		updateRCM(min_rcseq, line[i + k]);
 		min_canon = (min(min_seq, min_rcseq));
