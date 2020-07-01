@@ -47,7 +47,7 @@ public:
 	bool is_present(kint, uint64_t);
 	bool is_present_brutforce(kmer_full kmer, uint8_t & mini_k_idx);
 	bool compact_right(const kmer_full& kmf);
-	const bool is_present(kmer_full kmf);
+	bool is_present(kmer_full kmf);
 	kint get_prefix()  const;
 	kint get_suffix() const;
 };

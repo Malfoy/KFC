@@ -8,13 +8,13 @@ using namespace std;
 
 
 
-uint64_t k = 63;
-const uint64_t minimizer_size = 12;
+uint64_t k = 11;
+const uint64_t minimizer_size = 5;
 const uint64_t super_minimizer_size(minimizer_size+4);
 uint64_t counting_errors=0;
 bool check=false;
 robin_hood::unordered_flat_map<string, uint64_t> real_count;
-
+kint k_mask = (((kint)1) << (2*k)) - 1;
 
 
 string intToString(uint64_t n) {

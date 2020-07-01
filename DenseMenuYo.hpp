@@ -56,8 +56,8 @@ public:
 		string toprint;
 		for(uint64_t mini(0);mini<bucket_number;++mini){
 			uint32_t i = indexes[mini];
-			if(bucketList[i].size()!=0){
-				bucketList[i].print_kmers(toprint,kmer2str(mini,minimizer_size));
+			if(i!=0){
+				bucketList[i-1].print_kmers(toprint,kmer2str(mini,minimizer_size));
 			}
 		}
 		if(check){
@@ -86,7 +86,8 @@ public:
 		uint64_t largest_bucket(0);
 		for(uint64_t mini(0);mini<bucket_number;++mini){
 			uint32_t i = indexes[mini];
-			if(bucketList[i].size()!=0){
+			if(i!=0){
+				i -= 1;
 				largest_bucket = max(largest_bucket,bucketList[i].size());
 				non_null_buckets++;
 				total_super_kmers +=bucketList[i].size();

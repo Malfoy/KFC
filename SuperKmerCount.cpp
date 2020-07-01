@@ -99,7 +99,7 @@ bool SKC::is_present(kint kmer_val, uint64_t kmer_minimizer_idx) {
 
 
 
-const bool SKC::is_present(kmer_full kmf) {
+bool SKC::is_present(kmer_full kmf) {
 	if(minimizer_idx>=kmf.minimizer_idx){
 		if((int)kmf.minimizer_idx>=(int)minimizer_idx+1-size){
 			if(kmf.prefix==get_prefix()%((kint)1<<(2*(k-minimizer_size-kmf.minimizer_idx)))) {
