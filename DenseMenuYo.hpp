@@ -15,56 +15,66 @@
 #define DENSEMENUYO_H
 
 
+#define mutex_number (1<<12)
+
+
 class DenseMenuYo{
 public:
 	uint32_t * indexes;
-	std::vector<Bucket> bucketList;
+	// std::vector<Bucket> bucketList;
+	std::vector<Bucket> * bucketMatrix;
 	uint64_t minimizer_size;
 	uint64_t bucket_number;
-	omp_lock_t MutexWall[8192];
+	omp_lock_t MutexWall[mutex_number];
 
 
 	DenseMenuYo(uint64_t minisize){
 		// cout<<"creattion"<<endl;
-		for (uint64_t i(0); i < 8192; ++i) {
+		for (uint64_t i(0); i < mutex_number; ++i) {
 			omp_init_lock(&MutexWall[i]);
 		}
 		minimizer_size=minisize;
 		bucket_number=1<<(2*minimizer_size);
-		// bucketList=new Bucket[bucket_number];
-		indexes=new uint32_t[bucket_number];
-		// indexes = (uint32_t*) malloc(bucket_number * sizeof(uint32_t));
-		// memset(indexes, 0, sizeof(uint32_t) * bucket_number);
+		// indexes = new uint32_t[mutex_number][bucket_number/mutex_number];
+		indexes = new uint32_t[bucket_number];
+		bucketMatrix = new std::vector<Bucket>[mutex_number];
 		// cout<<"ok"<<endl;
 	}
 
 
 	void add_kmers(vector<kmer_full>& v,uint64_t minimizer){
-		uint32_t idx = indexes[minimizer];
-		#pragma omp critical (newBucket)
-		{
+		cout << "add" << endl;
+		uint64_t mutex_idx = minimizer % mutex_number;
+		uint64_t index_idx = minimizer / mutex_number;
+		uint32_t idx = indexes[mutex_idx * mutex_number + index_idx];
+		omp_set_lock(&MutexWall[mutex_idx]);
 			if (idx == 0) {
-				bucketList.push_back(Bucket());
-				indexes[minimizer] = bucketList.size();
+				cout << "new bucket" << endl;
+				bucketMatrix[mutex_idx].push_back(Bucket());
+				indexes[mutex_idx * mutex_number + index_idx] = bucketMatrix[mutex_idx].size();
+				idx = indexes[mutex_idx * mutex_number + index_idx];
+				cout << "/new bucket" << endl;
 			}
-		}
-		idx = indexes[minimizer];
-		omp_set_lock(&MutexWall[minimizer % 8192]);
-		bucketList[idx-1].add_kmers(v);
-		omp_unset_lock(&MutexWall[minimizer % 8192]);
+		cout << "True add" << endl;
+		cout << idx << " " << (bucket_number/mutex_number) << " " << bucketMatrix[mutex_idx].size() << endl;
+		bucketMatrix[mutex_idx][idx-1].add_kmers(v);
+		omp_unset_lock(&MutexWall[mutex_idx]);
 		// }
 		v.clear();
+		cout << "/add" << endl;
 	}
 
 
 	int dump_counting(){
 		string toprint;
 		for(uint64_t mini(0);mini<bucket_number;++mini){
-			uint32_t i = indexes[mini];
+			uint64_t mutex_idx = mini % mutex_number;
+			uint64_t index_idx = mini / mutex_number;
+			uint32_t i = indexes[mutex_idx * mutex_number + index_idx];
 			if(i!=0){
 				i--;
-				if(bucketList[i].size()!=0){
-					bucketList[i].print_kmers(toprint,kmer2str(mini,minimizer_size));
+				if(bucketMatrix[mutex_idx][i].size()!=0){
+					bucketMatrix[mutex_idx][i].print_kmers(toprint,kmer2str(mini,minimizer_size));
 				}
 			}
 		}
@@ -94,17 +104,19 @@ public:
 		uint64_t largest_bucket(0);
 		for(uint64_t mini(0);mini<bucket_number;++mini){
 			// cout<<"lini"<<mini<<endl;
-			uint32_t i = indexes[mini];
+			uint64_t mutex_idx = mini % mutex_number;
+			uint64_t index_idx = mini / mutex_number;
+			uint32_t i = indexes[mutex_idx * mutex_number + index_idx];
 			if(i!=0){
 				i--;
 				// cout<<"go"<<i<<endl;
-				largest_bucket = max(largest_bucket,bucketList[i].size());
+				largest_bucket = max(largest_bucket,bucketMatrix[mutex_idx][i].size());
 				// cout<<"lol1"<<endl;
 				non_null_buckets++;
-				total_super_kmers +=bucketList[i].size();
+				total_super_kmers +=bucketMatrix[mutex_idx][i].size();
 				// cout<<"lol2"<<endl;
 				// cout<<bucketList[i].size()<<endl;
-				total_kmers += bucketList[i].number_kmer();
+				total_kmers += bucketMatrix[mutex_idx][i].number_kmer();
 				// cout<<i<<"end"<<endl;
 			}else{
 				null_buckets++;
