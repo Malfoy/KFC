@@ -25,29 +25,34 @@ public:
 
 
 	DenseMenuYo(uint64_t minisize){
+		// cout<<"creattion"<<endl;
 		for (uint64_t i(0); i < 8192; ++i) {
 			omp_init_lock(&MutexWall[i]);
 		}
 		minimizer_size=minisize;
 		bucket_number=1<<(2*minimizer_size);
 		// bucketList=new Bucket[bucket_number];
-		indexes = (uint32_t*) malloc(bucket_number * sizeof(uint32_t));
-		memset(indexes, 0, sizeof(uint32_t) * bucket_number);
+		indexes=new uint32_t[bucket_number];
+		// indexes = (uint32_t*) malloc(bucket_number * sizeof(uint32_t));
+		// memset(indexes, 0, sizeof(uint32_t) * bucket_number);
+		// cout<<"ok"<<endl;
 	}
 
 
 	void add_kmers(vector<kmer_full>& v,uint64_t minimizer){
-		omp_set_lock(&MutexWall[minimizer % 8192]);
 		uint32_t idx = indexes[minimizer];
-
-		if (idx == 0) {
-			bucketList.push_back(Bucket());
-			indexes[minimizer] = bucketList.size();
-			idx = indexes[minimizer];
+		#pragma omp critical (newBucket)
+		{
+			if (idx == 0) {
+				bucketList.push_back(Bucket());
+				indexes[minimizer] = bucketList.size();
+			}
 		}
-
+		idx = indexes[minimizer];
+		omp_set_lock(&MutexWall[minimizer % 8192]);
 		bucketList[idx-1].add_kmers(v);
 		omp_unset_lock(&MutexWall[minimizer % 8192]);
+		// }
 		v.clear();
 	}
 
@@ -57,7 +62,10 @@ public:
 		for(uint64_t mini(0);mini<bucket_number;++mini){
 			uint32_t i = indexes[mini];
 			if(i!=0){
-				bucketList[i-1].print_kmers(toprint,kmer2str(mini,minimizer_size));
+				i--;
+				if(bucketList[i].size()!=0){
+					bucketList[i].print_kmers(toprint,kmer2str(mini,minimizer_size));
+				}
 			}
 		}
 		if(check){
@@ -85,13 +93,19 @@ public:
 		uint64_t null_buckets(0);
 		uint64_t largest_bucket(0);
 		for(uint64_t mini(0);mini<bucket_number;++mini){
+			// cout<<"lini"<<mini<<endl;
 			uint32_t i = indexes[mini];
 			if(i!=0){
-				i -= 1;
+				i--;
+				// cout<<"go"<<i<<endl;
 				largest_bucket = max(largest_bucket,bucketList[i].size());
+				// cout<<"lol1"<<endl;
 				non_null_buckets++;
 				total_super_kmers +=bucketList[i].size();
+				// cout<<"lol2"<<endl;
+				// cout<<bucketList[i].size()<<endl;
 				total_kmers += bucketList[i].number_kmer();
+				// cout<<i<<"end"<<endl;
 			}else{
 				null_buckets++;
 			}

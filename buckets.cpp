@@ -71,6 +71,9 @@ void  Bucket::add_kmers_buffer( vector<kmer_full>& kmers){
 				if(not isinserted){
 					// cout<<"pUSH:"<<endl;
 					// print_kmer(kmer.get_compacted(),k);
+					if(skml.size()==skml.capacity()){
+						skml.reserve(skml.capacity()*1.5);
+					}
 					skml.push_back(SKC(kmer.get_compacted(), (int)kmer.get_minimizer_idx()));
 				}
 			}

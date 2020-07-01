@@ -25,10 +25,10 @@
 #include "buckets.cpp"
 #include "DenseMenu.hpp"
 #include "DenseMenuYo.hpp"
-#include "SparseMenu.hpp"
+// #include "SparseMenu.hpp"
 #include "pow2.hpp"
 #include "robin_hood.h"
-#include "sparse_map.h"
+// #include "sparse_map.h"
 
 
 
@@ -36,7 +36,7 @@ using namespace std;
 
 
 
-DenseMenuYo menu(minimizer_size);
+DenseMenuYo	 menu(minimizer_size);
 // SparseMenu menu(minimizer_size);
 uint64_t line_count(0);
 Pow2<kint> offsetUpdateAnchor(2 * k);
@@ -61,6 +61,7 @@ uint64_t hash64shift(uint64_t key) {
 	key = key + (key << 31);
 	return (uint64_t)key;
 }
+
 
 
 string getLineFasta(zstr::ifstream* in) {
@@ -205,7 +206,7 @@ void count_line(string& line) {
 
 	uint8_t position_minimizer_in_kmer;
 	if (multiple_min){
-		position_minimizer_in_kmer = static_cast<uint8_t>(-relative_min_position - 1);
+		position_minimizer_in_kmer = (uint8_t)(-relative_min_position - 1);
 	}else{
 		position_minimizer_in_kmer = relative_min_position;
 	}
@@ -254,7 +255,7 @@ void count_line(string& line) {
 		else if (new_hash == hash_mini) {
 			multiple_min = true;
 			position_minimizer_in_kmer += 1;
-			relative_min_position = -(static_cast<int8_t>(position_minimizer_in_kmer)) - 1;
+			relative_min_position = -((int8_t)position_minimizer_in_kmer) - 1;
 		}
 		//the previous MINIMIZER is outdated
 		else if (position_minimizer_in_kmer >= k - super_minimizer_size) {
@@ -267,7 +268,7 @@ void count_line(string& line) {
 			minimizer    = get_minimizer(kmer_seq, relative_min_position);
 			multiple_min = relative_min_position < 0;
 			if (multiple_min){
-				position_minimizer_in_kmer = static_cast<uint8_t>(-relative_min_position - 1);
+				position_minimizer_in_kmer = (uint8_t)(-relative_min_position - 1);
 			}else{
 				position_minimizer_in_kmer = relative_min_position;
 			}
@@ -385,6 +386,7 @@ int main(int argc, char** argv) {
 	if (mode % 2 == 0) {
 		cout<<menu.dump_counting()<<" errors"<<endl;;
 	}
+	cout<<"DUMP COUNTING DONE"<<endl;
 	menu.dump_stats();
 	exit(0);
 }
