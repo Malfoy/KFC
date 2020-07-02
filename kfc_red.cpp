@@ -78,9 +78,6 @@ string getLineFasta(zstr::ifstream* in) {
 
 
 
-
-
-
 uint32_t revhash(uint32_t x) {
 	x = ((x >> 16) ^ x) * 0x2c1b3c6d;
 	x = ((x >> 16) ^ x) * 0x297a2d39;
@@ -137,14 +134,6 @@ inline void updateK(kint& min, char nuc) {
 
 
 
-inline void add_nuc_superkmer(SKC& min, char nuc) {
-	min.sk <<= 2;
-	min.sk += (kint)nuc2int(nuc);
-	min.counts[min.size++] = 0;
-}
-
-
-
 inline void updateM(uint64_t& min, char nuc) {
 	min <<= 2;
 	min += nuc2int(nuc);
@@ -195,9 +184,6 @@ void count_line(string& line) {
 	vector<kmer_full> kmers;
 	// Init Sequences
 	kint kmer_seq = (str2num(line.substr(0, k))), kmer_rc_seq(rcb(kmer_seq));
-	// cout<<"init"<<endl;
-	// print_kmer(kmer_seq,k);
-	// print_kmer(kmer_rc_seq,k);
 	uint64_t min_seq  = (str2num(line.substr(k - super_minimizer_size, super_minimizer_size))), min_rcseq(rcbc(min_seq, super_minimizer_size)), min_canon(min(min_seq, min_rcseq));
 	// Init MINIMIZER
 	int8_t relative_min_position;
@@ -230,9 +216,6 @@ void count_line(string& line) {
 		// Update KMER and MINIMIZER candidate with the new letter
 		updateK(kmer_seq, line[i + k]);
 		updateRCK(kmer_rc_seq, line[i + k]);
-		// cout<<"i:	"<<i<<endl;
-		// print_kmer(kmer_seq,k);
-		// print_kmer(kmer_rc_seq,k);
 		updateM(min_seq, line[i + k]);
 		updateRCM(min_rcseq, line[i + k]);
 		min_canon = (min(min_seq, min_rcseq));
@@ -302,6 +285,7 @@ void count_line(string& line) {
 }
 
 
+
 inline bool exists_test (const string& name) {
   struct stat buffer;
   return (stat (name.c_str(), &buffer) == 0);
@@ -331,8 +315,6 @@ void read_fasta_file(const string& filename) {
 				}else{
 					line = getLineFasta(&in);
 					if(line.size()>100000000000){
-						// buffer.push_back(line.substr(0,line.size()/2));
-						// line=line.substr(line.size()/2-k+1);
 						buffer.push_back(line.substr(0,line.size()/4));
 						buffer.push_back(line.substr(line.size()/4-k+1,line.size()/4+k-1));
 						buffer.push_back(line.substr(line.size()/2-k+1,line.size()/4+k-1));
@@ -386,7 +368,7 @@ int main(int argc, char** argv) {
 	if (mode % 2 == 0) {
 		cout<<menu.dump_counting()<<" errors"<<endl;;
 	}
-	cout<<"DUMP COUNTING DONE"<<endl;
+	// cout<<"DUMP COUNTING DONE"<<endl;
 	menu.dump_stats();
 	exit(0);
 }

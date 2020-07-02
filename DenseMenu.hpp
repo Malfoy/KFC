@@ -75,7 +75,7 @@ public:
 			cout << "Largest_bucket:	" << intToString(largest_bucket) << endl;
 			cout<<intToString(getMemorySelfMaxUsed())<<endl;
 			cout<<intToString(getMemorySelfMaxUsed()*1024)<<" Bytes"<<endl;
-			cout<<intToString(getMemorySelfMaxUsed()*1024/total_kmers)<<" Bytes per kmer"<<endl;
+			cout<<intToString(getMemorySelfMaxUsed()*1024*8/total_kmers)<<" Bits per kmer"<<endl;
 			cout<<intToString(getMemorySelfMaxUsed()*1024/total_super_kmers)<<" Bytes per superkmer"<<endl;
 		}
 		cout<<sizeof(SKC)<<endl;
@@ -103,16 +103,13 @@ public:
 	}
 
 
+
 	uint64_t getMemorySelfMaxUsed (){
 	    u_int64_t result = 0;
 	    struct rusage usage;
 	    if (getrusage(RUSAGE_SELF, &usage)==0)  {  result = usage.ru_maxrss;  }
 	    return result;
 	}
-
-
-
-
 };
 
 #endif

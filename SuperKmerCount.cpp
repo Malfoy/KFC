@@ -15,10 +15,10 @@ using namespace std;
 	* @param kmer The unsigned int 64 used to represent the binary kmer.
 	* @param mini_idx The minimizer position in the kmer.
 	*/
-SKC::SKC(const kint kmer, const uint8_t mini_idx) {
+SKC::SKC(const kint kmer, const uint8_t mini_idx, const uint32_t indice_v) {
 	this->sk            = kmer;
 	this->size          = 1;
-	this->counts[0]     = 1;
+	indice_value=indice_v;
 	this->minimizer_idx = mini_idx;
 };
 
@@ -39,7 +39,7 @@ SKC::SKC(const kint kmer, const uint8_t mini_idx) {
 
 
 bool SKC::compact_right(const kmer_full& kmf) {
-	if (size==14) {
+	if (k+this->size-minimizer_size>=sizeof(kint)*4) {
 		return false;
 	}
 	kint prefix(get_prefix());
@@ -50,7 +50,6 @@ bool SKC::compact_right(const kmer_full& kmf) {
 			sk += (kmf.suffix % 4);
 			size++;
 			minimizer_idx++;
-			this->counts[this->size-1]               = 1;
 			return true;
 		}else{
 		}
@@ -74,7 +73,6 @@ bool SKC::compact_left(const kint kmer_val) {
 		this->sk += ((__uint128_t)(kmer_val >> (2 * (k - 1)))) << (2 * (k + this->size - 1));
 		//           Select 2 left bits         Shift to the beginning of the sk
 		this->size += 1;
-		this->counts[this->size - 1] = 1;
 		return true;
 	}
 	return false;
@@ -124,15 +122,19 @@ bool SKC::is_present_brutforce(kmer_full kmer, uint8_t & mini_k_idx) {
 
 
 
-bool SKC::add_kmer(const kmer_full& kmer) {
+bool SKC::query_kmer_bool(const kmer_full& kmer) {
 	if(this->is_present(kmer)){
-		this->counts[kmer.minimizer_idx - (this->minimizer_idx-size+1)]++;
 		return true;
 	}
-	// if(this-> compact_right(kmer)){
-	// 	return true;
-	// }
 	return false;
+}
+
+
+uint32_t SKC::query_kmer_hash(const kmer_full& kmer) {
+	if(this->is_present(kmer)){
+		return indice_value+kmer.minimizer_idx - (minimizer_idx-size+1);
+	}
+	return -1;
 }
 
 
@@ -176,43 +178,12 @@ ostream& operator<<(ostream& out, const SKC& skc) {
 		out << ' ';
 	_out_kmer(out, skc.sk >> (2 * skc.minimizer_idx), minimizer_size);
 	out << " (mini idx " << (uint64_t)skc.minimizer_idx << ")" << endl;
-	// Print the counters (same direction than superkmer)
-	for (uint64_t i = skc.size; i > 0; i--)
-		out << static_cast<uint64_t>(skc.counts[i - 1]) << "\t";
 	return out;
 }
 
 
 
-void  SKC::print_count(const string& out,const string minimizer) const {
-	// cout<<"go superkmer"<<endl;
-	string skm=kmer2str(sk,k-1+size-minimizer_size);
-	string prefix=skm.substr(0,skm.size()-minimizer_idx);
-	string suffix=skm.substr(prefix.size());
-	// string result;
-	skm=prefix+minimizer+suffix;
 
-	//FOREACH KMER WITHIN THE SUPERKMER
-	for (uint64_t i(0); i < size; ++i) {
-		// result+=skm.substr(i,k)+'	'+to_string(counts[i])+'\n';
-		if(check){
-			if(real_count[getCanonical(skm.substr(i,k))]!=(int)counts[i]){
-					cout<<"skm:	"<<skm<<endl;
-					cout<<"prefix:	"<<prefix<<endl;
-					cout<<"minimizer:	"<<minimizer<<endl;
-					cout<<"suffix:	"<<suffix<<endl;
-				cout<<(int)counts[i]<<" "<<i<<" "<<(int)size<<endl;
-				cout<<skm.substr(i,k)<<" "<<to_string(counts[i]);
-				cout<<"	instead of ";
-				cout<<real_count[getCanonical(skm.substr(i,k))]<<endl;
-				counting_errors++;
-			}else{
-				real_count[getCanonical(skm.substr(i,k))]=0;
-				// cout<<skm.substr(i,k)<<" "<<to_string(counts[i])<<" OKK"<<endl;;
-			}
-		}
-	}
-}
 
 
 

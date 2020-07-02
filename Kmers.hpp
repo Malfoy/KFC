@@ -16,6 +16,7 @@ using namespace std;
 
 
 typedef __uint128_t kint;
+// typedef u_int64_t kint;
 
 
 

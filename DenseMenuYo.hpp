@@ -9,72 +9,61 @@
 
 
 
-
-
 #ifndef DENSEMENUYO_H
 #define DENSEMENUYO_H
 
-
-#define mutex_number (1<<12)
 
 
 class DenseMenuYo{
 public:
 	uint32_t * indexes;
-	// std::vector<Bucket> bucketList;
-	std::vector<Bucket> * bucketMatrix;
+	vector<Bucket> bucketList;
 	uint64_t minimizer_size;
 	uint64_t bucket_number;
-	omp_lock_t MutexWall[mutex_number];
+	omp_lock_t MutexWall[8192];
+
 
 
 	DenseMenuYo(uint64_t minisize){
-		// cout<<"creattion"<<endl;
-		for (uint64_t i(0); i < mutex_number; ++i) {
+		for (uint64_t i(0); i < 8192; ++i) {
 			omp_init_lock(&MutexWall[i]);
 		}
 		minimizer_size=minisize;
 		bucket_number=1<<(2*minimizer_size);
-		// indexes = new uint32_t[mutex_number][bucket_number/mutex_number];
-		indexes = new uint32_t[bucket_number];
-		bucketMatrix = new std::vector<Bucket>[mutex_number];
-		// cout<<"ok"<<endl;
+		indexes=new uint32_t[bucket_number];
 	}
+
 
 
 	void add_kmers(vector<kmer_full>& v,uint64_t minimizer){
-		cout << "add" << endl;
-		uint64_t mutex_idx = minimizer % mutex_number;
-		uint64_t index_idx = minimizer / mutex_number;
-		uint32_t idx = indexes[mutex_idx * mutex_number + index_idx];
-		omp_set_lock(&MutexWall[mutex_idx]);
+		uint32_t idx = indexes[minimizer];
+		#pragma omp critical (newBucket)
+		{
 			if (idx == 0) {
-				cout << "new bucket" << endl;
-				bucketMatrix[mutex_idx].push_back(Bucket());
-				indexes[mutex_idx * mutex_number + index_idx] = bucketMatrix[mutex_idx].size();
-				idx = indexes[mutex_idx * mutex_number + index_idx];
-				cout << "/new bucket" << endl;
+				if(bucketList.capacity()==bucketList.size()){
+					bucketList.reserve(bucketList.capacity()*1.5);
+				}
+				bucketList.push_back(Bucket());
+				indexes[minimizer] = bucketList.size();
 			}
-		cout << "True add" << endl;
-		cout << idx << " " << (bucket_number/mutex_number) << " " << bucketMatrix[mutex_idx].size() << endl;
-		bucketMatrix[mutex_idx][idx-1].add_kmers(v);
-		omp_unset_lock(&MutexWall[mutex_idx]);
-		// }
+		}
+		idx = indexes[minimizer];
+		omp_set_lock(&MutexWall[minimizer % 8192]);
+		bucketList[idx-1].add_kmers(v);
+		omp_unset_lock(&MutexWall[minimizer % 8192]);
 		v.clear();
-		cout << "/add" << endl;
 	}
+
 
 
 	int dump_counting(){
 		string toprint;
 		for(uint64_t mini(0);mini<bucket_number;++mini){
-			uint64_t mutex_idx = mini % mutex_number;
-			uint64_t index_idx = mini / mutex_number;
-			uint32_t i = indexes[mutex_idx * mutex_number + index_idx];
+			uint32_t i = indexes[mini];
 			if(i!=0){
 				i--;
-				if(bucketMatrix[mutex_idx][i].size()!=0){
-					bucketMatrix[mutex_idx][i].print_kmers(toprint,kmer2str(mini,minimizer_size));
+				if(bucketList[i].size()!=0){
+					bucketList[i].print_kmers(toprint,kmer2str(mini,minimizer_size));
 				}
 			}
 		}
@@ -103,21 +92,13 @@ public:
 		uint64_t null_buckets(0);
 		uint64_t largest_bucket(0);
 		for(uint64_t mini(0);mini<bucket_number;++mini){
-			// cout<<"lini"<<mini<<endl;
-			uint64_t mutex_idx = mini % mutex_number;
-			uint64_t index_idx = mini / mutex_number;
-			uint32_t i = indexes[mutex_idx * mutex_number + index_idx];
+			uint32_t i = indexes[mini];
 			if(i!=0){
 				i--;
-				// cout<<"go"<<i<<endl;
-				largest_bucket = max(largest_bucket,bucketMatrix[mutex_idx][i].size());
-				// cout<<"lol1"<<endl;
+				largest_bucket = max(largest_bucket,bucketList[i].size());
 				non_null_buckets++;
-				total_super_kmers +=bucketMatrix[mutex_idx][i].size();
-				// cout<<"lol2"<<endl;
-				// cout<<bucketList[i].size()<<endl;
-				total_kmers += bucketMatrix[mutex_idx][i].number_kmer();
-				// cout<<i<<"end"<<endl;
+				total_super_kmers +=bucketList[i].size();
+				total_kmers += bucketList[i].number_kmer();
 			}else{
 				null_buckets++;
 			}
@@ -126,7 +107,6 @@ public:
 		cout << "Empty buckets:	" << intToString(null_buckets) << endl;
 		cout << "Useful buckets:	" << intToString(non_null_buckets) << endl;
 		cout << "#Superkmer:	" << intToString(total_super_kmers) << endl;
-		// cout << "#Superkmer2:	" << intToString(nb_superkmer) << endl;
 		cout << "#kmer:	" << intToString(total_kmers) << endl;
 		if(total_kmers!=0){
 			cout << "super_kmer per useful buckets*1000:	" << intToString(total_super_kmers * 1000 / non_null_buckets) << endl;
@@ -135,11 +115,12 @@ public:
 			cout << "Largest_bucket:	" << intToString(largest_bucket) << endl;
 			cout<<intToString(getMemorySelfMaxUsed())<<endl;
 			cout<<intToString(getMemorySelfMaxUsed()*1024)<<" Bytes"<<endl;
-			cout<<intToString(getMemorySelfMaxUsed()*1024/total_kmers)<<" Bytes per kmer"<<endl;
+			cout<<intToString(getMemorySelfMaxUsed()*1024*8/total_kmers)<<" Bits per kmer"<<endl;
 			cout<<intToString(getMemorySelfMaxUsed()*1024/total_super_kmers)<<" Bytes per superkmer"<<endl;
 		}
 		cout<<sizeof(SKC)<<endl;
 	}
+
 
 
 	uint64_t getMemorySelfMaxUsed (){

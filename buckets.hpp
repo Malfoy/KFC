@@ -13,6 +13,7 @@
 class Bucket{
 public:
 	vector<SKC> skml;
+	vector<uint8_t> values;
 	uint32_t sorted_size;
 
 	void insert_buffer();
