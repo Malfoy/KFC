@@ -36,7 +36,7 @@ using namespace std;
 
 
 
-DenseMenuYo	 menu(minimizer_size);
+DenseMenuYo menu(minimizer_size);
 // SparseMenu menu(minimizer_size);
 uint64_t line_count(0);
 Pow2<kint> offsetUpdateAnchor(2 * k);
