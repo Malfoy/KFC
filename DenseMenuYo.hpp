@@ -9,61 +9,82 @@
 
 
 
+
+
 #ifndef DENSEMENUYO_H
 #define DENSEMENUYO_H
 
+
+#define mutex_order (6)
+#define mutex_number (1<<(2*mutex_order)) /* DO NOT MODIFY, to increase/decrease modify mutex_order*/
 
 
 class DenseMenuYo{
 public:
 	uint32_t * indexes;
-	vector<Bucket> bucketList;
+	// std::vector<Bucket> bucketList;
+	std::vector<Bucket> * bucketMatrix;
 	uint64_t minimizer_size;
 	uint64_t bucket_number;
-	omp_lock_t MutexWall[8192];
-
+	uint64_t matrix_column_number;
+	omp_lock_t MutexWall[mutex_number];
 
 
 	DenseMenuYo(uint64_t minisize){
-		for (uint64_t i(0); i < 8192; ++i) {
+		// cout<<"creattion"<<endl;
+		for (uint64_t i(0); i < mutex_number; ++i) {
 			omp_init_lock(&MutexWall[i]);
 		}
 		minimizer_size=minisize;
 		bucket_number=1<<(2*minimizer_size);
-		indexes=new uint32_t[bucket_number];
+		matrix_column_number = bucket_number / mutex_number;
+		// indexes = new uint32_t[mutex_number][bucket_number/mutex_number];
+		indexes = new uint32_t[bucket_number];
+		bucketMatrix = new std::vector<Bucket>[mutex_number];
+		// cout<<"ok"<<endl;
 	}
 
-
+	#define get_mutex(mini) (mini%mutex_number)
+	#define get_column(mini) (mini/mutex_number)
+	#define matrix_position(row_idx, col_idx) (row_idx * matrix_column_number + col_idx)
 
 	void add_kmers(vector<kmer_full>& v,uint64_t minimizer){
-		uint32_t idx = indexes[minimizer];
-		#pragma omp critical (newBucket)
-		{
+		// cout << "add" << endl;
+		uint64_t mutex_idx = get_mutex(minimizer);
+		uint64_t column_idx = get_column(minimizer);
+		uint64_t matrix_idx = matrix_position(mutex_idx, column_idx);
+		omp_set_lock(&MutexWall[mutex_idx]);
+			uint32_t idx = indexes[matrix_idx];
+			// cout << idx << " " << (bucket_number/mutex_number) << " " << bucketMatrix[mutex_idx].size() << endl;
 			if (idx == 0) {
-				if(bucketList.capacity()==bucketList.size()){
-					bucketList.reserve(bucketList.capacity()*1.5);
-				}
-				bucketList.push_back(Bucket());
-				indexes[minimizer] = bucketList.size();
+				// cout << "new bucket" << endl;
+				bucketMatrix[mutex_idx].push_back(Bucket());
+				indexes[matrix_idx] = bucketMatrix[mutex_idx].size();
+				idx = indexes[matrix_idx];
+				// cout << "/new bucket" << endl;
 			}
-		}
-		idx = indexes[minimizer];
-		omp_set_lock(&MutexWall[minimizer % 8192]);
-		bucketList[idx-1].add_kmers(v);
-		omp_unset_lock(&MutexWall[minimizer % 8192]);
-		v.clear();
-	}
+			// else cout << "fill bucket" << endl;
+		// cout << "True add" << endl;
+		// cout << idx << " " << (bucket_number/mutex_number) << " " << bucketMatrix[mutex_idx].size() << endl;
+		bucketMatrix[mutex_idx][idx-1].add_kmers(v);
+		omp_unset_lock(&MutexWall[mutex_idx]);
 
+		v.clear();
+		// cout << "/add" << endl;
+	}
 
 
 	int dump_counting(){
 		string toprint;
 		for(uint64_t mini(0);mini<bucket_number;++mini){
-			uint32_t i = indexes[mini];
+			uint64_t mutex_idx = get_mutex(mini);
+			uint64_t column_idx = get_column(mini);
+			uint64_t matrix_idx = matrix_position(mutex_idx, column_idx);
+			uint32_t i = indexes[matrix_idx];
 			if(i!=0){
 				i--;
-				if(bucketList[i].size()!=0){
-					bucketList[i].print_kmers(toprint,kmer2str(mini,minimizer_size));
+				if(bucketMatrix[mutex_idx][i].size()!=0){
+					bucketMatrix[mutex_idx][i].print_kmers(toprint,kmer2str(mini,minimizer_size));
 				}
 			}
 		}
@@ -92,13 +113,22 @@ public:
 		uint64_t null_buckets(0);
 		uint64_t largest_bucket(0);
 		for(uint64_t mini(0);mini<bucket_number;++mini){
-			uint32_t i = indexes[mini];
+			// cout<<"lini"<<mini<<endl;
+			uint64_t mutex_idx = get_mutex(mini);
+			uint64_t column_idx = get_column(mini);
+			uint64_t matrix_idx = matrix_position(mutex_idx, column_idx);
+			uint32_t i = indexes[matrix_idx];
 			if(i!=0){
 				i--;
-				largest_bucket = max(largest_bucket,bucketList[i].size());
+				// cout<<"go"<<i<<endl;
+				largest_bucket = max(largest_bucket,bucketMatrix[mutex_idx][i].size());
+				// cout<<"lol1"<<endl;
 				non_null_buckets++;
-				total_super_kmers +=bucketList[i].size();
-				total_kmers += bucketList[i].number_kmer();
+				total_super_kmers +=bucketMatrix[mutex_idx][i].size();
+				// cout<<"lol2"<<endl;
+				// cout<<bucketList[i].size()<<endl;
+				total_kmers += bucketMatrix[mutex_idx][i].number_kmer();
+				// cout<<i<<"end"<<endl;
 			}else{
 				null_buckets++;
 			}
@@ -107,6 +137,7 @@ public:
 		cout << "Empty buckets:	" << intToString(null_buckets) << endl;
 		cout << "Useful buckets:	" << intToString(non_null_buckets) << endl;
 		cout << "#Superkmer:	" << intToString(total_super_kmers) << endl;
+		// cout << "#Superkmer2:	" << intToString(nb_superkmer) << endl;
 		cout << "#kmer:	" << intToString(total_kmers) << endl;
 		if(total_kmers!=0){
 			cout << "super_kmer per useful buckets*1000:	" << intToString(total_super_kmers * 1000 / non_null_buckets) << endl;
@@ -120,7 +151,6 @@ public:
 		}
 		cout<<sizeof(SKC)<<endl;
 	}
-
 
 
 	uint64_t getMemorySelfMaxUsed (){
