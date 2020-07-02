@@ -8,7 +8,7 @@ using namespace std;
 
 
 
-uint64_t k = 63;
+uint64_t k = 61;
 const uint64_t minimizer_size = 12;
 const uint64_t super_minimizer_size(minimizer_size+4);
 uint64_t counting_errors=0;

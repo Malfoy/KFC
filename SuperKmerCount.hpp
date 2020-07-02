@@ -15,6 +15,8 @@ public:
 	uint32_t indice_value;//4B
 	uint8_t size;//1B
 	uint8_t minimizer_idx;//1B
+
+
 	//TOTAL 16+4+2
 
 	/** Construct a superkmer from one kmer and the minimizer position.
@@ -52,7 +54,7 @@ public:
 		}
 		return  s1<s2;
 	}
-};
+} __attribute__((packed));
 
 
 
