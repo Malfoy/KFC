@@ -22,6 +22,7 @@
 #include <vector>
 #include "Kmers.cpp"
 #include "SuperKmerCount.cpp"
+#include "SuperKmerLight.cpp"
 #include "buckets.cpp"
 #include "DenseMenu.hpp"
 #include "DenseMenuYo.hpp"

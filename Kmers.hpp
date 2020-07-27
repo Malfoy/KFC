@@ -16,17 +16,21 @@ using namespace std;
 
 
 typedef __uint128_t kint;
-// typedef u_int64_t kint;
+typedef __uint128_t skint;
+//~ typedef uint64_t kint;
 
 
 
 extern robin_hood::unordered_flat_map<string, uint64_t> real_count;
 extern uint64_t counting_errors;
-extern uint64_t k;
-extern kint k_mask;
+extern const uint64_t k;
+extern const kint k_mask;
+extern const kint compact_mask;
 extern const  uint64_t minimizer_size;
 extern const  uint64_t super_minimizer_size;
-extern uint64_t min_mask;
+extern const uint64_t min_mask;
+extern const uint64_t compacted_size;
+extern const uint64_t byte_nuc;
 
 
 
@@ -37,8 +41,8 @@ extern uint64_t min_mask;
 
 string intToString(kint n);
 
-void print_kmer(__uint128_t num,uint64_t n);
-std::string kmer2str(__uint128_t num, uint k);
+void print_kmer(kint num,uint64_t n);
+string kmer2str(kint num, uint k);
 kint str2num(const std::string& str);
 // RC functions
 uint64_t rcb(const uint64_t& in);
@@ -64,7 +68,7 @@ public:
 	kint prefix;
 	kint suffix;
 	kmer_full(int8_t minimizer_idx, kint value);
-	kint get_compacted();
+	kint get_compacted()const ;
 	/** Return the minimizer regarding the minimizer_idx property
 		* Warning: The minimizer should be canon
 		*/

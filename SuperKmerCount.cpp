@@ -25,27 +25,32 @@ SKC::SKC(const kint kmer, const uint8_t mini_idx, const uint32_t indice_v) {
 
 
 //THE PREFIX IS AT RIGHT!
- kint SKC::get_prefix()  const {
+ skint SKC::get_prefix()  const {
 	return sk>>(2*minimizer_idx);
 }
 
 
 
 //THE SUFFIX IS AT LEFT!
- kint SKC::get_suffix() const  {
+ skint SKC::get_suffix() const  {
 	return sk%((kint)1<<(2*minimizer_idx));
 }
 
 
 
 bool SKC::compact_right(const kmer_full& kmf) {
-	if (k+this->size-minimizer_size>=sizeof(kint)*4) {
+	if ((k+(int)this->size-1-(int)minimizer_size )>= sizeof(skint)*4) {
 		return false;
 	}
-	kint prefix(get_prefix());
-	kint suffix(get_suffix());
-	if((kmf.suffix>>2)==suffix){
-		if(kmf.prefix==(prefix%((kint)1<<(2*(k-minimizer_size-minimizer_idx-1))))) {
+	if(k-1<minimizer_size+minimizer_idx){
+		return false;
+	}
+	skint prefix(get_prefix());
+	skint suffix(get_suffix());
+	if( (skint) (kmf.suffix>>2)==suffix){
+		// if(true	) {
+		// cout<<(2*(k-minimizer_size-minimizer_idx-1))<<endl;
+		if((skint)kmf.prefix==(prefix%((skint)1<<(2*(k-minimizer_size-minimizer_idx-1))))) {
 			sk<<=2;
 			sk += (kmf.suffix % 4);
 			size++;
@@ -65,18 +70,18 @@ bool SKC::compact_right(const kmer_full& kmf) {
 	* @return True if the kmer is inserted false otherwise.
 	*/
 	//NOT USED
-bool SKC::compact_left(const kint kmer_val) {
-	kint begin_sk = this->sk >> (this->size * 2);
-	begin_sk &= (((kint)1 << (2 * (k - 1))) - 1);
-	kint end_kmer = kmer_val & (((kint)1 << (2 * (k - 1))) - 1);
-	if (begin_sk == end_kmer) {
-		this->sk += ((__uint128_t)(kmer_val >> (2 * (k - 1)))) << (2 * (k + this->size - 1));
-		//           Select 2 left bits         Shift to the beginning of the sk
-		this->size += 1;
-		return true;
-	}
-	return false;
-}
+// bool SKC::compact_left(const kint kmer_val) {
+// 	kint begin_sk = this->sk >> (this->size * 2);
+// 	begin_sk &= (((kint)1 << (2 * (k - 1))) - 1);
+// 	kint end_kmer = kmer_val & (((kint)1 << (2 * (k - 1))) - 1);
+// 	if (begin_sk == end_kmer) {
+// 		this->sk += ((kint)(kmer_val >> (2 * (k - 1)))) << (2 * (k + this->size - 1));
+// 		//           Select 2 left bits         Shift to the beginning of the sk
+// 		this->size += 1;
+// 		return true;
+// 	}
+// 	return false;
+// }
 
 
 
@@ -91,7 +96,7 @@ bool SKC::is_present(kint kmer_val, uint64_t kmer_minimizer_idx) {
 	if(start_idx<0 or (start_idx>=this->size)){
 		return false;
 	}
-	kint aligned_sk = (this->sk >> (2 * start_idx)) & k_mask;
+	kint aligned_sk = (kint)((this->sk >> (2 * start_idx)) & k_mask);
 	return aligned_sk == kmer_val;
 }
 
@@ -140,9 +145,9 @@ uint32_t SKC::query_kmer_hash(const kmer_full& kmer) {
 
 
 // --- Pretty printing functions ---
-void _out_kmer(ostream& out, __uint128_t kmer, uint64_t size) {
-	kmer &= (((__uint128_t)1) << (2 * size)) - 1;
-	__uint128_t anc((__uint128_t)1 << (2 * (size - 1)));
+void _out_kmer(ostream& out, kint kmer, uint64_t size) {
+	kmer &= (((kint)1) << (2 * size)) - 1;
+	kint anc((kint)1 << (2 * (size - 1)));
 	for (uint64_t i(0); i < size and anc != 0; ++i) {
 		uint64_t nuc = kmer / anc;
 		kmer         = kmer % anc;
@@ -168,18 +173,18 @@ void _out_kmer(ostream& out, __uint128_t kmer, uint64_t size) {
 
 
 
-ostream& operator<<(ostream& out, const SKC& skc) {
-	// Print the superkmer
-	_out_kmer(out, skc.sk, k + skc.size - 1);
-	out << endl;
-	// Print the minimizer
-	uint64_t left_spaces = k + skc.size - minimizer_size - skc.minimizer_idx - 1;
-	for (uint64_t i = 0; i < left_spaces; i++)
-		out << ' ';
-	_out_kmer(out, skc.sk >> (2 * skc.minimizer_idx), minimizer_size);
-	out << " (mini idx " << (uint64_t)skc.minimizer_idx << ")" << endl;
-	return out;
-}
+// ostream& operator<<(ostream& out, const SKC& skc) {
+// 	// Print the superkmer
+// 	_out_kmer(out, skc.sk, k + skc.size - 1);
+// 	out << endl;
+// 	// Print the minimizer
+// 	uint64_t left_spaces = k + skc.size - minimizer_size - skc.minimizer_idx - 1;
+// 	for (uint64_t i = 0; i < left_spaces; i++)
+// 		out << ' ';
+// 	_out_kmer(out, skc.sk >> (2 * skc.minimizer_idx), minimizer_size);
+// 	out << " (mini idx " << (uint64_t)skc.minimizer_idx << ")" << endl;
+// 	return out;
+// }
 
 
 

@@ -11,7 +11,7 @@
 
 class SKC {
 public:
-	kint sk;//8B or 16B
+	skint sk;//8B or 16B
 	uint32_t indice_value;//4B
 	uint8_t size;//1B
 	uint8_t minimizer_idx;//1B
@@ -36,8 +36,8 @@ public:
 	bool is_present_brutforce(kmer_full kmer, uint8_t & mini_k_idx);
 	bool compact_right(const kmer_full& kmf);
 	bool is_present(kmer_full kmf);
-	kint get_prefix()  const;
-	kint get_suffix() const;
+	skint get_prefix()  const;
+	skint get_suffix() const;
 	bool query_kmer_bool(const kmer_full& kmer);
 	uint32_t query_kmer_hash(const kmer_full& kmer);
 

@@ -12,7 +12,7 @@
 //TODO CHANGE VECTOR of STruct TO Struct of vector
 class Bucket{
 public:
-	vector<SKC> skml;
+	vector<SKCL> skml;
 	vector<uint8_t> values;
 	uint32_t sorted_size;
 

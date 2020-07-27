@@ -8,13 +8,17 @@ using namespace std;
 
 
 
-uint64_t k = 61;
+const uint64_t k = 63;
 const uint64_t minimizer_size = 12;
+const uint64_t compacted_size = k-minimizer_size;
 const uint64_t super_minimizer_size(minimizer_size+4);
+const uint64_t byte_nuc=ceil((2*k-minimizer_size)/4)-1;
 uint64_t counting_errors=0;
 bool check=false;
 robin_hood::unordered_flat_map<string, uint64_t> real_count;
-kint k_mask = (((kint)1) << (2*k)) - 1;
+const kint k_mask = (((kint)1) << (2*k)) - 1;
+const kint compact_mask = (((kint)1) << (2*compacted_size)) - 1;
+
 
 
 string intToString(uint64_t n) {
@@ -45,7 +49,6 @@ uint8_t kmer_full::get_minimizer_idx() const {
 
 
 kmer_full::kmer_full(int8_t minimizer_idx, kint value) {
-	// cout<<"go"<<endl;
 	this->minimizer_idx = minimizer_idx;
 	this->kmer_s = value;
 	this->prefix=(value);
@@ -54,16 +57,13 @@ kmer_full::kmer_full(int8_t minimizer_idx, kint value) {
 	this->suffix=(value);
 	shift=(minimizer_idx)*2;
 	this->suffix%=((kint)1<<shift);
-	// print_kmer(value,k);
-	// print_kmer(prefix,k);
-	// print_kmer(suffix,k);
 }
 
 
 
-string kmer2str(kint num, uint k) {
+string kmer2str(__uint128_t num, uint k) {
 	string res;
-	Pow2<kint> anc(2 * (k - 1));
+	Pow2<__uint128_t> anc(2 * (k - 1));
 	for (uint64_t i(0); i < k; ++i) {
 		uint64_t nuc = num / anc;
 		num             = num % anc;
@@ -93,8 +93,39 @@ string kmer2str(kint num, uint k) {
 
 
 
+//~ string kmer2str(uint256_t num, uint k) {
+	//~ string res;
+	//~ Pow2<uint256_t> anc(2 * (k - 1));
+	//~ for (uint64_t i(0); i < k; ++i) {
+		//~ auto nuc = num / anc;
+		//~ num             = num % anc;
+		//~ if (nuc == 3) {
+			//~ res += "G";
+		//~ }
+		//~ if (nuc == 2) {
+			//~ res += "T";
+		//~ }
+		//~ if (nuc == 1) {
+			//~ res += "C";
+		//~ }
+		//~ if (nuc == 0) {
+			//~ res += "A";
+		//~ }
+		//~ if (nuc >= 4) {
+			//~ cout << "WTF kmer2str" << endl;
+			//~ // cout<<(uint6)anc.value()<<endl;
+			//~ cout<<nuc<<endl;
+			//~ return "";
+		//~ }
+		//~ anc >>= 2;
+	//~ }
+	//~ return res;
+//~ }
+
+
+
 // SUFFIX IS AT RIGHT!!!!!!DO NOT CHANGE THIS
-kint kmer_full::get_compacted(){
+kint kmer_full::get_compacted() const {
 	kint result;
 	result=prefix;
 	result<<=(minimizer_idx*2);
@@ -134,7 +165,7 @@ void print_kmer(__uint128_t num,uint64_t n){
 		}
 		anc>>=2;
 	}
-	cout<<endl;
+	// cout<<endl;
 }
 
 
@@ -144,6 +175,16 @@ kint str2num(const string& str) {
 	for (uint64_t i(0); i < str.size(); i++) {
 		res <<= 2;
 		res += (str[i] / 2) % 4;
+	}
+	return res;
+}
+
+
+
+kint str2num2(const string& str) {
+	kint res(0);
+	for (uint64_t i(1); i <= str.size(); i++) {
+		res += ((str[i-1] / 2) % 4)<<(str.size()-i);
 	}
 	return res;
 }

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdint>
 #include <cstring>
+#include <map>
 #include "Kmers.hpp"
 #include "SuperKmerCount.hpp"
 #include "buckets.hpp"
@@ -19,6 +20,7 @@
 #define mutex_number (1<<(2*mutex_order)) /* DO NOT MODIFY, to increase/decrease modify mutex_order*/
 
 
+
 class DenseMenuYo{
 public:
 	uint32_t * indexes;
@@ -28,10 +30,12 @@ public:
 	uint64_t bucket_number;
 	uint64_t matrix_column_number;
 	omp_lock_t MutexWall[mutex_number];
+	u_int64_t call_ad;
+	u_int64_t skm_total_size;
+	map<uint,uint> size_sk;
 
 
 	DenseMenuYo(uint64_t minisize){
-		// cout<<"creattion"<<endl;
 		for (uint64_t i(0); i < mutex_number; ++i) {
 			omp_init_lock(&MutexWall[i]);
 		}
@@ -41,7 +45,7 @@ public:
 		// indexes = new uint32_t[mutex_number][bucket_number/mutex_number];
 		indexes = new uint32_t[bucket_number];
 		bucketMatrix = new std::vector<Bucket>[mutex_number];
-		// cout<<"ok"<<endl;
+		skm_total_size=call_ad=0;
 	}
 
 	#define get_mutex(mini) (mini%mutex_number)
@@ -49,6 +53,12 @@ public:
 	#define matrix_position(row_idx, col_idx) (row_idx * matrix_column_number + col_idx)
 
 	void add_kmers(vector<kmer_full>& v,uint64_t minimizer){
+		#pragma omp critical
+		{
+			call_ad++;
+			skm_total_size+=v.size();
+			size_sk[v.size()]++;
+		}
 		// cout << "add" << endl;
 		uint64_t mutex_idx = get_mutex(minimizer);
 		uint64_t column_idx = get_column(minimizer);
@@ -148,8 +158,13 @@ public:
 			cout<<intToString(getMemorySelfMaxUsed()*1024)<<" Bytes"<<endl;
 			cout<<intToString(getMemorySelfMaxUsed()*1024*8/total_kmers)<<" Bits per kmer"<<endl;
 			cout<<intToString(getMemorySelfMaxUsed()*1024/total_super_kmers)<<" Bytes per superkmer"<<endl;
+			cout<<intToString(skm_total_size*1000/call_ad)<<" Real superkmer size"<<endl;
+			// for (auto& it: size_sk) {
+			// 	cout<<it.first<<" "<<intToString((uint64_t)it.second)<<endl;
+			// }
 		}
-		cout<<sizeof(SKC)<<endl;
+		cout<<sizeof(SKCL)<<endl;
+		// cout<<sizeof(uint256_t)<<endl;
 	}
 
 
